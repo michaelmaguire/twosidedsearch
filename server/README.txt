@@ -1,3 +1,3 @@
-Server side code goes here...
+TODO
 
-Test
+Write up instructions on setting up Postgres, Apache, PHP
