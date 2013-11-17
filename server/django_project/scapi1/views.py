@@ -4,8 +4,9 @@ from django.shortcuts import render
 import json
 import uuid
 
-def jsonify(object):
-    return json.dumps(object, indent=4)
+def json_response(object):
+    return HttpResponse(json.dumps(object, indent=4),
+                        content_type="application/json")
 
 def docs(request):
     return render(request, "docs.html", { "test": "foox" })
@@ -29,8 +30,7 @@ def create_account(request):
                        WHERE email = %s""",
                    (request.POST["email"],))
     if cursor.fetchone():
-        return HttpResponse(jsonify({ "status" : "EMAIL_IN_USE" }),
-                            content_type="application/json")
+        return json_response({ "status" : "EMAIL_IN_USE" })
 
     # check if the email address is already known to us
     cursor.execute("""SELECT 1
@@ -38,8 +38,7 @@ def create_account(request):
                        WHERE username = %s""",
                    (request.POST["username"],))
     if cursor.fetchone():
-        return HttpResponse(jsonify({ "status" : "USERNAME_IN_USE" }),
-                            content_type="application/json")
+        return json_response({ "status" : "USERNAME_IN_USE" })
     
     # clear to proceed
     cursor.execute("""INSERT INTO person (username, firstname, lastname, email, status, password_hash, created, logins)
@@ -49,8 +48,7 @@ def create_account(request):
                     request.POST["lastname"],
                     request.POST["email"],
                     request.POST["password"]))
-    return HttpResponse(jsonify({ "status" : "OK" }),
-                        content_type="application/json")
+    return json_response({ "status" : "OK" })
 
 def login(request):
     cursor = connection.cursor()
@@ -83,7 +81,7 @@ def login(request):
         else:
             response = { "status" : "FAIL" }
             # TODO handle this case
-    return HttpResponse(json.dumps(response, indent=4), content_type="application/json")
+    return json_response(response)
 
 def logout(request):
     cursor = connection.cursor()
@@ -96,7 +94,7 @@ def logout(request):
         response = { "status" : "OK" }
     else:
         response = { "status" : "FAIL" }
-    return HttpResponse(json.dumps(response, indent=4), content_type="application/json")
+    return json_response(response)
 
 def schedule(request, username):
     cursor = connection.cursor()
@@ -114,7 +112,7 @@ def schedule(request, username):
                            "note" : note } 
                          for day, availability, note in cursor.fetchall() ]
     cursor.close()
-    return HttpResponse(json.dumps(response, indent=4), content_type="application/json")
+    return json_response(response)
 
 def find(request, day, skill):
     cursor = connection.cursor()
@@ -141,4 +139,4 @@ def find(request, day, skill):
                            "message" : message }
                          for username, firstname, lastname, email, message in cursor.fetchall() ]
     cursor.close()
-    return HttpResponse(json.dumps(response, indent=4), content_type="application/json")
+    return json_response(response)
