@@ -3,22 +3,27 @@
     <h1>Speedycrew API v1 test page</h1>
     
     <h2>Session management</h2>
+    <p>
+      Most API called require a 'token'.  The only way to get one is
+      to log in.  Users can log in from multiple devices the same
+      time, and tokens currently last forever, or until 
+    </p>
     <ol>
       <li>
         To log in, HTTP POST to <code>/api/1/login</code> with parameters <code>username</code> and <code>password</code>.
         <form action="login" method="POST">
-          username = <input name="username" type="password"/>,
+          username = <input name="username" type="input"/>,
           password = <input name="password" type="password"/>,
           <input type="submit"/>
         </form>
         Results look like:
-        <code><pre>
+<code><pre>
 {
     "status": "OK", 
-    "lastname": "Bloggs", 
-    "token": "68f22a73a6884dd7856f64160790e7e4", 
+    "firstname": "Joe",
     "email": "bloggo@chef.com", 
-    "firstname": "Joe"
+    "lastname": "Bloggs", 
+    "token": "68f22a73a6884dd7856f64160790e7e4"
 }
 </pre></code> or like this:
 <code><pre>
@@ -27,7 +32,29 @@
 }
 </pre></code>
       </li>
+      <li>
+        To log out, HTTP POST to <code>/api/1/logout</code> with <code>token</code> obtained by logging in.
+        <form action="logout" method="POST">
+          token = <input name="token">,
+          <input type="submit">
+        </form>
+        Results look like:
+<code><pre>
+{
+    "status": "OK"
+}
+</pre></code> or like this:
+<code><pre>
+{
+    "status": "FAIL"
+}
+</pre></code>
+
+      </li>
     </ol>
+    
+
+    <h2>Data retrieval</h2>
   </body>
 </html>
 
