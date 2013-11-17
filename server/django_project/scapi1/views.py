@@ -5,6 +5,7 @@ import json
 import uuid
 
 def json_response(object):
+    """A convenience function for generating a JSON HTTP response."""
     return HttpResponse(json.dumps(object, indent=4),
                         content_type="application/json")
 
@@ -60,28 +61,27 @@ def login(request):
     row = cursor.fetchone()
     if row == None:
         # TODO count failures, implement back-off
-        response = { "status": "FAIL" }
+        return json_response({ "status": "FAIL" })
+        
+    id, firstname, lastname, email, status = row        
+    if status == "ACTIVE":
+        token = uuid.uuid4().hex
+        cursor.execute("""INSERT INTO login_session (token, person, created)
+                          VALUES (%s, %s, now())""",
+                       (token, id))
+        cursor.execute("""UPDATE person
+                             SET last_login = now(),
+                                 logins = logins + 1
+                           WHERE id = %s""",
+                       (id,))
+        return json_response({ "status" : "OK",
+                               "firstname" : firstname,
+                               "lastname" : lastname,
+                               "email" : email,
+                               "token" : token })
     else:
-        id, firstname, lastname, email, status = row        
-        if status == "ACTIVE":
-            token = uuid.uuid4().hex
-            cursor.execute("""INSERT INTO login_session (token, person, created)
-                              VALUES (%s, %s, now())""",
-                           (token, id))
-            cursor.execute("""UPDATE person
-                                 SET last_login = now(),
-                                     logins = logins + 1
-                               WHERE id = %s""",
-                           (id,))
-            response = { "status" : "OK",
-                         "firstname" : firstname,
-                         "lastname" : lastname,
-                         "email" : email,
-                         "token" : token }
-        else:
-            response = { "status" : "FAIL" }
-            # TODO handle this case
-    return json_response(response)
+        # TODO handle this case better (say 'you're banned'?)
+        return json_response({ "status" : "FAIL" })
 
 def logout(request):
     cursor = connection.cursor()
@@ -91,10 +91,9 @@ def logout(request):
                          AND ended IS NULL""",
                    (request.POST["token"],))
     if cursor.rowcount == 1:
-        response = { "status" : "OK" }
+        return json_response({ "status" : "OK" })
     else:
-        response = { "status" : "FAIL" }
-    return json_response(response)
+        return json_response({ "status" : "FAIL" })
 
 def schedule(request, username):
     cursor = connection.cursor()
