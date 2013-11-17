@@ -5,7 +5,9 @@ from django.conf.urls import patterns, include, url
 # admin.autodiscover()
 
 urlpatterns = patterns('',
-
+    url(r'^api/1/docs$', 'scapi1.views.docs', name='docs'),
+    url(r'^api/1/login$', 'scapi1.views.login', name='login'),
+    url(r'^api/1/logout$', 'scapi1.views.logout', name='logout'),
     url(r'^api/1/schedule/([a-zA-Z0-9_-]+)$', 'scapi1.views.schedule', name='schedule'),
     url(r'^api/1/find/([0-9]{4}-[0-9]{2}-[0-9]{2})/([a-z0-9-]+)$', 'scapi1.views.find', name='find'),
 
