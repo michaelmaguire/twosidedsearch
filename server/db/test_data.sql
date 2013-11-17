@@ -9,9 +9,9 @@ values (1, 'chef', 'Trained chef'),
        (6, 'bottle-washer', 'Master dish washer');
 
 insert into person 
-values (1, 'maguire_the_knife', 'Michael', 'Maguire', 'mm@chef.com', 'ACTIVE', crypt('foo', gen_salt('md5')), 'Looking to deploy my Ginsu', now(), now()),
-       (2, 'coulis', 'Dietmar', 'Kuehl', 'dk@chef.com', 'ACTIVE', crypt('foo', gen_salt('md5')), 'You kill it, I''ll grill it', now(), now()),
-       (3, 'spudpeeler', 'Thomas', 'Munro', 'tm@chef.com', 'ACTIVE', crypt('foo', gen_salt('md5')), 'Will supply own potato peeler and proprietary bottle scrubbing device', now(), now());
+values (1, 'maguire_the_knife', 'Michael', 'Maguire', 'mm@chef.com', 'ACTIVE', crypt('foo', gen_salt('md5')), 'Looking to deploy my Ginsu', now(), null, 0),
+       (2, 'coulis', 'Dietmar', 'Kuehl', 'dk@chef.com', 'ACTIVE', crypt('foo', gen_salt('md5')), 'You kill it, I''ll grill it', now(), null, 0),
+       (3, 'spudpeeler', 'Thomas', 'Munro', 'tm@chef.com', 'ACTIVE', crypt('foo', gen_salt('md5')), 'Will supply own potato peeler and proprietary bottle scrubbing device', now(), null, 0);
 
 insert into person_skill
 values (1, 2, now()),
