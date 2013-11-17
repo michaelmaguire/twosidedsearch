@@ -1,0 +1,33 @@
+<html>
+  <body>
+    <h1>Speedycrew API v1 test page</h1>
+    
+    <h2>Session management</h2>
+    <ol>
+      <li>
+        To log in, HTTP POST to <code>/api/1/login</code> with parameters <code>username</code> and <code>password</code>.
+        <form action="login" method="POST">
+          username = <input name="username" type="password"/>,
+          password = <input name="password" type="password"/>,
+          <input type="submit"/>
+        </form>
+        Results look like:
+        <code><pre>
+{
+    "status": "OK", 
+    "lastname": "Bloggs", 
+    "token": "68f22a73a6884dd7856f64160790e7e4", 
+    "email": "bloggo@chef.com", 
+    "firstname": "Joe"
+}
+</pre></code> or like this:
+<code><pre>
+{
+    "status": "FAIL"
+}
+</pre></code>
+      </li>
+    </ol>
+  </body>
+</html>
+
