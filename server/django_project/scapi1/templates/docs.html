@@ -38,12 +38,14 @@
           token = <input name="token">,
           <input type="submit">
         </form>
-        Results look like:
+        If the token was known, and the session was currently logged
+        in (hadn't already been logged out), then the result looks
+        like this:
 <code><pre>
 {
     "status": "OK"
 }
-</pre></code> or like this:
+</pre></code> Otherwise it looks like this:
 <code><pre>
 {
     "status": "FAIL"

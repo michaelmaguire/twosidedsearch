@@ -44,7 +44,8 @@ def logout(request):
     cursor = connection.cursor()
     cursor.execute("""UPDATE login_session
                          SET ended = now()
-                       WHERE token = %s""",
+                       WHERE token = %s
+                         AND ended IS NULL""",
                    (request.POST["token"],))
     if cursor.rowcount == 1:
         response = { "status" : "OK" }
