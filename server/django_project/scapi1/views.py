@@ -40,6 +40,18 @@ def login(request):
             # TODO handle this case
     return HttpResponse(json.dumps(response, indent=4), content_type="application/json")
 
+def logout(request):
+    cursor = connection.cursor()
+    cursor.execute("""UPDATE login_session
+                         SET ended = now()
+                       WHERE token = %s""",
+                   (request.POST["token"],))
+    if cursor.rowcount == 1:
+        response = { "status" : "OK" }
+    else:
+        response = { "status" : "FAIL" }
+    return HttpResponse(json.dumps(response, indent=4), content_type="application/json")
+
 def schedule(request, username):
     cursor = connection.cursor()
     cursor.execute("""SELECT pd.day, pd.availability, pd.note
