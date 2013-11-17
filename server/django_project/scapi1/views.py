@@ -113,29 +113,42 @@ def schedule(request, username):
     cursor.close()
     return json_response(response)
 
-def find(request, day, skill):
+def find(request):
+    # TODO require valid token, even though we do nothing with your
+    # identity here
     cursor = connection.cursor()
     cursor.execute(""" SELECT p.username,
                               p.firstname,
                               p.lastname,
                               p.email,
-                              p.message
+                              p.message,
+                              st_distance(l.geography,
+                                          st_geographyfromtext('POINT(' || %s || ' ' || %s || ')'))
                          FROM person p
                          JOIN person_day pd ON p.id = pd.person
                          JOIN person_skill ps ON p.id = ps.person
                          JOIN skill s ON ps.skill = s.id
+                         JOIN travel_area ta ON p.id = ta.person
+                         JOIN location l ON ta.base = l.id           
                         WHERE pd.availability = 'AVAILABLE'
                           AND pd.day = %s::DATE
-                          and s.name = %s
+                          AND s.name = %s
+                          AND st_dwithin(l.geography,
+                                         st_geographyfromtext('POINT(' || %s || ' ' || %s || ')'),
+                                         ta.max_distance)
                         ORDER BY p.firstname, p.lastname""",
-                   (day, skill))
-    response = {}
-    response["status"] = "OK"
-    response["data"] = [ { "username" : username,
-                           "firstname" : firstname,
-                           "lastname" : lastname,
-                           "email" : email,
-                           "message" : message }
-                         for username, firstname, lastname, email, message in cursor.fetchall() ]
-    cursor.close()
-    return json_response(response)
+                   (request.POST["longitude"],
+                    request.POST["latitude"],
+                    request.POST["day"],
+                    request.POST["skill"],
+                    request.POST["longitude"],
+                    request.POST["latitude"]))
+    return json_response({ "status" : "OK",
+                           "data" : [ { "username" : username,
+                                        "firstname" : firstname,
+                                        "lastname" : lastname,
+                                        "email" : email,
+                                        "message" : message,
+                                        "distance" : distance }
+                                      for username, firstname, lastname, email, message, distance
+                                      in cursor.fetchall() ] })

@@ -74,24 +74,41 @@
 
     <h2>Profile management</h2>
 
+    <p>* NOT WORKING YET *</p>
     <ol>
       <li>To fetch profile data, HTTP POST
         to <code>/api/1/profile</code> with <code>token</code> obtained
         by logging in.
         <form action="profile" method="POST">
           token = <input name="token">,
-          <input type="submit">
+          <input type="submit"/>
         </form>
       </li>
       <li>
         To update profile data, HTTP POST
         to <code>/api/1/profile</code>
-        with <code>token</code>, <code>message</code>.
+        with <code>token</code>, <code>message</code>. ... TODO
       </li>
     </ol>
 
     <h2>Simple searches</h2>
 
+    <ol>
+      <li>
+        To find available people, HTTP POST
+        to <code>/api/1/file</code>
+        with <code>token</code>, <code>day</code>, <code>skill</code>, <code>longitude</code>, <code>latitude</code>.
+        <form action="find" method="POST">
+          token = <input type="input" name="token"/>,
+          day = <input type="input" name="day"/>,
+          skill = <input type="input" name="skill"/>,
+          longitude = <input type="input" name="longitude"/>,
+          latitude = <input type="input" name="latitude">,
+          <input type="submit"/>
+        </form>
+      </li>
+    </ol>
+    
     <h2>Project management</h2>
   </body>
 </html>
