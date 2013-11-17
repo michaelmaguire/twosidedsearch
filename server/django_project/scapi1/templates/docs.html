@@ -1,16 +1,32 @@
 <html>
   <body>
     <h1>Speedycrew API v1 test page</h1>
-    
+
     <h2>Session management</h2>
     <p>
       Most API called require a 'token'.  The only way to get one is
-      to log in.  Users can log in from multiple devices the same
-      time, and tokens currently last forever, or until they log out.
+      to log in.  The only way to log in is to create an account
+      first.  Users can log in from multiple devices the same time,
+      and tokens currently last forever, or until they log out.
     </p>
     <ol>
       <li>
-        To log in, HTTP POST to <code>/api/1/login</code> with parameters <code>username</code> and <code>password</code>.
+        To create an account, HTTP POST
+        to <code>/api/1/create_account</code> with
+        parameters <code>username</code>, <code>firstname</code>,
+        <code>lastname</code>, <code>email</code>, <code>password</code>.
+        <form action="create_account" method="POST">
+          username = <input name="username" type="input"/>,
+          firstname = <input name="firstname" type="input"/>,
+          lastname = <input name="lastname" type="input"/>,
+          email = <input name="email" type="input"/>,
+          password = <input name="password" type="password">
+          <input type="submit"/>
+        </form>
+      </li>
+      <li>
+        To log in, HTTP POST to <code>/api/1/login</code> with
+        parameters <code>username</code> and <code>password</code>.
         <form action="login" method="POST">
           username = <input name="username" type="input"/>,
           password = <input name="password" type="password"/>,
@@ -54,9 +70,29 @@
       </li>
     </ol>
 
+    <p>Coming soon: forgotten passwords.</p>
+
     <h2>Profile management</h2>
 
-    <h2>Data retrieval</h2>
+    <ol>
+      <li>To fetch profile data, HTTP POST
+        to <code>/api/1/profile</code> with <code>token</code> obtained
+        by logging in.
+        <form action="profile" method="POST">
+          token = <input name="token">,
+          <input type="submit">
+        </form>
+      </li>
+      <li>
+        To update profile data, HTTP POST
+        to <code>/api/1/profile</code>
+        with <code>token</code>, <code>message</code>.
+      </li>
+    </ol>
+
+    <h2>Simple searches</h2>
+
+    <h2>Project management</h2>
   </body>
 </html>
 

@@ -4,8 +4,53 @@ from django.shortcuts import render
 import json
 import uuid
 
+def jsonify(object):
+    return json.dumps(object, indent=4)
+
 def docs(request):
     return render(request, "docs.html", { "test": "foox" })
+
+def create_account(request):
+    cursor = connection.cursor()
+    # TODO reject empty names etc
+    # TODO check if the password is not good enough according to some policy
+    # TODO likewise for the username
+
+    # the following checks are 'polite' ways to discover emails and
+    # username already in use and give a friendly error message:
+    # obviously there is also a race here due to concurrency, and the
+    # database will enforce uniqueness (the error will just be uglier
+    # if we get there); in theory you'd just use the DB and detect
+    # those errors specially, a job for another day
+    
+    # check if the email address is already known to us
+    cursor.execute("""SELECT 1
+                        FROM person
+                       WHERE email = %s""",
+                   (request.POST["email"],))
+    if cursor.fetchone():
+        return HttpResponse(jsonify({ "status" : "EMAIL_IN_USE" }),
+                            content_type="application/json")
+
+    # check if the email address is already known to us
+    cursor.execute("""SELECT 1
+                        FROM person
+                       WHERE username = %s""",
+                   (request.POST["username"],))
+    if cursor.fetchone():
+        return HttpResponse(jsonify({ "status" : "USERNAME_IN_USE" }),
+                            content_type="application/json")
+    
+    # clear to proceed
+    cursor.execute("""INSERT INTO person (username, firstname, lastname, email, status, password_hash, created, logins)
+                      VALUES (%s, %s, %s, %s, 'ACTIVE', crypt(%s, gen_salt('bf')), now(), 0)""",
+                   (request.POST["username"],
+                    request.POST["firstname"],
+                    request.POST["lastname"],
+                    request.POST["email"],
+                    request.POST["password"]))
+    return HttpResponse(jsonify({ "status" : "OK" }),
+                        content_type="application/json")
 
 def login(request):
     cursor = connection.cursor()
