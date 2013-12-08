@@ -8,6 +8,8 @@
         android:minSdkVersion="18"
         android:targetSdkVersion="18" />
 
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <application
         android:name="com.speedycrew.client.android.SpeedyCrewApplication"
         android:allowBackup="true"

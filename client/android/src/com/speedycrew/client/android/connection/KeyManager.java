@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.math.BigInteger;
 import java.security.InvalidAlgorithmParameterException;
+import java.security.KeyManagementException;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
 import java.security.KeyStore.PrivateKeyEntry;
@@ -12,9 +13,14 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.UnrecoverableEntryException;
+import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Calendar;
+
+import javax.net.ssl.KeyManagerFactory;
+
+import org.apache.http.conn.ssl.SSLSocketFactory;
 
 import javax.security.auth.x500.X500Principal;
 
@@ -187,4 +193,19 @@ public final class KeyManager {
 		return hexString.toString();
 	}
 
+	public SSLSocketFactory getSSLSocketFactory() throws KeyStoreException, NoSuchAlgorithmException, UnrecoverableKeyException, CertificateException, IOException,
+			KeyManagementException {
+		KeyStore keyStore = KeyStore.getInstance(ANDROID_KEY_STORE);
+		keyStore.load(null);
+
+		// initialize key manager factory with the read client certificate
+		KeyManagerFactory keyManagerFactory = null;
+		keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+		keyManagerFactory.init(keyStore, "MyPassword".toCharArray());
+
+		// initialize SSLSocketFactory to use the certificates
+		SSLSocketFactory socketFactory = null;
+		socketFactory = new SSLSocketFactory(SSLSocketFactory.TLS, keyStore, null, null, null, null);
+		return socketFactory;
+	}
 }
