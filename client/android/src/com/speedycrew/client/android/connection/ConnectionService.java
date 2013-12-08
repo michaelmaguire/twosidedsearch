@@ -82,17 +82,16 @@ public class ConnectionService extends Service {
 					// This is the hex-encoded SHA1 hash of the public key.
 					// It's the best thing to use as a unique identifying ID for
 					// a user.
-					String uniqueUserId = mKeyManager.getUserId();
-					Log.i(LOGTAG, "uniqueUserId[" + uniqueUserId + "]");
+					String uniqueUserId = null;
 					try {
-
+						uniqueUserId = mKeyManager.getUserId();
+						Log.i(LOGTAG, "uniqueUserId[" + uniqueUserId + "]");
 					} catch (Exception e) {
 						Log.e(LOGTAG, "initiateConnection getUserId: " + e.getMessage());
 						throw e;
 					}
 
 					DefaultHttpClient httpsClient = null;
-
 					try {
 						SSLSocketFactory socketFactory = mKeyManager.getSSLSocketFactory();
 
@@ -123,7 +122,6 @@ public class ConnectionService extends Service {
 						schReg.register(new Scheme("https", socketFactory, 443));
 						ClientConnectionManager conMgr = new ThreadSafeClientConnManager(params, schReg);
 						httpsClient = new DefaultHttpClient(conMgr, params);
-
 					} catch (Exception e) {
 						Log.e(LOGTAG, "initiateConnection: error creating DefaultHttpClient: " + e.getMessage());
 						throw e;
@@ -154,7 +152,7 @@ public class ConnectionService extends Service {
 							System.out.println(query);
 
 					} catch (Exception e) {
-						Log.e(LOGTAG, "initiateConnection: error making request: " + e.getMessage());
+						Log.e(LOGTAG, "initiateConnection: error reading response: " + e.getMessage());
 						throw e;
 					}
 				} catch (Throwable t) {
