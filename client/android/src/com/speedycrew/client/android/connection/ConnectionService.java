@@ -3,11 +3,17 @@ package com.speedycrew.client.android.connection;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.Authenticator;
+import java.net.PasswordAuthentication;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpVersion;
-import org.apache.http.client.methods.HttpGet;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.params.HttpClientParams;
 import org.apache.http.conn.ClientConnectionManager;
 import org.apache.http.conn.params.ConnManagerParams;
@@ -19,6 +25,7 @@ import org.apache.http.conn.scheme.SchemeRegistry;
 import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
+import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
@@ -27,14 +34,23 @@ import org.apache.http.params.HttpProtocolParams;
 import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
+import android.util.Base64;
 import android.util.Log;
 
 public class ConnectionService extends Service {
 
 	private static String LOGTAG = ConnectionService.class.getName();
 
-	private static String SPEEDY_URL = "https://dev.speedycrew.com/api/1/login";
+	// Intended -- but currently we get told to piss off:
+	// private static String SPEEDY_URL =
+	// "http://dev.speedycrew.com/api/1/create";
+
+	// Testing -- works enough to get us a valid HTML response.
 	// private static String SPEEDY_URL = "https://www.google.co.uk/";
+
+	// Temporary -- since HTTPS gets us told to piss off -- still can't get past
+	// captain cook, though -- must be doing basic auth wrong.
+	private static String SPEEDY_URL = "http://dev.speedycrew.com/api/1/create";
 
 	private static String X_SPEEDY_CREW_USER_ID = "X-SpeedyCrew-UserId";
 
@@ -101,7 +117,6 @@ public class ConnectionService extends Service {
 						HttpProtocolParams.setContentCharset(params, "UTF-8");
 						HttpProtocolParams.setUseExpectContinue(params, true);
 						HttpProtocolParams.setUserAgent(params, "Android SpeedyCrew/1.0.0");
-						params.setParameter(X_SPEEDY_CREW_USER_ID, uniqueUserId);
 
 						// Make connection pool.
 						ConnPerRoute connPerRoute = new ConnPerRouteBean(12);
@@ -127,9 +142,33 @@ public class ConnectionService extends Service {
 						throw e;
 					}
 
-					HttpGet httpGet = null;
+					HttpPost httpPost = null;
 					try {
-						httpGet = new HttpGet(SPEEDY_URL);
+						httpPost = new HttpPost(SPEEDY_URL);
+
+						httpPost.addHeader(X_SPEEDY_CREW_USER_ID, uniqueUserId);
+
+						// Try adding in our test dev server credentials.
+						// Hmmm. Still not doing this right... getting "401
+						// Authorization Required".
+						httpPost.addHeader("Authorization", "basic " + Base64.encode("captain:cook".getBytes(), Base64.NO_WRAP));
+
+						// Set post data.
+						List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(2);
+						nameValuePairs.add(new BasicNameValuePair("username", "michael1234"));
+						nameValuePairs.add(new BasicNameValuePair("firstname", "MichaelTest"));
+						nameValuePairs.add(new BasicNameValuePair("lastname", "LastnameTest"));
+						nameValuePairs.add(new BasicNameValuePair("email", "speedytest@michaelmaguire.ca"));
+
+						// Not needed with our new public key mechanism -- there
+						// will be no subsequent /api/1/login calls anymore, so
+						// we're not really creating an account here so much as
+						// letting the server know about us...
+						// nameValuePairs.add(new BasicNameValuePair("password",
+						// "N/A"));
+
+						httpPost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
+
 					} catch (Exception e) {
 						Log.e(LOGTAG, "initiateConnection: error HttpGet: " + e.getMessage());
 						throw e;
@@ -137,7 +176,7 @@ public class ConnectionService extends Service {
 
 					HttpResponse response = null;
 					try {
-						response = httpsClient.execute(httpGet);
+						response = httpsClient.execute(httpPost);
 					} catch (Exception e) {
 						Log.e(LOGTAG, "initiateConnection: error execute: " + e.getMessage());
 						throw e;
