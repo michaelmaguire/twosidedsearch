@@ -155,17 +155,21 @@ public final class KeyManager {
 
 		X509Certificate certificate = (X509Certificate) privateKeyEntry.getCertificate();
 
-		return getSHA1Fingerprint(certificate);
+		return getPublicKeySHA1Fingerprint(certificate);
 	}
 
 	/**
-	 * Given an X509 certificate returns the standard SHA1 fingerprint of it.
+	 * Given an X509 certificate returns the standard SHA1 fingerprint of ONLY
+	 * ITS PUBLIC KEY.
+	 * 
+	 * TODO: Should we instead do a SHA1 hash of the whole encoded certificate?
+	 * There doesn't seem to be too much a of standard for this.
 	 * 
 	 * @param certificate
 	 * @return
 	 * @throws NoSuchAlgorithmException
 	 */
-	public static String getSHA1Fingerprint(java.security.cert.X509Certificate certificate) throws NoSuchAlgorithmException {
+	public static String getPublicKeySHA1Fingerprint(java.security.cert.X509Certificate certificate) throws NoSuchAlgorithmException {
 
 		MessageDigest md = MessageDigest.getInstance(FINGERPRINT_ALGORITHM_SHA1);
 		byte[] asn1EncodedPublicKey = md.digest(certificate.getPublicKey().getEncoded());
