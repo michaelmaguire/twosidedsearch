@@ -38,15 +38,20 @@ public class KeyManager {
 
 	private static String ENCRYPTION_ALGORITHM_RSA = "RSA";
 
-	public static synchronized KeyManager getInstance() throws NoSuchAlgorithmException, NoSuchProviderException, InvalidAlgorithmParameterException {
+	public static synchronized KeyManager getInstance() throws NoSuchAlgorithmException, NoSuchProviderException, InvalidAlgorithmParameterException, UnrecoverableEntryException,
+			KeyStoreException, CertificateException, IOException {
 		if (sInstance == null) {
 			sInstance = new KeyManager();
 		}
 		return sInstance;
 	}
 
-	private KeyManager() throws NoSuchAlgorithmException, NoSuchProviderException, InvalidAlgorithmParameterException {
-		initKey();
+	private KeyManager() throws NoSuchAlgorithmException, NoSuchProviderException, InvalidAlgorithmParameterException, UnrecoverableEntryException, KeyStoreException,
+			CertificateException, IOException {
+
+		if (null == getPrivateKeyEntry()) {
+			initKey();
+		}
 	}
 
 	/**
