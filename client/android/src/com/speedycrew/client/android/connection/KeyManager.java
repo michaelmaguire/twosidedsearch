@@ -4,17 +4,16 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.math.BigInteger;
 import java.security.InvalidAlgorithmParameterException;
-import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
 import java.security.KeyStore.PrivateKeyEntry;
 import java.security.KeyStoreException;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.UnrecoverableEntryException;
 import java.security.cert.CertificateException;
-import java.security.interfaces.RSAPrivateKey;
-import java.security.interfaces.RSAPublicKey;
+import java.security.cert.X509Certificate;
 import java.util.Calendar;
 
 import javax.security.auth.x500.X500Principal;
@@ -25,7 +24,7 @@ import android.security.KeyPairGeneratorSpec;
 
 import com.speedycrew.client.android.SpeedyCrewApplication;
 
-public class KeyManager {
+public final class KeyManager {
 
 	private static KeyManager sInstance;
 	private static String IDENTITY_KEY_NAME = "identityKey";
@@ -37,6 +36,8 @@ public class KeyManager {
 	private static String ANDROID_KEY_STORE = "AndroidKeyStore";
 
 	private static String ENCRYPTION_ALGORITHM_RSA = "RSA";
+
+	private static String FINGERPRINT_ALGORITHM_SHA1 = "SHA1";
 
 	public static synchronized KeyManager getInstance() throws NoSuchAlgorithmException, NoSuchProviderException, InvalidAlgorithmParameterException, UnrecoverableEntryException,
 			KeyStoreException, CertificateException, IOException {
@@ -137,6 +138,49 @@ public class KeyManager {
 		keyStore.load(null);
 		KeyStore.PrivateKeyEntry keyEntry = (KeyStore.PrivateKeyEntry) keyStore.getEntry(IDENTITY_KEY_NAME, null);
 		return keyEntry;
+	}
+
+	/**
+	 * This is the hex-encoded SHA1 hash of the public key. It's the best thing
+	 * to use as a unique identifying ID for a user.
+	 * 
+	 * @throws IOException
+	 * @throws CertificateException
+	 * @throws KeyStoreException
+	 * @throws UnrecoverableEntryException
+	 * @throws NoSuchAlgorithmException
+	 */
+	public String getUserId() throws NoSuchAlgorithmException, UnrecoverableEntryException, KeyStoreException, CertificateException, IOException {
+		PrivateKeyEntry privateKeyEntry = getPrivateKeyEntry();
+
+		X509Certificate certificate = (X509Certificate) privateKeyEntry.getCertificate();
+
+		return getSHA1Fingerprint(certificate);
+	}
+
+	/**
+	 * Given an X509 certificate returns the standard SHA1 fingerprint of it.
+	 * 
+	 * @param certificate
+	 * @return
+	 * @throws NoSuchAlgorithmException
+	 */
+	public static String getSHA1Fingerprint(java.security.cert.X509Certificate certificate) throws NoSuchAlgorithmException {
+
+		MessageDigest md = MessageDigest.getInstance(FINGERPRINT_ALGORITHM_SHA1);
+		byte[] asn1EncodedPublicKey = md.digest(certificate.getPublicKey().getEncoded());
+
+		// Hex encode.
+		StringBuffer hexString = new StringBuffer();
+		for (int i = 0; i < asn1EncodedPublicKey.length; i++) {
+			String appendString = Integer.toHexString(0xFF & asn1EncodedPublicKey[i]);
+			// Left pad with zero if necessary.
+			if (appendString.length() == 1) {
+				hexString.append("0");
+			}
+			hexString.append(appendString);
+		}
+		return hexString.toString();
 	}
 
 }

@@ -46,7 +46,7 @@ public class ConnectionService extends Service {
 
 			X509Certificate certificate = (X509Certificate) privateKeyEntry.getCertificate();
 
-			// Ddefault toString() is a bit lame -- e.g. doesn't show full CN in
+			// Default toString() is a bit lame -- e.g. doesn't show full CN in
 			// Subject.
 			String certString = certificate.toString();
 			Log.i(LOGTAG, "cert[" + certString + "]");
@@ -54,6 +54,11 @@ public class ConnectionService extends Service {
 			// But don't worry, it's there...
 			X500Principal subject = certificate.getSubjectX500Principal();
 			Log.i(LOGTAG, "subject[" + subject.toString() + "]");
+
+			// This is the hex-encoded SHA1 hash of the public key.
+			// It's the best thing to use as a unique identifying ID for a user.
+			String uniqueUserId = mKeyManager.getUserId();
+			Log.i(LOGTAG, "uniqueUserId[" + uniqueUserId + "]");
 
 		} catch (Exception e) {
 			Log.e(LOGTAG, "onStartCommand getPrivateKeyEntry: " + e.getMessage());
