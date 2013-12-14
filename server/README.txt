@@ -29,7 +29,7 @@ http://wiki.postgresql.org/wiki/Apt
 If the 'create database' step gives you problems relating to character
 encoding (because the encoding doesn't match the template database's
 encoding, which depends on choices you made when you installed your
-OS), then stick "template template 0" on the end of the "create
+OS), then stick "template template0" on the end of the "create
 database" statement, or leave out "encoding 'utf8'".
 
 Alternatively, create a user with the same name as your Unix username,
