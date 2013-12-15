@@ -1,27 +1,26 @@
 begin;
 
-insert into skill 
-values (1, 'chef', 'Trained chef'),
-       (2, 'sous-chef', 'Blah blah'),
-       (3, 'sioux-chef', 'Blah blah'),
-       (4, 'sushi-chef', 'Blah blah'),
-       (5, 'kitchen-hand', 'Able to cut a potato'),
-       (6, 'bottle-washer', 'Master dish washer');
+set search_path to speedycrew, public;
 
-insert into person 
-values (1, 'maguire_the_knife', 'Michael', 'Maguire', 'mm@chef.com', 'ACTIVE', crypt('foo', gen_salt('md5')), 'Looking to deploy my Ginsu', now(), null, 0),
-       (2, 'coulis', 'Dietmar', 'Kuehl', 'dk@chef.com', 'ACTIVE', crypt('foo', gen_salt('md5')), 'You kill it, I''ll grill it', now(), null, 0),
-       (3, 'spudpeeler', 'Thomas', 'Munro', 'tm@chef.com', 'ACTIVE', crypt('foo', gen_salt('md5')), 'Will supply own potato peeler and proprietary bottle scrubbing device', now(), null, 0);
+insert into tag
+values (default, 'chef', 'Trained chef'),
+       (default, 'sous-chef', 'Blah blah'),
+       (default, 'sioux-chef', 'Blah blah'),
+       (default, 'sushi-chef', 'Blah blah'),
+       (default, 'kitchen-hand', 'Able to cut a potato'),
+       (default, 'bottle-washer', 'Master dish washer');
 
-insert into person_skill
-values (1, 2, now()),
-       (1, 3, now()),
-       (2, 2, now()),
-       (2, 4, now()),
-       (3, 5, now()),
-       (3, 6, now());
+insert into profile (id, username, email, status, message, created)
+values (default, 'maguire_the_knife', 'mm@chef.com', 'ACTIVE', 'Looking to deploy my Ginsu', now()),
+       (default, 'coulis', 'dk@chef.com', 'ACTIVE', 'You kill it, I''ll grill it', now()),
+       (default, 'spudpeeler', 'tm@chef.com', 'ACTIVE', 'Will supply own potato peeler and proprietary bottle scrubbing device', now());
 
-insert into person_day
+
+
+--insert into search (id, owner, side, location, radius, created)
+--values (1, 1, 'PROVIDE', 
+
+insert into profile_availability
 values (1, DATE '2013-11-10', 'AVAILABLE', 'Anywhere in London', now()),
        (1, DATE '2013-11-11', 'AVAILABLE', 'I may be late getting depending on afterparty for previous gig', now()),
        (2, DATE '2013-11-10', 'AVAILABLE', null, now()),

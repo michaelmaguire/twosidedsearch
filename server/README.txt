@@ -58,7 +58,7 @@ of speedycrew.
 The square brackets are just to indicate that he username is optional,
 defaulting to your Unix user.
 
-5.  Create the database schema objects and insert test data.
+5.  Create the "speedycrew" schema and insert test data.
 
    $ cd server/db
    $ psql speedycrew_dev [speedycrew] -f create.sql
@@ -66,17 +66,10 @@ defaulting to your Unix user.
 
 Or leave out "speedycrew" if you're using your own account name.
 
-6.  Blow away the schema objects so you can recreate them as part of
-    iterative development.
+6.  Blow away the "speedycrew" schema (and everything in it) so you
+    can recreate them as part of iterative development.
 
    $ psql speedycrew_dev [speedycrew] -f drop.sql
-
-Since it lists the objects to be dropped explicitly, and since that
-set of objects changes over time, this isn't really a create way to do
-it, as it may leave some bits and pieces behind.  The solution to this
-is probably to create a schema (= namespace) rather than using the
-default schema "public", so that the whole schema can be dropped at
-once, which I will look into.  You can list schema objects with \dt.
 
 7.  Start up a Django testing web server.
 
