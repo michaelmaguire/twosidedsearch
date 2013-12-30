@@ -7,9 +7,11 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "SpCData.h"
 
 @interface SpCAppDelegate : UIResponder <UIApplicationDelegate>
 
 @property (strong, nonatomic) UIWindow *window;
+@property SpCData*                      data;
 
 @end

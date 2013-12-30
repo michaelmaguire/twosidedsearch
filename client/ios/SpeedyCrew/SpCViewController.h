@@ -11,6 +11,7 @@
 @interface SpCViewController : UIViewController<UITableViewDataSource, UITableViewDelegate>
 
 @property (strong, nonatomic) IBOutlet UITableView *tableView;
+@property (strong, nonatomic) NSMutableArray       *searches;
 @property (strong, nonatomic) NSMutableArray       *actions;
 
 @end

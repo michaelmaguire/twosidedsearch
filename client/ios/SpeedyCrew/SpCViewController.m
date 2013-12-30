@@ -19,6 +19,8 @@
 {
     [super viewDidLoad];
     self.actions = [[NSMutableArray alloc] initWithObjects:@"Availability", @"Invites", @"Events", @"Messages", nil];
+    SpCAppDelegate* delegate = (((SpCAppDelegate*) [UIApplication sharedApplication].delegate));
+    self.searches = delegate.data.searches;
 }
 
 - (void)didReceiveMemoryWarning
@@ -29,18 +31,38 @@
 
 - (UITableViewCell *)tableView:(UITableView *)tv cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    UITableViewCell *cell = [tv dequeueReusableCellWithIdentifier:@"cell"];
-    if (nil == cell) {
-        cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"cell"];
+    NSLog(@"add controller cell row=%ld", (long)indexPath.row);
+    if (0 == indexPath.section)
+    {
+        return [tv dequeueReusableCellWithIdentifier:@"TextCell"];
     }
+    else if (1 == indexPath.section)
+    {
+        UITableViewCell* cell = [tv dequeueReusableCellWithIdentifier:@"ResultCell"];
+        cell.textLabel.text = [self.searches objectAtIndexedSubscript:indexPath.row];
+        return cell;
+    }else
+    {
+        UITableViewCell *cell = [tv dequeueReusableCellWithIdentifier:@"ActionCell"];
+        cell.textLabel.text = [self.actions objectAtIndexedSubscript:indexPath.row];
+        return cell;
+    }
+}
 
-    cell.textLabel.text = [self.actions objectAtIndexedSubscript:indexPath.row];
-    return cell;
+- (NSInteger)numberOfSectionsInTableView:(UITableView*)tv
+{
+    return 3;
 }
 
 - (NSInteger)tableView:(UITableView *)tv numberOfRowsInSection:(NSInteger)section
 {
-    return [self.actions count];
+    NSLog(@"number-of-rows-in-section=%ld", (long)section);
+    return section == 0? 1: section == 1? [self.searches count]: [self.actions count];
+}
+
+- (NSString*)tableView:(UITableView*)tv titleForHeaderInSection:(NSInteger)section
+{
+    return section == 0? nil: section == 1? @"Searches": @"Actions";
 }
 
 - (void)tableView:(UITableView *)tv didSelectRowAtIndexPath:(NSIndexPath *)indexPath

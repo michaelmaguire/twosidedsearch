@@ -22,6 +22,7 @@
 		AB9C2E6E184EA15400454DCD /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = AB9C2E6C184EA15400454DCD /* InfoPlist.strings */; };
 		AB9C2E70184EA15400454DCD /* SpeedyCrewTests.m in Sources */ = {isa = PBXBuildFile; fileRef = AB9C2E6F184EA15400454DCD /* SpeedyCrewTests.m */; };
 		AB9C2E81185001DB00454DCD /* SpCInvitesController.m in Sources */ = {isa = PBXBuildFile; fileRef = AB9C2E80185001DB00454DCD /* SpCInvitesController.m */; };
+		ABAC2F8718720A4A006D7F7E /* SpCData.m in Sources */ = {isa = PBXBuildFile; fileRef = ABAC2F8618720A4A006D7F7E /* SpCData.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -56,6 +57,8 @@
 		AB9C2E6F184EA15400454DCD /* SpeedyCrewTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SpeedyCrewTests.m; sourceTree = "<group>"; };
 		AB9C2E7F185001DB00454DCD /* SpCInvitesController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SpCInvitesController.h; sourceTree = "<group>"; };
 		AB9C2E80185001DB00454DCD /* SpCInvitesController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SpCInvitesController.m; sourceTree = "<group>"; };
+		ABAC2F8518720A4A006D7F7E /* SpCData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SpCData.h; sourceTree = "<group>"; };
+		ABAC2F8618720A4A006D7F7E /* SpCData.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SpCData.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -124,6 +127,8 @@
 				AB9C2E4B184EA15400454DCD /* Supporting Files */,
 				AB9C2E7F185001DB00454DCD /* SpCInvitesController.h */,
 				AB9C2E80185001DB00454DCD /* SpCInvitesController.m */,
+				ABAC2F8518720A4A006D7F7E /* SpCData.h */,
+				ABAC2F8618720A4A006D7F7E /* SpCData.m */,
 			);
 			path = SpeedyCrew;
 			sourceTree = "<group>";
@@ -256,6 +261,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				AB9C2E51184EA15400454DCD /* main.m in Sources */,
+				ABAC2F8718720A4A006D7F7E /* SpCData.m in Sources */,
 				AB9C2E81185001DB00454DCD /* SpCInvitesController.m in Sources */,
 				AB9C2E55184EA15400454DCD /* SpCAppDelegate.m in Sources */,
 				AB9C2E5B184EA15400454DCD /* SpCViewController.m in Sources */,
