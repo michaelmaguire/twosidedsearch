@@ -51,13 +51,14 @@
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView*)tv
 {
+    self.tableView = tv; //-dk:TODO???
     return 3;
 }
 
 - (NSInteger)tableView:(UITableView *)tv numberOfRowsInSection:(NSInteger)section
 {
-    NSLog(@"number-of-rows-in-section=%ld", (long)section);
-    return section == 0? 1: section == 1? [self.searches count]: [self.actions count];
+    int result = section == 0? 1: section == 1? [self.searches count]: [self.actions count];
+    return result;
 }
 
 - (NSString*)tableView:(UITableView*)tv titleForHeaderInSection:(NSInteger)section
@@ -75,5 +76,16 @@
         UIViewController *viewController = [storyboard instantiateViewControllerWithIdentifier:@"Invites"];
         [navController pushViewController:viewController animated:YES];
     }
+}
+
+- (BOOL)textFieldShouldReturn:(UITextField *)textField {
+    if (0 < textField.text.length) {
+        [textField resignFirstResponder];
+        [self.searches insertObject: textField.text atIndex: 0];
+        NSIndexSet* indices = [[NSIndexSet alloc] initWithIndex:1];
+        [self.tableView reloadSections:indices withRowAnimation: UITableViewRowAnimationNone];
+        return NO;
+    }
+    return YES;
 }
 @end

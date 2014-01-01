@@ -8,7 +8,7 @@
 
 #import <UIKit/UIKit.h>
 
-@interface SpCViewController : UIViewController<UITableViewDataSource, UITableViewDelegate>
+@interface SpCViewController : UIViewController<UITableViewDataSource, UITableViewDelegate, UITextFieldDelegate>
 
 @property (strong, nonatomic) IBOutlet UITableView *tableView;
 @property (strong, nonatomic) NSMutableArray       *searches;

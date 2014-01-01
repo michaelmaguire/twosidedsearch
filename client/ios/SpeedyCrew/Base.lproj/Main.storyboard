@@ -34,6 +34,9 @@
                                                     <nil key="textColor"/>
                                                     <fontDescription key="fontDescription" type="system" pointSize="12"/>
                                                     <textInputTraits key="textInputTraits"/>
+                                                    <connections>
+                                                        <outlet property="delegate" destination="vXZ-lx-hvc" id="niL-Rc-Z9H"/>
+                                                    </connections>
                                                 </textField>
                                             </subviews>
                                             <attributedString key="userComments">
@@ -84,7 +87,7 @@
                                 </prototypes>
                                 <sections/>
                                 <connections>
-                                    <outlet property="dataSource" destination="vXZ-lx-hvc" id="lfF-NU-OXs"/>
+                                    <outlet property="dataSource" destination="vXZ-lx-hvc" id="vaS-Gz-ZGF"/>
                                     <outlet property="delegate" destination="vXZ-lx-hvc" id="euJ-Pq-2oW"/>
                                 </connections>
                             </tableView>
