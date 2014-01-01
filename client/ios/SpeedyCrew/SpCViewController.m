@@ -21,6 +21,7 @@
     self.actions = [[NSMutableArray alloc] initWithObjects:@"Availability", @"Invites", @"Events", @"Messages", nil];
     SpCAppDelegate* delegate = (((SpCAppDelegate*) [UIApplication sharedApplication].delegate));
     self.searches = delegate.data.searches;
+    self.currentSearch = [[SpCSearch alloc] init];
 }
 
 - (void)didReceiveMemoryWarning
@@ -39,7 +40,8 @@
     else if (1 == indexPath.section)
     {
         UITableViewCell* cell = [tv dequeueReusableCellWithIdentifier:@"ResultCell"];
-        cell.textLabel.text = [self.searches objectAtIndexedSubscript:indexPath.row];
+        SpCSearch* search = [self.searches objectAtIndex:indexPath.row];
+        cell.textLabel.text = search.name;
         return cell;
     }else
     {
@@ -51,7 +53,7 @@
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView*)tv
 {
-    self.tableView = tv; //-dk:TODO???
+//    self.tableView = tv; //-dk:TODO???
     return 3;
 }
 
@@ -80,12 +82,33 @@
 
 - (BOOL)textFieldShouldReturn:(UITextField *)textField {
     if (0 < textField.text.length) {
-        [textField resignFirstResponder];
-        [self.searches insertObject: textField.text atIndex: 0];
-        NSIndexSet* indices = [[NSIndexSet alloc] initWithIndex:1];
-        [self.tableView reloadSections:indices withRowAnimation: UITableViewRowAnimationNone];
+        [self.currentSearch updateQueryWith: textField.text];
         return NO;
     }
     return YES;
+}
+
+- (IBAction)updateSearch:(id)sender
+{
+    if (0 < self.currentSearch.name.length) {
+        NSLog(@"adding query %s", self.currentSearch.name.UTF8String);
+        int index = 0, size = [self.searches count];
+        for (; index != size; ++index) {
+            SpCSearch* search = self.searches[index];
+            if ([search.id isEqualToString: self.currentSearch.id]) {
+                break;
+            }
+        }
+        if (index != size ) {
+            NSLog(@"update name=%s", self.currentSearch.name.UTF8String);
+        }
+        else {
+            NSLog(@"adding name=%s", self.currentSearch.name.UTF8String);
+            [self.searches insertObject: self.currentSearch atIndex: 0];
+            index = 1;
+        }
+        NSIndexSet* indices = [[NSIndexSet alloc] initWithIndex:index];
+        [self.tableView reloadSections:indices withRowAnimation: UITableViewRowAnimationNone];
+    }
 }
 @end

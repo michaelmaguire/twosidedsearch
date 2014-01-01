@@ -23,6 +23,7 @@
 		AB9C2E70184EA15400454DCD /* SpeedyCrewTests.m in Sources */ = {isa = PBXBuildFile; fileRef = AB9C2E6F184EA15400454DCD /* SpeedyCrewTests.m */; };
 		AB9C2E81185001DB00454DCD /* SpCInvitesController.m in Sources */ = {isa = PBXBuildFile; fileRef = AB9C2E80185001DB00454DCD /* SpCInvitesController.m */; };
 		ABAC2F8718720A4A006D7F7E /* SpCData.m in Sources */ = {isa = PBXBuildFile; fileRef = ABAC2F8618720A4A006D7F7E /* SpCData.m */; };
+		ABAC2F8A18748081006D7F7E /* SpCSearch.m in Sources */ = {isa = PBXBuildFile; fileRef = ABAC2F8918748081006D7F7E /* SpCSearch.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -59,6 +60,8 @@
 		AB9C2E80185001DB00454DCD /* SpCInvitesController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SpCInvitesController.m; sourceTree = "<group>"; };
 		ABAC2F8518720A4A006D7F7E /* SpCData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SpCData.h; sourceTree = "<group>"; };
 		ABAC2F8618720A4A006D7F7E /* SpCData.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SpCData.m; sourceTree = "<group>"; };
+		ABAC2F8818748081006D7F7E /* SpCSearch.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SpCSearch.h; sourceTree = "<group>"; };
+		ABAC2F8918748081006D7F7E /* SpCSearch.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SpCSearch.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -129,6 +132,8 @@
 				AB9C2E80185001DB00454DCD /* SpCInvitesController.m */,
 				ABAC2F8518720A4A006D7F7E /* SpCData.h */,
 				ABAC2F8618720A4A006D7F7E /* SpCData.m */,
+				ABAC2F8818748081006D7F7E /* SpCSearch.h */,
+				ABAC2F8918748081006D7F7E /* SpCSearch.m */,
 			);
 			path = SpeedyCrew;
 			sourceTree = "<group>";
@@ -262,6 +267,7 @@
 			files = (
 				AB9C2E51184EA15400454DCD /* main.m in Sources */,
 				ABAC2F8718720A4A006D7F7E /* SpCData.m in Sources */,
+				ABAC2F8A18748081006D7F7E /* SpCSearch.m in Sources */,
 				AB9C2E81185001DB00454DCD /* SpCInvitesController.m in Sources */,
 				AB9C2E55184EA15400454DCD /* SpCAppDelegate.m in Sources */,
 				AB9C2E5B184EA15400454DCD /* SpCViewController.m in Sources */,

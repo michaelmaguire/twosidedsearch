@@ -28,8 +28,8 @@
                                             <rect key="frame" x="0.0" y="0.0" width="320" height="43"/>
                                             <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
-                                                <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="Enter Search" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="Zb4-PS-JSD">
-                                                    <rect key="frame" x="20" y="7" width="280" height="30"/>
+                                                <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="Enter Search" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="Zb4-PS-JSD" userLabel="Query Text">
+                                                    <rect key="frame" x="20" y="7" width="247" height="30"/>
                                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                                     <nil key="textColor"/>
                                                     <fontDescription key="fontDescription" type="system" pointSize="12"/>
@@ -38,6 +38,16 @@
                                                         <outlet property="delegate" destination="vXZ-lx-hvc" id="niL-Rc-Z9H"/>
                                                     </connections>
                                                 </textField>
+                                                <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="mOt-p9-Mma" userLabel="Add Search">
+                                                    <rect key="frame" x="275" y="5" width="30" height="30"/>
+                                                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                                    <state key="normal" title="+">
+                                                        <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
+                                                    </state>
+                                                    <connections>
+                                                        <action selector="updateSearch:" destination="x5A-6p-PRh" eventType="touchUpInside" id="gij-en-Dyq"/>
+                                                    </connections>
+                                                </button>
                                             </subviews>
                                             <attributedString key="userComments">
                                                 <fragment content="Availability">
@@ -94,9 +104,10 @@
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
                     </view>
-                    <navigationItem key="navigationItem" title="Speedy Crew" id="BLb-L8-Qxs">
-                        <barButtonItem key="rightBarButtonItem" systemItem="add" id="ZvA-mh-EyD"/>
-                    </navigationItem>
+                    <navigationItem key="navigationItem" title="Speedy Crew" id="BLb-L8-Qxs"/>
+                    <connections>
+                        <outlet property="tableView" destination="RiA-kO-Ljz" id="cyg-MW-uOX"/>
+                    </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="x5A-6p-PRh" sceneMemberID="firstResponder"/>
             </objects>

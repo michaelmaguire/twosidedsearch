@@ -7,11 +7,14 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "SpCSearch.h"
 
 @interface SpCViewController : UIViewController<UITableViewDataSource, UITableViewDelegate, UITextFieldDelegate>
 
-@property (strong, nonatomic) IBOutlet UITableView *tableView;
+@property (strong, nonatomic) SpCSearch            *currentSearch;
 @property (strong, nonatomic) NSMutableArray       *searches;
 @property (strong, nonatomic) NSMutableArray       *actions;
+@property (weak, nonatomic) IBOutlet UITableView *tableView;
+@property (weak, nonatomic) IBOutlet UIView *queryField;
 
 @end
