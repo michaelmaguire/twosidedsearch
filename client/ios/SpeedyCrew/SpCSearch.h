@@ -17,5 +17,7 @@
 
 - (SpCSearch*)init;
 - (void)updateQueryWith:(NSString*)query;
+- (void)addListener:(NSObject*)listener withId:(NSString*)id;
+- (void)removeListenerWithId:(NSString*)id;
 
 @end

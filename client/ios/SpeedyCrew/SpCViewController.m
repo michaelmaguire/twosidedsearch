@@ -8,6 +8,7 @@
 
 #import "SpCViewController.h"
 #import "SpCAppDelegate.h"
+#import "SpCResult.h"
 
 @interface SpCViewController ()
 
@@ -22,6 +23,7 @@
     SpCAppDelegate* delegate = (((SpCAppDelegate*) [UIApplication sharedApplication].delegate));
     self.searches = delegate.data.searches;
     self.currentSearch = [[SpCSearch alloc] init];
+    [self.currentSearch addListener:self withId: @"ViewController"];
 }
 
 - (void)didReceiveMemoryWarning
@@ -32,10 +34,15 @@
 
 - (UITableViewCell *)tableView:(UITableView *)tv cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    NSLog(@"add controller cell row=%ld", (long)indexPath.row);
     if (0 == indexPath.section)
     {
-        return [tv dequeueReusableCellWithIdentifier:@"TextCell"];
+        if (0 == indexPath.row) {
+            return [tv dequeueReusableCellWithIdentifier:@"TextCell"];
+        }
+        UITableViewCell* cell = [tv dequeueReusableCellWithIdentifier:@"ResultCell"];
+        SpCResult* result = [self.currentSearch.results objectAtIndex:indexPath.row - 1];
+        cell.textLabel.text = [NSString stringWithFormat:@"id=%@ value=%@", result.id, result.value];
+        return cell;
     }
     else if (1 == indexPath.section)
     {
@@ -53,13 +60,14 @@
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView*)tv
 {
-//    self.tableView = tv; //-dk:TODO???
     return 3;
 }
 
 - (NSInteger)tableView:(UITableView *)tv numberOfRowsInSection:(NSInteger)section
 {
-    int result = section == 0? 1: section == 1? [self.searches count]: [self.actions count];
+    int result = section == 0
+        ? 1 + [self.currentSearch.results count]
+        : section == 1? [self.searches count]: [self.actions count];
     return result;
 }
 
@@ -110,5 +118,13 @@
         NSIndexSet* indices = [[NSIndexSet alloc] initWithIndex:index];
         [self.tableView reloadSections:indices withRowAnimation: UITableViewRowAnimationNone];
     }
+}
+
+- (void)resultsChanged:(id)sender
+{
+    NSLog(@"control control: received change!");
+    NSIndexSet* indices = [[NSIndexSet alloc] initWithIndex:0];
+    [self.tableView reloadSections:indices withRowAnimation: UITableViewRowAnimationNone];
+
 }
 @end

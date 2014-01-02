@@ -12,7 +12,6 @@
 
 - (SpCData*)init
 {
-    NSLog(@"allocating data");
     self.identity = @"dummy-identity";             //-dk:TODO recover stored identity
     self.searches = [[NSMutableArray alloc] init]; //-dk:TODO recover stored searches
     return self;
