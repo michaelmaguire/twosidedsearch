@@ -101,40 +101,4 @@ create table profile_availability (
 
 comment on table profile_availability is 'A person''s availability status for each day';
 
-
-
-
-
-
--- not sure if we still want to track projects at all?  maybe this is dead
-
---create table project (
---  id serial primary key,
---  owner integer not null references profile(id),
---  name text not null,
---  location integer not null references location(id),
---  created timestamptz not null
---);
-
---comment on table project is 'An event or project being organised by *owner*';
-
---create table project_requirement (
---  id serial primary key,
---  project integer not null references project(id),
---  day date not null,
---  count integer,
---  short_description text not null,
---  long_description text,
---  created timestamptz not null
---);
-
---comment on table project_requirement is 'A slot to be filled by one person, on one day';
-
---create table project_requirement_skill (
---  project_requirement integer not null references project_requirement(id),
---  skill integer not null references skill(id)
---);
-
---comment on table project_requirement_skill is 'Skill tags desired for a requirement';
-
 commit;
