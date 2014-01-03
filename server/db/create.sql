@@ -9,12 +9,13 @@ create type profile_status as enum ('ACTIVE', 'CANCELLED', 'BANNED');
 create table profile (
   id serial primary key,
   username text unique,
-  real_name text,b
+  real_name text,
   email text unique,
   password_hash text,
   status profile_status not null,
   message text,
-  created timestamptz not null
+  next_batch_sequence integer not null default 0,
+  created timestamptz not null default now()
 );
 
 comment on table profile is 'A user in our system';
@@ -84,7 +85,8 @@ comment on table search is 'A search created by either a seeker or provider of a
 
 create table search_tag (
   search integer not null references search(id),
-  tag integer not null references tag(id)
+  tag integer not null references tag(id),
+  primary key (search, tag)
 );
 
 comment on table search_tag is 'A tag that is part of a search (many-to-many link table)';
@@ -100,5 +102,92 @@ create table profile_availability (
 );
 
 comment on table profile_availability is 'A person''s availability status for each day';
+
+create type match_status as enum ('ACTIVE', 'DELETED');
+
+create table match (
+  a integer not null references search(id),
+  b integer not null references search(id),
+  status match_status not null,
+  batch_sequence integer,
+  created timestamptz not null,
+  primary key (a, b)
+);
+
+comment on table match is 'A match between two searches';
+
+create or replace function make_geo(long double precision, lat double precision)
+returns geography as $$
+  select st_geographyfromtext('POINT(' || long::text || ' ' || $2::text || ')');
+$$
+language sql
+immutable
+returns null on null input;
+
+create or replace function run_search(i_search_id integer) returns void as $$
+declare
+  v_side search_side;
+  v_geography geography;
+  v_radius float;
+  v_id integer;
+  v_tag_ids integer[];
+begin
+  -- load some data from this search into local variables
+  select s.side, l.geography, s.radius
+    into v_side, v_geography, v_radius
+    from search s
+    join location l on s.location = l.id
+   where s.id = i_search_id;
+  if not found then
+    return;
+  end if;
+  select array_agg(st.tag)
+    into v_tag_ids
+    from search_tag st
+   where st.search = i_search_id;
+  -- in this version, we only support PROVIDE (a service, like being a chef)
+  -- with a location and a radius, or SEEK (a chef), with a fixed location
+  -- and a null radius;  we implement this with two different queries, but
+  -- the results should be the same whichever way around it is done!
+  if v_side = 'PROVIDE' then
+    for v_id in select s.id
+                  from search s
+                  join location l on s.location = l.id
+                  join search_tag st on st.search = s.id
+                 where st_dwithin(l.geography, v_geography, v_radius)
+                   and st.tag = any (v_tag_ids)
+                   and s.side = 'SEEK'
+    loop
+      begin
+        insert into match (a, b, status, created)
+        values (i_search_id, v_id, 'ACTIVE', now()),
+               (v_id, i_search_id, 'ACTIVE', now());
+      exception when unique_violation then
+        -- do nothing
+      end;
+    end loop;
+  else
+    -- v_side = 'SEEK'
+    for v_id in select s.id
+                  from search s
+                  join location l on s.location = l.id
+                  join search_tag st on st.search = s.id
+                 where st_dwithin(l.geography, v_geography, s.radius)
+                   and st.tag = any (v_tag_ids)                  
+                   and s.side = 'PROVIDE'
+    loop
+      -- TODO avoid this duplicated code
+      begin
+        insert into match (a, b, status, created)
+        values (i_search_id, v_id, 'ACTIVE', now()),
+               (v_id, i_search_id, 'ACTIVE', now());
+        exception when unique_violation then
+        -- do nothing
+      end;
+    end loop;
+  end if;
+end;
+$$
+language 'plpgsql';
 
 commit;

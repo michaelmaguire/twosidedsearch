@@ -15,10 +15,17 @@ values (default, 'maguire_the_knife', 'mm@chef.com', 'ACTIVE', 'Looking to deplo
        (default, 'coulis', 'dk@chef.com', 'ACTIVE', 'You kill it, I''ll grill it', now()),
        (default, 'spudpeeler', 'tm@chef.com', 'ACTIVE', 'Will supply own potato peeler and proprietary bottle scrubbing device', now());
 
+insert into location (id, owner, name, longitude, latitude, geography, created)
+values (1, 1, 'here', -0.1247, 51.5008, make_geo(-0.1247, 51.5008), now()), -- big ben
+       (2, 2, 'there', -0.1228, 51.5120, make_geo(-0.1228, 51.5120), now()); -- covent garden
 
+insert into search (id, owner, side, location, radius, created)
+values (1, 1, 'PROVIDE', 1, 2000, now()), -- 2kms
+       (2, 2, 'SEEK', 2, null, now());
 
---insert into search (id, owner, side, location, radius, created)
---values (1, 1, 'PROVIDE', 
+insert into search_tag (search, tag)
+values (1, 4),
+       (2, 4);
 
 insert into profile_availability
 values (1, DATE '2013-11-10', 'AVAILABLE', 'Anywhere in London', now()),
