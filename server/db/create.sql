@@ -46,38 +46,35 @@ create table country (
 
 insert into country values ('GB', 'United Kingdom');
 
-create table location (
-  id serial primary key,
-  owner integer not null references profile(id),
-  name text not null,
-  address text,
-  postcode text,
-  country varchar(2) references country(id),
-  longitude float not null,
-  latitude float not null,
-  geography geography not null,
-  created timestamptz not null
-);
-
-comment on table location is 'A location configured by a user';
+create type tag_status as enum ('ACTIVE', 'BANNED', 'DELETED');
 
 create table tag (
   id serial primary key,
   name text unique not null,
-  description text not null
+  description text,
+  status tag_status not null default 'ACTIVE',
+  created timestamptz not null default now(),
+  creator integer references profile(id)
 );
 
 comment on table tag is 'Tags';
 
 create type search_side as enum ('SEEK', 'PROVIDE');
 
+create type search_status as enum ('ACTIVE', 'DELETED');
+
 create table search (
   id serial primary key,
   owner integer not null references profile(id),
   name text,
   side search_side,
-  location integer not null references location(id),
+  address text,
+  postcode text,
+  city text,
+  country varchar(2) references country(id),
+  geography geography not null,
   radius float,
+  status search_status not null,
   created timestamptz not null
 );
 
@@ -126,24 +123,23 @@ returns null on null input;
 
 create or replace function run_search(i_search_id integer) returns void as $$
 declare
-  v_side search_side;
+  v_side speedycrew.search_side;
   v_geography geography;
   v_radius float;
   v_id integer;
   v_tag_ids integer[];
 begin
   -- load some data from this search into local variables
-  select s.side, l.geography, s.radius
+  select s.side, s.geography, s.radius
     into v_side, v_geography, v_radius
-    from search s
-    join location l on s.location = l.id
+    from speedycrew.search s
    where s.id = i_search_id;
   if not found then
     return;
   end if;
   select array_agg(st.tag)
     into v_tag_ids
-    from search_tag st
+    from speedycrew.search_tag st
    where st.search = i_search_id;
   -- in this version, we only support PROVIDE (a service, like being a chef)
   -- with a location and a radius, or SEEK (a chef), with a fixed location
@@ -151,15 +147,14 @@ begin
   -- the results should be the same whichever way around it is done!
   if v_side = 'PROVIDE' then
     for v_id in select s.id
-                  from search s
-                  join location l on s.location = l.id
-                  join search_tag st on st.search = s.id
-                 where st_dwithin(l.geography, v_geography, v_radius)
+                  from speedycrew.search s
+                  join speedycrew.search_tag st on st.search = s.id
+                 where st_dwithin(s.geography, v_geography, v_radius)
                    and st.tag = any (v_tag_ids)
                    and s.side = 'SEEK'
     loop
       begin
-        insert into match (a, b, status, created)
+        insert into speedycrew.match (a, b, status, created)
         values (i_search_id, v_id, 'ACTIVE', now()),
                (v_id, i_search_id, 'ACTIVE', now());
       exception when unique_violation then
@@ -169,16 +164,15 @@ begin
   else
     -- v_side = 'SEEK'
     for v_id in select s.id
-                  from search s
-                  join location l on s.location = l.id
-                  join search_tag st on st.search = s.id
-                 where st_dwithin(l.geography, v_geography, s.radius)
+                  from speedycrew.search s
+                  join speedycrew.search_tag st on st.search = s.id
+                 where st_dwithin(s.geography, v_geography, s.radius)
                    and st.tag = any (v_tag_ids)                  
                    and s.side = 'PROVIDE'
     loop
       -- TODO avoid this duplicated code
       begin
-        insert into match (a, b, status, created)
+        insert into speedycrew.match (a, b, status, created)
         values (i_search_id, v_id, 'ACTIVE', now()),
                (v_id, i_search_id, 'ACTIVE', now());
         exception when unique_violation then
