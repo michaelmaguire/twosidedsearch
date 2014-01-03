@@ -24,6 +24,7 @@
     self.searches = delegate.data.searches;
     self.currentSearch = [[SpCSearch alloc] init];
     [self.currentSearch addListener:self withId: @"ViewController"];
+    self.tableView.bounces = YES;
 }
 
 - (void)didReceiveMemoryWarning
@@ -36,15 +37,15 @@
 {
     if (0 == indexPath.section)
     {
-        if (0 == indexPath.row) {
-            return [tv dequeueReusableCellWithIdentifier:@"TextCell"];
-        }
+        return [tv dequeueReusableCellWithIdentifier:@"TextCell"];
+    }
+    else if (1 == indexPath.section) {
         UITableViewCell* cell = [tv dequeueReusableCellWithIdentifier:@"ResultCell"];
-        SpCResult* result = [self.currentSearch.results objectAtIndex:indexPath.row - 1];
+        SpCResult* result = [self.currentSearch.results objectAtIndex:indexPath.row];
         cell.textLabel.text = [NSString stringWithFormat:@"id=%@ value=%@", result.id, result.value];
         return cell;
     }
-    else if (1 == indexPath.section)
+    else if (2 == indexPath.section)
     {
         UITableViewCell* cell = [tv dequeueReusableCellWithIdentifier:@"ResultCell"];
         SpCSearch* search = [self.searches objectAtIndex:indexPath.row];
@@ -60,20 +61,27 @@
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView*)tv
 {
-    return 3;
+    return 4;
 }
 
 - (NSInteger)tableView:(UITableView *)tv numberOfRowsInSection:(NSInteger)section
 {
-    int result = section == 0
-        ? 1 + [self.currentSearch.results count]
-        : section == 1? [self.searches count]: [self.actions count];
+    int result =
+          section == 0? 1
+        : section == 1? [self.currentSearch.results count]
+        : section == 2? [self.searches count]
+        : section == 3? [self.actions count]
+        : 0;
     return result;
 }
 
 - (NSString*)tableView:(UITableView*)tv titleForHeaderInSection:(NSInteger)section
 {
-    return section == 0? nil: section == 1? @"Searches": @"Actions";
+    return section == 0? nil
+         : section == 1? nil
+         : section == 2? @"Searches"
+         : section == 3? @"Actions"
+         : nil;
 }
 
 - (void)tableView:(UITableView *)tv didSelectRowAtIndexPath:(NSIndexPath *)indexPath
@@ -113,7 +121,7 @@
         else {
             NSLog(@"adding name=%s", self.currentSearch.name.UTF8String);
             [self.searches insertObject: self.currentSearch atIndex: 0];
-            index = 1;
+            index = 2;
         }
         NSIndexSet* indices = [[NSIndexSet alloc] initWithIndex:index];
         [self.tableView reloadSections:indices withRowAnimation: UITableViewRowAnimationNone];
@@ -123,8 +131,7 @@
 - (void)resultsChanged:(id)sender
 {
     NSLog(@"control control: received change!");
-    NSIndexSet* indices = [[NSIndexSet alloc] initWithIndex:0];
+    NSIndexSet* indices = [[NSIndexSet alloc] initWithIndex:1];
     [self.tableView reloadSections:indices withRowAnimation: UITableViewRowAnimationNone];
-
 }
 @end
