@@ -9,6 +9,7 @@
 #import "SpCViewController.h"
 #import "SpCAppDelegate.h"
 #import "SpCResult.h"
+#import "SpCSearchViewController.h"
 
 @interface SpCViewController ()
 
@@ -90,9 +91,16 @@
     UIStoryboard *storyboard = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
     UINavigationController *navController = (UINavigationController*)delegate.window.rootViewController;
 
-    if (indexPath.row == 1) {
-        UIViewController *viewController = [storyboard instantiateViewControllerWithIdentifier:@"Invites"];
-        [navController pushViewController:viewController animated:YES];
+    if (2 == indexPath.section) {
+        SpCSearchViewController* controller = [storyboard instantiateViewControllerWithIdentifier:@"Search"];
+        controller.search = [self.searches objectAtIndex:indexPath.row];
+        [navController pushViewController:controller animated:YES];
+    }
+    else if (3 == indexPath.section) {
+        if (indexPath.row == 1) {
+            UIViewController *viewController = [storyboard instantiateViewControllerWithIdentifier:@"Invites"];
+            [navController pushViewController:viewController animated:YES];
+        }
     }
 }
 
@@ -106,6 +114,7 @@
 
 - (IBAction)updateSearch:(id)sender
 {
+    
     if (0 < self.currentSearch.name.length) {
         NSLog(@"adding query %s", self.currentSearch.name.UTF8String);
         int index = 0, size = [self.searches count];

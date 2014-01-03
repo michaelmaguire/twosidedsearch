@@ -11,6 +11,7 @@
 @interface SpCSearch : NSObject
 
 @property (readonly) NSString* name;
+@property (readonly) NSString* query;
 @property (readonly) NSString* id;
 
 @property NSMutableArray* results;

@@ -14,7 +14,7 @@
 
 @interface SpCSearch()
 @property NSString*            uid;
-@property NSString*            query;
+@property NSString*            queryString;
 @property NSMutableDictionary* listeners;
 @end
 
@@ -27,7 +27,7 @@ static int nextId = 0;
 {
     self = [super init];
     self.uid = [NSString stringWithFormat: @"%d", ++nextId];
-    self.query = @"";
+    self.queryString = @"";
     self.results = [[NSMutableArray alloc] init];
     self.listeners = [[NSMutableDictionary alloc] init];
     return self;
@@ -38,6 +38,10 @@ static int nextId = 0;
     return self.uid;
 }
 
+- (NSString*)query
+{
+    return self.queryString;
+}
 - (NSString*)name
 {
     return self.query;
@@ -45,8 +49,8 @@ static int nextId = 0;
 
 - (void)updateQueryWith:(NSString*)query
 {
-    self.query = query;
-    [self makeHttpRequestForQuery:self.query];
+    self.queryString = query;
+    [self makeHttpRequestForQuery:self.queryString];
 }
 
 - (void)receivedResponse:(NSData*)response
