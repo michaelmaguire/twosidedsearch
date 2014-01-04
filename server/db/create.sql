@@ -15,7 +15,8 @@ create table profile (
   status profile_status not null,
   message text,
   next_batch_sequence integer not null default 0,
-  created timestamptz not null default now()
+  created timestamptz not null default now(),
+  modified timestamptz not null default now()
 );
 
 comment on table profile is 'A user in our system';
