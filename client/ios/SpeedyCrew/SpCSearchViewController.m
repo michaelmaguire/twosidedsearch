@@ -136,6 +136,8 @@
     if (0 < searchBar.text.length) {
         [self.search updateQueryWith: searchBar.text];
     }
+    [searchBar resignFirstResponder];
+
 }
 
 - (void)resultsChanged:(SpCSearch*)search

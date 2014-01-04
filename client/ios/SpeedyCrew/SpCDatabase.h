@@ -12,6 +12,5 @@
 
 + (SpCDatabase*) database;
 - (NSString*) querySetting: (NSString*)name;
-- (NSString*) querySetting: (NSString*)name withDefault:(NSString*)def;
-
+- (void) updateSetting:(NSString*)name with:(NSString*)value;
 @end

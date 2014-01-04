@@ -8,6 +8,6 @@
 
 #import <UIKit/UIKit.h>
 
-@interface SpCUserViewController : UITableViewController
+@interface SpCUserViewController : UITableViewController<UITextFieldDelegate>
 
 @end

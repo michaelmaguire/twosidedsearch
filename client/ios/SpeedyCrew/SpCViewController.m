@@ -112,11 +112,11 @@
     else if (3 == indexPath.section) {
         if (0 == indexPath.row) {
             UIViewController *viewController = [storyboard instantiateViewControllerWithIdentifier:@"User"];
-            [navController pushViewController:viewController animated:NO];
+            [navController pushViewController:viewController animated:YES];
         }
         else if (1 == indexPath.row) {
             UIViewController *viewController = [storyboard instantiateViewControllerWithIdentifier:@"Invites"];
-            [navController pushViewController:viewController animated:NO];
+            [navController pushViewController:viewController animated:YES];
         }
     }
 }
@@ -126,14 +126,7 @@
     if (0 < searchBar.text) {
         [self.currentSearch updateQueryWith: searchBar.text];
     }
-}
-
-- (BOOL)textFieldShouldReturn:(UITextField *)textField {
-    if (0 < textField.text.length) {
-        [self.currentSearch updateQueryWith: textField.text];
-        return NO;
-    }
-    return YES;
+    [searchBar resignFirstResponder];
 }
 
 - (IBAction)addSearch:(id)sender

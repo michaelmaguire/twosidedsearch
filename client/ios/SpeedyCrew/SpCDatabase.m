@@ -74,10 +74,17 @@ static int ignore_callback(void* ud,int count,char** a0, char** a1)
     return result;
 }
 
-- (NSString*) querySetting: (NSString*)id withDefault:(NSString*)def
+- (void) updateSetting:(NSString*)name with:(NSString*)value
 {
-    //-dk:TODO
-    return @"TODO";
+    NSLog(@"updateSetting:%@ with:%@", name, value);
+    NSString* insert = [NSString stringWithFormat:@"insert into settings (name, value) values('%@', '%@');", name, value];
+    char* message = 0;
+    if (sqlite3_exec(database_, [insert UTF8String], ignore_callback, 0, &message)) {
+        NSString* update = [NSString stringWithFormat:@"update settings set value='%@' where name='%@';", value, name];
+        if (sqlite3_exec(database_, [update UTF8String], ignore_callback, 0, &message)) {
+            NSLog(@"both update and insert failed for setting name='%@' value='%@' message='%s'", name, value, message);
+        }
+    }
 }
 
 @end

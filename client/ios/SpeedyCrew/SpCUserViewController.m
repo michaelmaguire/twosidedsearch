@@ -68,7 +68,15 @@
             UILabel* label = [view.subviews objectAtIndex:1];
             label.text = value;
         }
-
+    }
+    else {
+        UIView* view = [cell.contentView viewWithTag:0];
+        if (view && 2 == view.subviews.count) {
+            UITextField* text = [view.subviews objectAtIndex:1];
+            text.text     = value;
+            text.tag      = path.row;
+            text.delegate = self;
+        }
     }
     return cell;
 }
@@ -123,5 +131,13 @@
 }
 
  */
+
+- (BOOL)textFieldShouldReturn:(UITextField *)textField {
+    NSLog(@"text did change: text='%@' id='%@'", textField.text, self.elements[textField.tag]);
+    [textField resignFirstResponder];
+    SpCDatabase* database = [SpCDatabase database];
+    [database updateSetting:self.elements[textField.tag] with:textField.text];
+    return NO;
+}
 
 @end
