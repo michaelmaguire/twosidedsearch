@@ -2,116 +2,37 @@
   <body>
     <h1>Speedycrew API v1 test page</h1>
 
-    <h2>Session management</h2>
-    <p>
-      Most API called require a 'token'.  The only way to get one is
-      to log in.  The only way to log in is to create an account
-      first.  Users can log in from multiple devices the same time,
-      and tokens currently last forever, or until they log out.
-    </p>
-    <ol>
-      <li>
-        To create an account, HTTP POST
-        to <code>/api/1/create_account</code> with
-        parameters <code>username</code>, <code>firstname</code>,
-        <code>lastname</code>, <code>email</code>, <code>password</code>.
-        <form action="create_account" method="POST">
-          username = <input name="username" type="input"/>,
-          firstname = <input name="firstname" type="input"/>,
-          lastname = <input name="lastname" type="input"/>,
-          email = <input name="email" type="input"/>,
-          password = <input name="password" type="password">
-          <input type="submit"/>
-        </form>
-      </li>
-      <li>
-        To log in, HTTP POST to <code>/api/1/login</code> with
-        parameters <code>username</code> and <code>password</code>.
-        <form action="login" method="POST">
-          username = <input name="username" type="input"/>,
-          password = <input name="password" type="password"/>,
-          <input type="submit"/>
-        </form>
-        Results look like:
-<code><pre>
-{
-    "status": "OK", 
-    "firstname": "Joe",
-    "email": "bloggo@chef.com", 
-    "lastname": "Bloggs", 
-    "token": "68f22a73a6884dd7856f64160790e7e4"
-}
-</pre></code> or like this:
-<code><pre>
-{
-    "status": "FAIL"
-}
-</pre></code>
-	<br/>
-	(Test accounts: maguire_the_knife/foo, coulis/foo, spudpeeler/foo).
-      </li>
-      <li>
-        To log out, HTTP POST to <code>/api/1/logout</code> with <code>token</code> obtained by logging in.
-        <form action="logout" method="POST">
-          token = <input name="token">,
-          <input type="submit">
-        </form>
-        If the token was known, and the session was currently logged
-        in (hadn't already been logged out), then the result looks
-        like this:
-<code><pre>
-{
-    "status": "OK"
-}
-</pre></code> Otherwise it looks like this:
-<code><pre>
-{
-    "status": "FAIL"
-}
-</pre></code>
-      </li>
-    </ol>
+    <h2>Device IDs</h2>
 
-    <p>Coming soon: forgotten passwords.</p>
+    <p>We will use device IDs based on client certificates.  But for
+    now, a request parameter x-id can be used.  Using a new device ID
+    automatically creates a new profile (with no name etc).</p>
+
+    <p>In all cases GET and POST are interchangeable.  GET is shown
+    here due to laziness but devices should probably POST.</p>
 
     <h2>Profile management</h2>
-
-    <p>* NOT WORKING YET *</p>
     <ol>
-      <li>To fetch profile data, HTTP POST
-        to <code>/api/1/profile</code> with <code>token</code> obtained
-        by logging in.
-        <form action="profile" method="POST">
-          token = <input name="token">,
-          <input type="submit"/>
-        </form>
-      </li>
-      <li>
-        To update profile data, HTTP POST
-        to <code>/api/1/profile</code>
-        with <code>token</code>, <code>message</code>. ... TODO
-      </li>
+      <li><a href="profile?x-id=1234">/api/1/profile?x-id=1234</a> to retrieve profile data</li>
+      <li><a href="update_profile?x-id=1234&real_name=Joe+Bloggs&message=I+can+cook&email=foo@bar">/api/1/update_profile?x-id=1234</a> with optional parameters real_name, message, email to update profile data</li>
+      <li>TODO: merging two profiles (ie merging separate devices)</li>
+      <li>TODO: deleting profile</li>
     </ol>
 
-    <h2>Simple searches</h2>
-
+    <h2>Search management</h2>
     <ol>
-      <li>
-        To find available people, HTTP POST
-        to <code>/api/1/file</code>
-        with <code>token</code>, <code>day</code>, <code>skill</code>, <code>longitude</code>, <code>latitude</code>.
-        <form action="find" method="POST">
-          token = <input type="input" name="token"/>,
-          day = <input type="input" name="day"/>,
-          skill = <input type="input" name="skill"/>,
-          longitude = <input type="input" name="longitude"/>,
-          latitude = <input type="input" name="latitude">,
-          <input type="submit"/>
-        </form>
-      </li>
+      <li><a href="searches?x-id=1234">/api/1/searches?x-id=1234</a> to list all active searches for this profile</li>
+      <li><a href="create_search?x-id=1234&side=PROVIDE&tags=sushi-chef,slice,dice&longitude=-0.15&latitude=51.5&radius=5000">/api/1/create_search?x-id=1234&amp;side=PROVIDE&amp;tags=sushi-chef,slice,dice&amp;longitude=-0.15&amp;latitude=51.5&amp;radius=5000</a> with optional extra parameters city, country, address, postcode (radius is required for side=PROVIDE, should not be present for side=SEEK for now, to discuss)</li>
+      <li><a href="search_results?x-id=1234&search=1">/api/1/search_results?x-id=1234&amp;search=1</a> to fetch results for one search</li>
+      <li><a href="delete_search?x-id=1234&search=1">/api/1/delete_search?x-id=1234&amp;search=1</a></li>
+      <li>TODO: incremental search results (with high water sequence number retained by devices)</li>
+      <li>TODO: no tracking/filtering of available dates yet (searches match based on location + tags only for now)</li>
     </ol>
-    
-    <h2>Project management</h2>
+
+    <h2>Miscellaneous</h2>
+    <ol>
+      <li><a href="tags?x-id=1234&prefix=s">/api/1/tags?x-id=1234&amp;prefix=s</a> to fetch tags with a certain prefix, for auto-complete (?!)</li>
+    </ol>
   </body>
 </html>
 

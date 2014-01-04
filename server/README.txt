@@ -38,7 +38,7 @@ mention it on the "psql" command line as it will be the default.
 
 3.  Configure PG to allow that user to connect from localhost.
 
-    $ sudo vi /etc/postgresql/9.2/main/pg_hba.conf
+    $ sudo vi /etc/postgresql/9.3/main/pg_hba.conf
     -> near the end somewhere add a line like this:
        local all speedycrew trust
     $ sudo /etc/init.d/postgresql reload
