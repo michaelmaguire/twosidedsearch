@@ -118,7 +118,7 @@ def update_profile(request):
         cursor.execute("""UPDATE speedycrew.profile SET message = %s WHERE id = %s""",
                        (message, profile_id))
 
-    return json_response({ "status" : "OK", "email" : email })
+    return json_response({ "status" : "OK" })
 
 def searches(request):
     """A view handler that returns a summary of the user's currently
