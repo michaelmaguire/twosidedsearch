@@ -101,7 +101,6 @@ static int nextId = 0;
 - (void)addListener:(NSObject*)listener withId:(NSString*)id
 {
     [self.listeners setObject:listener forKey:id];
-    NSLog(@"added listener '%@' (total listeners=%d)", id, [self.listeners count]);
 }
 - (void)removeListenerWithId:(NSString*)id
 {

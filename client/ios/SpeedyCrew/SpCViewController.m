@@ -23,7 +23,7 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-    self.actions = [[NSMutableArray alloc] initWithObjects:@"Availability", @"Invites", @"Events", @"Messages", nil];
+    self.actions = [[NSMutableArray alloc] initWithObjects:@"User", @"Invites", nil];
     SpCAppDelegate* delegate = (((SpCAppDelegate*) [UIApplication sharedApplication].delegate));
     self.searches = delegate.data.searches;
     self.currentSearch = [[SpCSearch alloc] init];
@@ -62,8 +62,13 @@
         return cell;
     }else
     {
-        UITableViewCell *cell = [tv dequeueReusableCellWithIdentifier:@"ActionCell"];
-        cell.textLabel.text = [self.actions objectAtIndexedSubscript:indexPath.row];
+        NSString* label = [self.actions objectAtIndex:indexPath.row];
+        NSString* name = [NSString stringWithFormat:@"%@Cell", label];
+        UITableViewCell *cell = [tv dequeueReusableCellWithIdentifier:name];
+        if (cell == nil) {
+            NSLog(@"returning nil cell!");
+        }
+        cell.textLabel.text = label;
         return cell;
     }
 }
@@ -105,9 +110,13 @@
         [navController pushViewController:controller animated:YES];
     }
     else if (3 == indexPath.section) {
-        if (indexPath.row == 1) {
+        if (0 == indexPath.row) {
+            UIViewController *viewController = [storyboard instantiateViewControllerWithIdentifier:@"User"];
+            [navController pushViewController:viewController animated:NO];
+        }
+        else if (1 == indexPath.row) {
             UIViewController *viewController = [storyboard instantiateViewControllerWithIdentifier:@"Invites"];
-            [navController pushViewController:viewController animated:YES];
+            [navController pushViewController:viewController animated:NO];
         }
     }
 }
