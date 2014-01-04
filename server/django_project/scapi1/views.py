@@ -71,20 +71,20 @@ def profile(request):
 
 def update_profile(request):
     profile_id = begin(request)
-    # TODO allow username to be updated too, but first check if it's
-    # not unique.  same for email address.  and do we need email
-    # verification status?  secondary email address?  blah
+    # TODO friendly check for username, email availability
     cursor = connection.cursor()
+    username = param_or_null(request, "username")
     real_name = param_or_null(request, "real_name")
     email = param_or_null(request, "email")
     message = param_or_null(request, "message")
     cursor.execute("""UPDATE speedycrew.profile
-                         SET real_name = %s,
+                         SET username = %s,
+                             real_name = %s,
                              email = %s,
                              message = %s,
                              modified = now()
                        WHERE id = %s""",
-                   (real_name, email, message, profile_id))
+                   (username, real_name, email, message, profile_id))
     return json_response({ "status" : "OK" })
 
 def searches(request):
