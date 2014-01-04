@@ -8,6 +8,8 @@
 
 #import "SpCUserViewController.h"
 #import "SpcDatabase.h"
+#import "SpCAppDelegate.h"
+#import "SpCData.h"
 
 @interface SpCUserViewController ()
 @property NSArray* elements;
@@ -28,7 +30,7 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-    self.elements = @[@"scid", @"realname", @"username", @"email", @"message"];
+    self.elements = @[@"scid", @"real_name", @"username", @"email", @"message"];
 
     // Uncomment the following line to preserve selection between presentations.
     // self.clearsSelectionOnViewWillAppear = NO;
@@ -135,8 +137,8 @@
 - (BOOL)textFieldShouldReturn:(UITextField *)textField {
     NSLog(@"text did change: text='%@' id='%@'", textField.text, self.elements[textField.tag]);
     [textField resignFirstResponder];
-    SpCDatabase* database = [SpCDatabase database];
-    [database updateSetting:self.elements[textField.tag] with:textField.text];
+    SpCAppDelegate* delegate = (((SpCAppDelegate*) [UIApplication sharedApplication].delegate));
+    [delegate.data updateSetting:self.elements[textField.tag] with:textField.text];
     return NO;
 }
 

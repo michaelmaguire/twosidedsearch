@@ -7,7 +7,10 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "SpCData.h"
 
 @interface SpCUserViewController : UITableViewController<UITextFieldDelegate>
+
+@property SpCData* data;
 
 @end

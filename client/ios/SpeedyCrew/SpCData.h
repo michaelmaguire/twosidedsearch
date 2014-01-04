@@ -14,5 +14,6 @@
 @property NSMutableArray* searches;
 
 - (SpCData*)init;
+- (void)updateSetting:(NSString*)name with:(NSString*)value;
 
 @end
