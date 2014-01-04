@@ -71,6 +71,9 @@ def profile(request):
 
 def update_profile(request):
     profile_id = begin(request)
+    # TODO allow username to be updated too, but first check if it's
+    # not unique.  same for email address.  and do we need email
+    # verification status?  secondary email address?  blah
     cursor = connection.cursor()
     real_name = param_or_null(request, "real_name")
     email = param_or_null(request, "email")
