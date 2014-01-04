@@ -103,19 +103,31 @@ def update_profile(request):
     # wants to forget some settings and go back to nothing/null...)
     if username != None:
         if username == "": username = None
-        cursor.execute("""UPDATE speedycrew.profile SET username = %s WHERE id = %s""", 
+        cursor.execute("""UPDATE speedycrew.profile 
+                             SET username = %s,
+                                 modified = now()
+                           WHERE id = %s""", 
                        (username, profile_id))
     if real_name != None:
         if real_name == "": real_name = None
-        cursor.execute("""UPDATE speedycrew.profile SET real_name = %s WHERE id = %s""",
+        cursor.execute("""UPDATE speedycrew.profile 
+                             SET real_name = %s,
+                                 modified = now()
+                           WHERE id = %s""",
                        (real_name, profile_id))
     if email != None:
         if email == "": email = None
-        cursor.execute("""UPDATE speedycrew.profile SET email = %s WHERE id = %s""",
+        cursor.execute("""UPDATE speedycrew.profile 
+                             SET email = %s,
+                                 modified = now()
+                           WHERE id = %s""",
                        (email, profile_id))
     if message != None:
         if message == "": message = None
-        cursor.execute("""UPDATE speedycrew.profile SET message = %s WHERE id = %s""",
+        cursor.execute("""UPDATE speedycrew.profile 
+                             SET message = %s,
+                                 modified = now()
+                           WHERE id = %s""",
                        (message, profile_id))
 
     return json_response({ "status" : "OK" })
