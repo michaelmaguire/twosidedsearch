@@ -10,7 +10,7 @@
 #import "SpCResult.h"
 
 @interface SpCSearchViewController ()
-
+@property UISearchBar* searchBar;
 @end
 
 @implementation SpCSearchViewController
@@ -60,12 +60,12 @@
 - (UITableViewCell *)tableView:(UITableView *)tv cellForRowAtIndexPath:(NSIndexPath *)path
 {
     if (0 == path.section) {
-        UITableViewCell* cell = [tv dequeueReusableCellWithIdentifier:@"SearchField" forIndexPath: path];
-//        if (1 == [cell.subviews count]) {
-//            UISearchBar* bar = [cell.subviews objectAtIndex:0];
-//            bar.text = self.search.query;
-//            
-//        }
+        UITableViewCell* cell = [tv dequeueReusableCellWithIdentifier:@"SearchField"];
+        UIView* view = [cell.contentView viewWithTag:0];
+        if (view && 1 == view.subviews.count) {
+            self.searchBar = [view.subviews objectAtIndex:0];
+            self.searchBar.text = self.search.query;
+        }
         return cell;
     }
     UITableViewCell *cell = [tv dequeueReusableCellWithIdentifier:@"Result" forIndexPath:path];
@@ -128,22 +128,18 @@
 
 - (void)searchBar:(UISearchBar *)searchBar textDidChange:(NSString *)searchText
 {
-    NSLog(@"search text changed: '%@'", searchText);
+    //-dk:TODO act upon these events! NSLog(@"search text changed: '%@'", searchText);
 }
 
 - (void)searchBarSearchButtonClicked:(UISearchBar *)searchBar
 {
-    NSLog(@"search button clicked: '%@'", searchBar.text);
-    [self.search updateQueryWith: searchBar.text];
-}
-- (void)searchBarTextDidBeginEditing:(UISearchBar *)searchBar
-{
-    NSLog(@"search done exiting");
+    if (0 < searchBar.text.length) {
+        [self.search updateQueryWith: searchBar.text];
+    }
 }
 
 - (void)resultsChanged:(SpCSearch*)search
 {
-    NSLog(@"Search: results changed");
     NSIndexSet* indices = [[NSIndexSet alloc] initWithIndex:1];
     [self.tableView reloadSections:indices withRowAnimation: UITableViewRowAnimationNone];
 

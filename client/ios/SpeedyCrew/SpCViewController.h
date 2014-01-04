@@ -10,12 +10,11 @@
 #import "SpCSearch.h"
 #import "SpCSearchListener.h"
 
-@interface SpCViewController : UIViewController<UITableViewDataSource, UITableViewDelegate, UITextFieldDelegate>
+@interface SpCViewController : UIViewController<UITableViewDataSource, UITableViewDelegate, UISearchBarDelegate>
 
 @property (strong, nonatomic) SpCSearch            *currentSearch;
 @property (strong, nonatomic) NSMutableArray       *searches;
 @property (strong, nonatomic) NSMutableArray       *actions;
 @property (weak, nonatomic) IBOutlet UITableView *tableView;
-@property (weak, nonatomic) IBOutlet UIView *queryField;
 
 @end

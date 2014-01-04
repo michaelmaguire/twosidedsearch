@@ -13,6 +13,9 @@
 
 @interface SpCViewController ()
 
+@property UISearchBar* search;
+- (IBAction)addSearch:(id)sender;
+
 @end
 
 @implementation SpCViewController
@@ -38,7 +41,12 @@
 {
     if (0 == indexPath.section)
     {
-        return [tv dequeueReusableCellWithIdentifier:@"TextCell"];
+        UITableViewCell* cell = [tv dequeueReusableCellWithIdentifier:@"TextCell"];
+        UIView* view = [cell.contentView viewWithTag:0];
+        if (view && 1 == view.subviews.count) {
+            self.search = [view.subviews objectAtIndex:0];
+        }
+        return cell;
     }
     else if (1 == indexPath.section) {
         UITableViewCell* cell = [tv dequeueReusableCellWithIdentifier:@"ResultCell"];
@@ -104,6 +112,13 @@
     }
 }
 
+- (void)searchBarSearchButtonClicked:(UISearchBar *)searchBar
+{
+    if (0 < searchBar.text) {
+        [self.currentSearch updateQueryWith: searchBar.text];
+    }
+}
+
 - (BOOL)textFieldShouldReturn:(UITextField *)textField {
     if (0 < textField.text.length) {
         [self.currentSearch updateQueryWith: textField.text];
@@ -112,10 +127,10 @@
     return YES;
 }
 
-- (IBAction)updateSearch:(id)sender
+- (IBAction)addSearch:(id)sender
 {
-    
-    if (0 < self.currentSearch.name.length) {
+    if (0 < self.search.text.length) {
+        [self.currentSearch updateQueryWith:self.search.text];
         NSLog(@"adding query %s", self.currentSearch.name.UTF8String);
         int index = 0, size = [self.searches count];
         for (; index != size; ++index) {
