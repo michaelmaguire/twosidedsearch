@@ -15,7 +15,6 @@
 {
     SpCDatabase* database = [SpCDatabase database];
     self.identity = [database querySetting: @"scid"];
-    NSLog(@"identity=%@", self.identity);
     self.searches = [[NSMutableArray alloc] init]; //-dk:TODO recover stored searches
     return self;
 }

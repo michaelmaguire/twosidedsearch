@@ -7,8 +7,10 @@
 //
 
 #import "SpCUserViewController.h"
+#import "SpcDatabase.h"
 
 @interface SpCUserViewController ()
+@property NSArray* elements;
 
 @end
 
@@ -26,6 +28,7 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
+    self.elements = @[@"scid", @"realname", @"username", @"email", @"message"];
 
     // Uncomment the following line to preserve selection between presentations.
     // self.clearsSelectionOnViewWillAppear = NO;
@@ -54,14 +57,20 @@
 
 - (UITableViewCell *)tableView:(UITableView *)tv cellForRowAtIndexPath:(NSIndexPath *)path
 {
-    if (1 == path.row) {
-        UITableViewCell *cell = [tv dequeueReusableCellWithIdentifier:@"Roller" forIndexPath:path];
-        return cell;
+    NSString* id = [self.elements objectAtIndex:path.row];
+    SpCDatabase* database = [ SpCDatabase database];
+    NSString* value = [database querySetting: id];
+    NSLog(@"user tab: id='%@' value='%@'", id, value);
+    UITableViewCell *cell = [tv dequeueReusableCellWithIdentifier:id forIndexPath:path];
+    if (0 == path.row) {
+        UIView* view = [cell.contentView viewWithTag:0];
+        if (view && 2 == view.subviews.count) {
+            UILabel* label = [view.subviews objectAtIndex:1];
+            label.text = value;
+        }
+
     }
-    else {
-        UITableViewCell *cell = [tv dequeueReusableCellWithIdentifier:@"Button" forIndexPath:path];
-        return cell;
-    }
+    return cell;
 }
 
 /*

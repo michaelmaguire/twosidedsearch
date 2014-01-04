@@ -13,7 +13,7 @@
 static sqlite3*     database_ = 0;
 static SpCDatabase* object = nil;
 
-int ignore_callback(void* ud,int count,char** a0, char** a1)
+static int ignore_callback(void* ud,int count,char** a0, char** a1)
 {
     return 0;
 }
@@ -64,10 +64,8 @@ int ignore_callback(void* ud,int count,char** a0, char** a1)
     NSString* query = [NSString stringWithFormat:@"select value from settings where name = '%@';", name];
     sqlite3_stmt *statement;
     NSString* result = @"";
-    NSLog(@"settings query: '%@'", query);
     if (sqlite3_prepare_v2(database_, [query UTF8String], -1, &statement, nil) == SQLITE_OK) {
         while (sqlite3_step(statement) == SQLITE_ROW) {
-            NSLog(@"received a result: '%s'", (char*)sqlite3_column_text(statement, 0));
             result = [NSString stringWithUTF8String:((char *) sqlite3_column_text(statement, 0))];
             break;
         }
