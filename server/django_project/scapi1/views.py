@@ -71,20 +71,65 @@ def profile(request):
 
 def update_profile(request):
     profile_id = begin(request)
-    # TODO friendly check for username, email availability
     cursor = connection.cursor()
     username = param_or_null(request, "username")
     real_name = param_or_null(request, "real_name")
     email = param_or_null(request, "email")
     message = param_or_null(request, "message")
-    cursor.execute("""UPDATE speedycrew.profile
-                         SET username = %s,
-                             real_name = %s,
-                             email = %s,
-                             message = %s,
-                             modified = now()
-                       WHERE id = %s""",
-                   (username, real_name, email, message, profile_id))
+
+    # TODO what constraints should we place on the form of email
+    # addresses and usernames?
+
+    # check uniqueness for email and username (of course there is a
+    # race condition here, but we try to give a friendly error reason
+    # that the GUI can work with; if someone races us and takes the
+    # username after our check then we'll get an ugly error, but there
+    # will be no corruption of the uniqueness which is enforced by the
+    # database's unique constraints)
+    if email != None and email != "":
+        cursor.execute("""SELECT * FROM speedycrew.profile WHERE email = %s AND id != %s""",
+                       (email, profile_id))
+        if cursor.fetchone():
+            return json_response({ "status" : "ERROR",
+                                   "reason" : "EMAIL_IN_USE" })
+    if username != None and username != "":
+        cursor.execute("""SELECT * FROM speedycrew.profile WHERE username = %s AND id != %s""",
+                       (username, profile_id))
+        if cursor.fetchone():
+            return json_response({ "status" : "ERROR",
+                                   "reason" : "USERNAME_IN_USE" })
+
+    # peform the updates (converting empty strings to null, if user
+    # wants to forget some settings and go back to nothing/null...)
+    if username != None:
+        if username == "": username = None
+        cursor.execute("""UPDATE speedycrew.profile 
+                             SET username = %s,
+                                 modified = now()
+                           WHERE id = %s""", 
+                       (username, profile_id))
+    if real_name != None:
+        if real_name == "": real_name = None
+        cursor.execute("""UPDATE speedycrew.profile 
+                             SET real_name = %s,
+                                 modified = now()
+                           WHERE id = %s""",
+                       (real_name, profile_id))
+    if email != None:
+        if email == "": email = None
+        cursor.execute("""UPDATE speedycrew.profile 
+                             SET email = %s,
+                                 modified = now()
+                           WHERE id = %s""",
+                       (email, profile_id))
+    if message != None:
+        if message == "": message = None
+        cursor.execute("""UPDATE speedycrew.profile 
+                             SET message = %s,
+                                 modified = now()
+                           WHERE id = %s""",
+                       (message, profile_id))
+
     return json_response({ "status" : "OK" })
 
 def searches(request):
