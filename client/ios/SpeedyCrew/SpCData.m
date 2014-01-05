@@ -54,14 +54,12 @@
     [NSURLConnection sendAsynchronousRequest:request queue:q completionHandler:
      ^(NSURLResponse* resp, NSData* d, NSError* err) {
          if (d) {
-             NSLog(@"received data");
              [self receivedResponse:d];
          }
          else {
              NSLog(@"received error...?");
          }
      }];
-    NSLog(@"next stage: results for query '%@'", query);
 }
 
 @end
