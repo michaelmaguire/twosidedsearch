@@ -3,6 +3,7 @@ from django.http import HttpResponse
 from django.shortcuts import render
 import json
 import uuid
+import re
 
 def json_response(object):
     """A convenience function for generating a JSON HTTP response."""
@@ -188,18 +189,23 @@ def create_search(request):
     cursor = connection.cursor()
 
     # required parameters
-    tags = request.REQUEST["tags"].split(",")
+    query = request.REQUEST["query"]
     side = request.REQUEST["side"]
     longitude = request.REQUEST["longitude"]
     latitude = request.REQUEST["latitude"]
 
+
     # optional parameters
-    name = param_or_null(request, "name")
     address = param_or_null(request, "address")
     city = param_or_null(request, "city")
     country = param_or_null(request, "country")
     postcode = param_or_null(request, "postcode")
     radius = param_or_null(request, "radius") # required if side = PROVIDE
+
+    tags = re.findall(r"#(\w+)", query)    
+    if not tags:
+        return json_response({ "status" : "ERROR",
+                               "message" : "query contains no tags" })
 
     # resolve tags to tag IDs, creating this if necessary
     tag_ids = []
@@ -224,10 +230,10 @@ def create_search(request):
                                        "message" : "tag is not allowed" })
             tag_ids.append(tag_id)
         
-    cursor.execute("""INSERT INTO speedycrew.search (id, owner, name, side, address, postcode, city, country, geography, radius, status, created)
+    cursor.execute("""INSERT INTO speedycrew.search (id, owner, query, side, address, postcode, city, country, geography, radius, status, created)
                       VALUES (DEFAULT, %s, %s, %s, %s, %s, %s, %s, speedycrew.make_geo(%s, %s), %s, 'ACTIVE', now())
                    RETURNING id""",
-                   (profile_id, name, side, address, postcode, city, country, longitude, latitude, radius))
+                   (profile_id, query, side, address, postcode, city, country, longitude, latitude, radius))
     search_id = cursor.fetchone()[0]
     for tag_id in tag_ids:
         cursor.execute("""INSERT INTO speedycrew.search_tag VALUES (%s, %s)""",

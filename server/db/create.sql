@@ -67,14 +67,14 @@ create type search_status as enum ('ACTIVE', 'DELETED');
 create table search (
   id serial primary key,
   owner integer not null references profile(id),
-  name text,
-  side search_side,
+  query text not null,
+  side search_side not null,
   address text,
   postcode text,
   city text,
   country varchar(2) references country(id),
   geography geography not null,
-  radius float,
+  radius float check ((radius is null) = (side = 'PROVIDE')),
   status search_status not null,
   created timestamptz not null
 );
@@ -142,17 +142,14 @@ begin
     into v_tag_ids
     from speedycrew.search_tag st
    where st.search = i_search_id;
-  -- in this version, we only support PROVIDE (a service, like being a chef)
-  -- with a location and a radius, or SEEK (a chef), with a fixed location
-  -- and a null radius;  we implement this with two different queries, but
-  -- the results should be the same whichever way around it is done!
-  if v_side = 'PROVIDE' then
+   -- SEEK has a radius (SEEKers are mobile)
+  if v_side = 'SEEK' then
     for v_id in select s.id
                   from speedycrew.search s
                   join speedycrew.search_tag st on st.search = s.id
                  where st_dwithin(s.geography, v_geography, v_radius)
                    and st.tag = any (v_tag_ids)
-                   and s.side = 'SEEK'
+                   and s.side = 'PROVIDE'
     loop
       begin
         insert into speedycrew.match (a, b, status, created)
@@ -163,13 +160,13 @@ begin
       end;
     end loop;
   else
-    -- v_side = 'SEEK'
+    -- v_side = 'PROVIDE'
     for v_id in select s.id
                   from speedycrew.search s
                   join speedycrew.search_tag st on st.search = s.id
                  where st_dwithin(s.geography, v_geography, s.radius)
                    and st.tag = any (v_tag_ids)                  
-                   and s.side = 'PROVIDE'
+                   and s.side = 'SEEK'
     loop
       -- TODO avoid this duplicated code
       begin
