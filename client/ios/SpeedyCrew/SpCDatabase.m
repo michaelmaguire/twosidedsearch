@@ -33,7 +33,6 @@ static int ignore_callback(void* ud,int count,char** a0, char** a1)
             NSLog(@"Failed to open database '%@'!", name);
         }
         else {
-            NSLog(@"opened database '%@'", name);
             char* message = 0;
             const char* create_values = "CREATE TABLE settings(name TEXT PRIMARY KEY, "
                                                               "value TEXT );";
@@ -42,7 +41,6 @@ static int ignore_callback(void* ud,int count,char** a0, char** a1)
             NSString* uuidstr = [uuid UUIDString];
             NSString* idsql = [NSString stringWithFormat:@"insert into settings (name, value) values('scid', '%@');", uuidstr];
             rc = sqlite3_exec(database_, [idsql UTF8String], ignore_callback, 0, &message);
-            NSLog(@"insert id rc=%d message=%s id=%@", rc, message? message: "<nil>", idsql);
         }
     }
     return self;
@@ -77,11 +75,14 @@ static int ignore_callback(void* ud,int count,char** a0, char** a1)
 - (void) updateSetting:(NSString*)name with:(NSString*)value
 {
     NSLog(@"updateSetting:%@ with:%@", name, value);
-    NSString* insert = [NSString stringWithFormat:@"insert into settings (name, value) values('%@', '%@');", name, value];
+    NSString* insert = [NSString stringWithFormat:@"insert into settings (name, value) values('%@', '%%q');", name];
     char* message = 0;
-    if (sqlite3_exec(database_, [insert UTF8String], ignore_callback, 0, &message)) {
-        NSString* update = [NSString stringWithFormat:@"update settings set value='%@' where name='%@';", value, name];
-        if (sqlite3_exec(database_, [update UTF8String], ignore_callback, 0, &message)) {
+    char buffer[512];
+    char* sql = sqlite3_snprintf(sizeof(buffer), buffer, [insert UTF8String], [value UTF8String]);
+    if (sqlite3_exec(database_, sql, ignore_callback, 0, &message)) {
+        NSString* update = [NSString stringWithFormat:@"update settings set value='%%q' where name='%@';", name];
+        sql = sqlite3_snprintf(sizeof(buffer), buffer, [update UTF8String], [value UTF8String]);
+        if (sqlite3_exec(database_, sql, ignore_callback, 0, &message)) {
             NSLog(@"both update and insert failed for setting name='%@' value='%@' message='%s'", name, value, message);
         }
     }

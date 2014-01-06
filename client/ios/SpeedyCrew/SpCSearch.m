@@ -61,14 +61,12 @@ static int nextId = 0;
         NSDictionary* result = [json objectAtIndex:i];
         NSString* id = [result objectForKey: @"id"];
         NSString* value = [result objectForKey: @"value"];
-        NSLog(@"received result: id='%@' value='%@'", id, value);
         [results addObject:[[SpCResult alloc] initWithId:id value:value]];
     }
     self.results = results;
     
     NSEnumerator *enumerator = [self.listeners objectEnumerator];
     SpCSearchListener* listener = nil;
-    NSLog(@"calling listeners: %d", [self.listeners count]);
     while ((listener = [enumerator nextObject])) {
         if (listener != nil) {
             [listener resultsChanged: self];
@@ -95,7 +93,6 @@ static int nextId = 0;
                 NSLog(@"received error...?");
             }
         }];
-    NSLog(@"next statge: results for query '%s'", self.query.UTF8String);
 }
 
 - (void)addListener:(NSObject*)listener withId:(NSString*)id

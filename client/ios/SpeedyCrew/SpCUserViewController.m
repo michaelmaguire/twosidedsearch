@@ -62,7 +62,6 @@
     NSString* id = [self.elements objectAtIndex:path.row];
     SpCDatabase* database = [ SpCDatabase database];
     NSString* value = [database querySetting: id];
-    NSLog(@"user tab: id='%@' value='%@'", id, value);
     UITableViewCell *cell = [tv dequeueReusableCellWithIdentifier:id forIndexPath:path];
     if (0 == path.row) {
         UIView* view = [cell.contentView viewWithTag:0];
@@ -134,12 +133,15 @@
 
  */
 
-- (BOOL)textFieldShouldReturn:(UITextField *)textField {
-    NSLog(@"text did change: text='%@' id='%@'", textField.text, self.elements[textField.tag]);
-    [textField resignFirstResponder];
+- (void)textFieldDidEndEditing:(UITextField *)textField
+{
     SpCAppDelegate* delegate = (((SpCAppDelegate*) [UIApplication sharedApplication].delegate));
     [delegate.data updateSetting:self.elements[textField.tag] with:textField.text];
-    return NO;
+}
+
+- (BOOL)textFieldShouldReturn:(UITextField *)textField {
+    [textField resignFirstResponder];
+    return YES;
 }
 
 @end
