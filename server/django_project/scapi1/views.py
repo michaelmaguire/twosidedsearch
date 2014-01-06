@@ -92,13 +92,15 @@ def update_profile(request):
         cursor.execute("""SELECT * FROM speedycrew.profile WHERE email = %s AND id != %s""",
                        (email, profile_id))
         if cursor.fetchone():
-            return json_response({ "status" : "ERROR",
+            return json_response({ "message_type" : "update_profile_response",
+                                   "status" : "ERROR",
                                    "reason" : "EMAIL_IN_USE" })
     if username != None and username != "":
         cursor.execute("""SELECT * FROM speedycrew.profile WHERE username = %s AND id != %s""",
                        (username, profile_id))
         if cursor.fetchone():
-            return json_response({ "status" : "ERROR",
+            return json_response({ "message_type" : "update_profile_response",
+                                   "status" : "ERROR",
                                    "reason" : "USERNAME_IN_USE" })
 
     # peform the updates (converting empty strings to null, if user
