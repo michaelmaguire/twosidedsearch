@@ -63,7 +63,8 @@ def profile(request):
                        WHERE p.id = %s""",
                    (profile_id, ))
     username, real_name, email, status, message, created = cursor.fetchone()
-    return json_response({ "username" : username,
+    return json_response({ "message_type" : "profile_response",
+                           "username" : username,
                            "real_name" : real_name,
                            "email" : email,
                            "status" : status,
@@ -131,29 +132,31 @@ def update_profile(request):
                            WHERE id = %s""",
                        (message, profile_id))
 
-    return json_response({ "status" : "OK" })
+    return json_response({ "message_type" : "update_profile_response",
+                           "status" : "OK" })
 
 def searches(request):
     """A view handler that returns a summary of the user's currently
     active searches."""
     profile_id = begin(request)
     cursor = connection.cursor()
-    cursor.execute("""SELECT s.id, s.name, s.side, s.created, array_agg(t.name) AS tags
+    cursor.execute("""SELECT s.id, s.query, s.side, s.created, array_agg(t.name) AS tags
                         FROM speedycrew.search s
                         JOIN speedycrew.search_tag st ON st.search = s.id
                         JOIN speedycrew.tag t ON st.tag = t.id
                        WHERE s.owner = %s
                        GROUP BY s.id
-                       ORDER BY s.name, s.created""",
+                       ORDER BY s.created DESC""",
                    (profile_id, ))
     searches = []
-    for id, name, side, created, tags in cursor:
+    for id, query, side, created, tags in cursor:
         searches.append({ "id" : id,
-                          "name" : name,
+                          "query" : query,
                           "side" : side,
                           "created" : created.isoformat(),
                           "tags" : tags })
-    return json_response({ "status" : "OK",
+    return json_response({ "message_type" : "searches_response",
+                           "status" : "OK",
                            "searches" : searches })
 
 def tags(request):
@@ -174,7 +177,8 @@ def tags(request):
     results = []
     for name, in cursor:
         results.append(name)
-    return json_response({ "status" : "OK",
+    return json_response({ "message_type" : "tags_response",
+                           "status" : "OK",
                            "tags" : results })
 
 def param_or_null(request, name):
@@ -204,7 +208,8 @@ def create_search(request):
 
     tags = re.findall(r"#(\w+)", query)    
     if not tags:
-        return json_response({ "status" : "ERROR",
+        return json_response({ "message_type" : "create_search_response",
+                               "status" : "ERROR",
                                "message" : "query contains no tags" })
 
     # resolve tags to tag IDs, creating this if necessary
@@ -246,7 +251,8 @@ def create_search(request):
     # TODO feed some actual responses back?  that'd be friendly.  for
     # now, here, take a number, go and get the results with another
     # request!
-    return json_response({ "status" : "OK",
+    return json_response({ "message_type" : "create_search_response",
+                           "status" : "OK",
                            "search_id" : search_id })
 
 def delete_search(request):
@@ -261,9 +267,11 @@ def delete_search(request):
                          AND status = 'ACTIVE'""",
                    (search_id, profile_id))
     if cursor.rowcount == 1:
-        return json_response({ "status" : "OK" })
+        return json_response({ "message_type" : "delete_search_response",
+                               "status" : "OK" })
     else:
-        return json_response({ "status" : "ERROR" })
+        return json_response({ "message_type" : "delete_search_response",
+                               "status" : "ERROR" })
 
 def search_results(request):
     """A dumb request for all results for a given search ID."""
@@ -298,5 +306,6 @@ def search_results(request):
                          "city" : city,
                          "country" : country,
                          "distance" : distance })
-    return json_response({ "status" : "OK",
+    return json_response({ "message_type" : "search_results_response",
+                           "status" : "OK",
                            "results" : results })                        
