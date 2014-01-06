@@ -10,6 +10,12 @@ def json_response(object):
     return HttpResponse(json.dumps(object, indent=4),
                         content_type="application/json")
 
+def param_or_null(request, name):
+    if name not in request.REQUEST:
+        return None
+    else:
+        return request.REQUEST[name]
+
 def begin(request):
     """The prelude to be used by all view functions to obtain or
     create a profile ID using the device ID information present in the
@@ -52,6 +58,7 @@ def docs(request):
 def profile(request):
     """A view handler for fetching the user's profile data."""
     profile_id = begin(request)
+    request_id = param_or_null(request, "request_id")
     cursor = connection.cursor()
     cursor.execute("""SELECT p.username,
                              p.real_name,
@@ -64,6 +71,7 @@ def profile(request):
                    (profile_id, ))
     username, real_name, email, status, message, created = cursor.fetchone()
     return json_response({ "message_type" : "profile_response",
+                           "request_id" : request_id,
                            "username" : username,
                            "real_name" : real_name,
                            "email" : email,
@@ -74,6 +82,7 @@ def profile(request):
 def update_profile(request):
     profile_id = begin(request)
     cursor = connection.cursor()
+    request_id = param_or_null(request, "request_id")
     username = param_or_null(request, "username")
     real_name = param_or_null(request, "real_name")
     email = param_or_null(request, "email")
@@ -93,6 +102,7 @@ def update_profile(request):
                        (email, profile_id))
         if cursor.fetchone():
             return json_response({ "message_type" : "update_profile_response",
+                                   "request_id" : request_id,
                                    "status" : "ERROR",
                                    "reason" : "EMAIL_IN_USE" })
     if username != None and username != "":
@@ -100,6 +110,7 @@ def update_profile(request):
                        (username, profile_id))
         if cursor.fetchone():
             return json_response({ "message_type" : "update_profile_response",
+                                   "request_id" : request_id,
                                    "status" : "ERROR",
                                    "reason" : "USERNAME_IN_USE" })
 
@@ -135,12 +146,14 @@ def update_profile(request):
                        (message, profile_id))
 
     return json_response({ "message_type" : "update_profile_response",
+                           "request_id" : request_id,
                            "status" : "OK" })
 
 def searches(request):
     """A view handler that returns a summary of the user's currently
     active searches."""
     profile_id = begin(request)
+    request_id = param_or_null(request, "request_id")
     cursor = connection.cursor()
     cursor.execute("""SELECT s.id, s.query, s.side, s.created, array_agg(t.name) AS tags
                         FROM speedycrew.search s
@@ -158,6 +171,7 @@ def searches(request):
                           "created" : created.isoformat(),
                           "tags" : tags })
     return json_response({ "message_type" : "searches_response",
+                           "request_id" : request_id,
                            "status" : "OK",
                            "searches" : searches })
 
@@ -166,6 +180,7 @@ def tags(request):
     auto-completion."""
     profile_id = begin(request)
     prefix = request.REQUEST["prefix"]
+    request_id = param_or_null(request, "request_id")
     # TODO sanitise?    
     cursor = connection.cursor()
     # TODO should probably try to suggest popular tags
@@ -180,14 +195,9 @@ def tags(request):
     for name, in cursor:
         results.append(name)
     return json_response({ "message_type" : "tags_response",
+                           "request_id" : request_id,
                            "status" : "OK",
                            "tags" : results })
-
-def param_or_null(request, name):
-    if name not in request.REQUEST:
-        return None
-    else:
-        return request.REQUEST[name]
 
 def create_search(request):
     """A view handler to create a new search."""
@@ -202,6 +212,7 @@ def create_search(request):
 
 
     # optional parameters
+    request_id = param_or_null(request, "request_id")
     address = param_or_null(request, "address")
     city = param_or_null(request, "city")
     country = param_or_null(request, "country")
@@ -211,6 +222,7 @@ def create_search(request):
     tags = re.findall(r"#(\w+)", query)    
     if not tags:
         return json_response({ "message_type" : "create_search_response",
+                               "request_id" : request_id,
                                "status" : "ERROR",
                                "message" : "query contains no tags" })
 
@@ -232,7 +244,9 @@ def create_search(request):
         else:
             tag_id, tag_status = row
             if tag_status != "ACTIVE":
-                return json_response({ "status" : "TAG_BLOCKED",
+                return json_response({ "message_type" : "create_search_response",
+                                       "request_id" : request_id,
+                                       "status" : "TAG_BLOCKED",
                                        "blocked_tag" : tag,
                                        "message" : "tag is not allowed" })
             tag_ids.append(tag_id)
@@ -254,6 +268,7 @@ def create_search(request):
     # now, here, take a number, go and get the results with another
     # request!
     return json_response({ "message_type" : "create_search_response",
+                           "request_id" : request_id,
                            "status" : "OK",
                            "search_id" : search_id })
 
@@ -261,6 +276,7 @@ def delete_search(request):
     """End an existing active search."""
     profile_id = begin(request)
     search_id = request.REQUEST["search"]
+    request_id = param_or_null(request, "request_id")
     cursor = connection.cursor()
     cursor.execute("""UPDATE speedycrew.search
                          SET status = 'DELETED'
@@ -270,15 +286,18 @@ def delete_search(request):
                    (search_id, profile_id))
     if cursor.rowcount == 1:
         return json_response({ "message_type" : "delete_search_response",
+                               "request_id" : request_id,
                                "status" : "OK" })
     else:
         return json_response({ "message_type" : "delete_search_response",
+                               "request_id" : request_id,
                                "status" : "ERROR" })
 
 def search_results(request):
     """A dumb request for all results for a given search ID."""
     profile_id = begin(request)
     search_id = request.REQUEST["search"]
+    request_id = param_or_null(request, "request_id")
     cursor = connection.cursor()
     cursor.execute("""SELECT s2.id, 
                              p.username, 
@@ -309,5 +328,6 @@ def search_results(request):
                          "country" : country,
                          "distance" : distance })
     return json_response({ "message_type" : "search_results_response",
+                           "request_id" : request_id,
                            "status" : "OK",
                            "results" : results })                        
