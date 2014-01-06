@@ -132,6 +132,11 @@
 }
 
  */
+-(void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation
+{
+    [self.tableView beginUpdates];
+    [self.tableView endUpdates];
+}
 
 - (void)textFieldDidEndEditing:(UITextField *)textField
 {

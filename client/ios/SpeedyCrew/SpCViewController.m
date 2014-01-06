@@ -121,6 +121,13 @@
     }
 }
 
+-(void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation
+{
+    NSLog(@"rotating");
+    [self.tableView beginUpdates];
+    [self.tableView endUpdates];
+}
+
 - (void)searchBarSearchButtonClicked:(UISearchBar *)searchBar
 {
     if (0 < searchBar.text) {
