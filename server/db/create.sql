@@ -121,7 +121,7 @@ create table tag_count (
   counter integer not null
 );
 
-comment on table tag_count on 'Recent tag usage counters';
+comment on table tag_count is 'Recent tag usage counters';
 
 create index tag_count_counter_idx on tag_count(counter);
 
