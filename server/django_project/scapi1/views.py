@@ -330,4 +330,25 @@ def search_results(request):
     return json_response({ "message_type" : "search_results_response",
                            "request_id" : request_id,
                            "status" : "OK",
-                           "results" : results })                        
+                           "results" : results })
+
+def trending(request):
+    """A dump of popular tags."""
+    profile_id = begin(request)
+    request_id = param_or_null(request, "request_id")
+    results = []
+    cursor = connection.cursor()
+    cursor.execute("""SELECT t.name, tc.provide_counter, tc.seek_counter, tc.counter
+                        FROM speedycrew.tag t
+                        JOIN speedycrew.tag_count tc ON t.id = tc.tag
+                    ORDER BY tc.counter
+                       LIMIT 100""")
+    for name, provide_counter, seek_counter, counter in cursor:
+        results.append({ "name" : name,
+                         "provide_counter" : provide_counter,
+                         "seek_counter" : seek_counter,
+                         "counter" : counter })
+    return json_response({ "message_type" : "trending_response",
+                           "request_id" : request_id,
+                           "status" : "OK",
+                           "results" : results })

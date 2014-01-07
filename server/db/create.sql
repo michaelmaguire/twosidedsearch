@@ -114,6 +114,17 @@ create table match (
 
 comment on table match is 'A match between two searches';
 
+create table tag_count (
+  tag integer not null primary key,
+  provide_counter integer not null,
+  seek_counter integer not null,
+  counter integer not null
+);
+
+comment on table tag_count on 'Recent tag usage counters';
+
+create index tag_count_counter_idx on tag_count(counter);
+
 create or replace function make_geo(long double precision, lat double precision)
 returns geography as $$
   select st_geographyfromtext('POINT(' || long::text || ' ' || $2::text || ')');
