@@ -344,7 +344,7 @@ def trending(request):
                     ORDER BY tc.counter
                        LIMIT 100""")
     for name, provide_counter, seek_counter, counter in cursor:
-        results.append({ "name" : name,
+        results.append({ "tag" : name,
                          "provide_counter" : provide_counter,
                          "seek_counter" : seek_counter,
                          "counter" : counter })
