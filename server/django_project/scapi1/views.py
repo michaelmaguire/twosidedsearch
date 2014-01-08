@@ -1,6 +1,7 @@
 from django.db import connection
 from django.http import HttpResponse
 from django.shortcuts import render
+import hashlib
 import json
 import uuid
 import re
@@ -22,7 +23,15 @@ def begin(request):
     request."""
     # in development, we use a header or a parameter, but later we
     # will use some fancy-pants certificate stuff
-    device_id = request.REQUEST["x-id"]
+    certificate = None
+    if "SSL_CLIENT_CERT" in request.META:
+        certificate = request.META["SSL_CLIENT_CERT"]
+        # TODO -- Mike, here is where we are hashing the certificate
+        # to obtain a device ID, does this make sense?
+        device_id = hashlib.sha224(certificate).hexdigest()
+    else:
+        # TODO check we are in a dev system before allowing this
+        device_id = request.REQUEST["x-id"]
     # this could be someone we've never heard of, or someone returning
     profile_id = None
     cursor = connection.cursor()
@@ -47,6 +56,10 @@ def begin(request):
         cursor.execute("""INSERT INTO speedycrew.device (id, profile, last_seen, created) 
                           VALUES (%s, %s, now(), now())""",
                        (device_id, profile_id))
+        if certificate:
+            cursor.execute("""INSERT INTO speedycrew.client_certificate (device, certificate)
+                              VALUES (%s, %s)""",
+                           (device_id, certificate))
     cursor.close()
     return profile_id
 
