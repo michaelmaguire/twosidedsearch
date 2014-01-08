@@ -5,6 +5,7 @@ import java.io.StringWriter;
 import java.math.BigInteger;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.KeyManagementException;
+import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
 import java.security.KeyStore.PrivateKeyEntry;
@@ -12,6 +13,7 @@ import java.security.KeyStoreException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
+import java.security.PublicKey;
 import java.security.UnrecoverableEntryException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
@@ -90,6 +92,25 @@ public final class KeyManager {
 	}
 
 	/**
+	 * TODO: Use the public key material in our original, generated self-signed
+	 * certificate to create a CSR which we signed with our trusted root, then
+	 * call this method to replace the cert entry corresponding to our private
+	 * key with the signed cert.
+	 * 
+	 * @param trustedRootCertSignedCertificate
+	 * @throws KeyStoreException
+	 * @throws IOException
+	 * @throws CertificateException
+	 * @throws NoSuchAlgorithmException
+	 */
+	private void replaceSelfSignedCertificate(java.security.cert.X509Certificate trustedRootCertSignedCertificate) throws KeyStoreException, NoSuchAlgorithmException,
+			CertificateException, IOException {
+		KeyStore keyStore = KeyStore.getInstance(ANDROID_KEY_STORE);
+		keyStore.load(null);
+		keyStore.setCertificateEntry(IDENTITY_KEY_NAME, trustedRootCertSignedCertificate);
+	}
+
+	/**
 	 * @see http 
 	 *      ://nelenkov.blogspot.co.uk/2013/08/credential-storage-enhancements
 	 *      -android-43.html
@@ -124,7 +145,19 @@ public final class KeyManager {
 		kpGenerator.initialize(spec);
 
 		// No need to store -- it will be stored for us in hardware.
-		/* KeyPair kp = */kpGenerator.generateKeyPair();
+		KeyPair keyPair = kpGenerator.generateKeyPair();
+
+		// TODO: Fetch the public key from the generated pair, turn it into a
+		// CSR, and obtain a certificate over the public key signed signed by a
+		// trusted root, then call replaceSelfSignedCertificate().
+		PublicKey publicKey = keyPair.getPublic();
+
+		// Need spongycastle, or is there a way to do this in Android already?
+		// We examples use com.sun.security.pkcs.PKCS10, which isn't available
+		// on Android.
+		// PKCS10CertificationRequest request = new
+		// PKCS10CertificationRequest();
+
 	}
 
 	/**
