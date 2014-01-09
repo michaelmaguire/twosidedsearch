@@ -5,6 +5,7 @@ import hashlib
 import json
 import uuid
 import re
+from M2Crypto import X509
 
 def json_response(object):
     """A convenience function for generating a JSON HTTP response."""
@@ -26,9 +27,10 @@ def begin(request):
     certificate = None
     if "SSL_CLIENT_CERT" in request.META:
         certificate = request.META["SSL_CLIENT_CERT"]
-        # TODO -- Mike, here is where we are hashing the certificate
-        # to obtain a device ID, does this make sense?
-        device_id = hashlib.sha224(certificate).hexdigest()
+        x509 = X509.load_cert_string(certificate, X509.FORMAT_PEM)
+        fingerprint = x509.get_fingerprint("sha1")
+        # insert colon characters to make it pretty
+        device_id = ':'.join(fingerprint[pos:pos+2] for pos in xrange(0, len(fingerprint), 2))
     else:
         # TODO check we are in a dev system before allowing this
         device_id = request.REQUEST["x-id"]

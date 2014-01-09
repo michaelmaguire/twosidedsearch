@@ -35,7 +35,7 @@ comment on table device is 'A device used by a person to access the system';
 
 create table client_certificate (
   device text not null references device(id),
-  certificate bytea not null
+  certificate text not null
 );
 
 comment on table client_certificate is 'Public certificate data for a device';
