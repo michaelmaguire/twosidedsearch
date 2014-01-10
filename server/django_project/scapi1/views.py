@@ -28,9 +28,7 @@ def begin(request):
     if "SSL_CLIENT_CERT" in request.META:
         certificate = request.META["SSL_CLIENT_CERT"]
         x509 = X509.load_cert_string(certificate, X509.FORMAT_PEM)
-        fingerprint = x509.get_fingerprint("sha1")
-        # insert colon characters to make it pretty
-        device_id = ':'.join(fingerprint[pos:pos+2] for pos in xrange(0, len(fingerprint), 2))
+        device_id = x509.get_fingerprint("sha1")
     else:
         # TODO check we are in a dev system before allowing this
         device_id = request.REQUEST["x-id"]
