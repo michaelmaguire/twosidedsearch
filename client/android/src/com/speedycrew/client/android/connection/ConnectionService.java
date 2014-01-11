@@ -50,7 +50,7 @@ public class ConnectionService extends Service {
 
 	// Temporary -- since HTTPS gets us told to piss off -- still can't get past
 	// captain cook, though -- must be doing basic auth wrong.
-	private static String SPEEDY_URL = "https://dev.speedycrew.com/api/1/create";
+	private static String UPDATE_SPEEDY_URL = "https://dev.speedycrew.com/api/1/update_profile";
 
 	//private static String X_SPEEDY_CREW_USER_ID = "X-SpeedyCrew-UserId";
 
@@ -144,7 +144,7 @@ public class ConnectionService extends Service {
 
 					HttpPost httpPost = null;
 					try {
-						httpPost = new HttpPost(SPEEDY_URL);
+						httpPost = new HttpPost(UPDATE_SPEEDY_URL);
 
 						//httpPost.addHeader(X_SPEEDY_CREW_USER_ID, uniqueUserId);
 
@@ -156,9 +156,8 @@ public class ConnectionService extends Service {
 
 						// Set post data.
 						List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(2);
-						nameValuePairs.add(new BasicNameValuePair("username", "michael1234"));
-						nameValuePairs.add(new BasicNameValuePair("firstname", "MichaelTest"));
-						nameValuePairs.add(new BasicNameValuePair("lastname", "LastnameTest"));
+						nameValuePairs.add(new BasicNameValuePair("real_name", "michael1234"));
+						nameValuePairs.add(new BasicNameValuePair("message", "MichaelTestMessage"));
 						nameValuePairs.add(new BasicNameValuePair("email", "speedytest@michaelmaguire.ca"));
 
 						// Not needed with our new public key mechanism -- there
