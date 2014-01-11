@@ -41,10 +41,6 @@ public class ConnectionService extends Service {
 
 	private static String LOGTAG = ConnectionService.class.getName();
 
-	// Intended -- but currently we get told to piss off:
-	// private static String SPEEDY_URL =
-	// "http://dev.speedycrew.com/api/1/create";
-
 	// Testing -- works enough to get us a valid HTML response.
 	// private static String SPEEDY_URL = "https://www.google.co.uk/";
 
@@ -52,6 +48,7 @@ public class ConnectionService extends Service {
 	// captain cook, though -- must be doing basic auth wrong.
 	private static String UPDATE_SPEEDY_URL = "https://dev.speedycrew.com/api/1/update_profile";
 
+	// This was only needed initially before we got SSL working.
 	//private static String X_SPEEDY_CREW_USER_ID = "X-SpeedyCrew-UserId";
 
 	private KeyManager mKeyManager;
@@ -146,12 +143,10 @@ public class ConnectionService extends Service {
 					try {
 						httpPost = new HttpPost(UPDATE_SPEEDY_URL);
 
+						// This was only needed initially before we got SSL working.
 						//httpPost.addHeader(X_SPEEDY_CREW_USER_ID, uniqueUserId);
 
-						// Try adding in our test dev server credentials.
-						// Hmmm. Still not doing this right... getting "401
-						// Authorization Required".
-						
+						// Needed for **dev**.speedycrew.com
 						httpPost.setHeader("Authorization", "Basic " + Base64.encodeToString("captain:cook".getBytes(), Base64.NO_WRAP));
 
 						// Set post data.
