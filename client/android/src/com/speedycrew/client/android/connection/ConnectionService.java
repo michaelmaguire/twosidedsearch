@@ -50,9 +50,9 @@ public class ConnectionService extends Service {
 
 	// Temporary -- since HTTPS gets us told to piss off -- still can't get past
 	// captain cook, though -- must be doing basic auth wrong.
-	private static String SPEEDY_URL = "http://dev.speedycrew.com/api/1/create";
+	private static String SPEEDY_URL = "https://dev.speedycrew.com/api/1/create";
 
-	private static String X_SPEEDY_CREW_USER_ID = "X-SpeedyCrew-UserId";
+	//private static String X_SPEEDY_CREW_USER_ID = "X-SpeedyCrew-UserId";
 
 	private KeyManager mKeyManager;
 
@@ -146,12 +146,13 @@ public class ConnectionService extends Service {
 					try {
 						httpPost = new HttpPost(SPEEDY_URL);
 
-						httpPost.addHeader(X_SPEEDY_CREW_USER_ID, uniqueUserId);
+						//httpPost.addHeader(X_SPEEDY_CREW_USER_ID, uniqueUserId);
 
 						// Try adding in our test dev server credentials.
 						// Hmmm. Still not doing this right... getting "401
 						// Authorization Required".
-						httpPost.addHeader("Authorization", "basic " + Base64.encode("captain:cook".getBytes(), Base64.NO_WRAP));
+						
+						httpPost.setHeader("Authorization", "Basic " + Base64.encodeToString("captain:cook".getBytes(), Base64.NO_WRAP));
 
 						// Set post data.
 						List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(2);
