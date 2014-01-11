@@ -1,6 +1,7 @@
 package com.speedycrew.client.android.connection;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.StringWriter;
 import java.math.BigInteger;
 import java.security.InvalidAlgorithmParameterException;
@@ -30,6 +31,7 @@ import android.content.Context;
 import android.provider.Settings.Secure;
 import android.security.KeyPairGeneratorSpec;
 
+import com.speedycrew.client.android.R;
 import com.speedycrew.client.android.SpeedyCrewApplication;
 
 public final class KeyManager {
@@ -228,17 +230,25 @@ public final class KeyManager {
 
 	public SSLSocketFactory getSSLSocketFactory() throws KeyStoreException, NoSuchAlgorithmException, UnrecoverableKeyException, CertificateException, IOException,
 			KeyManagementException {
-		KeyStore keyStore = KeyStore.getInstance(ANDROID_KEY_STORE);
-		keyStore.load(null);
+		Context context = SpeedyCrewApplication.getAppContext();
 
-		// initialize key manager factory with the read client certificate
-		KeyManagerFactory keyManagerFactory = null;
-		keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-		keyManagerFactory.init(keyStore, "MyPassword".toCharArray());
+		// Read in our client certificate from hardware.
+		KeyStore clientKeyStore = KeyStore.getInstance(ANDROID_KEY_STORE);
+		clientKeyStore.load(null);
+
+		// Initialize key manager factory with the client certificate.
+		KeyManagerFactory clientKeyManagerFactory = null;
+		clientKeyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+		clientKeyManagerFactory.init(clientKeyStore, "MyPassword".toCharArray());
+
+		// Read in the root CA certs for speedycrew.com which we'll trust from the server.
+		KeyStore localTrustStore = KeyStore.getInstance("BKS");
+		InputStream in = context.getResources().openRawResource(R.raw.mytruststore);
+		localTrustStore.load(in, "secret".toCharArray());
 
 		// initialize SSLSocketFactory to use the certificates
 		SSLSocketFactory socketFactory = null;
-		socketFactory = new SSLSocketFactory(SSLSocketFactory.TLS, keyStore, null, null, null, null);
+		socketFactory = new SSLSocketFactory(SSLSocketFactory.TLS, clientKeyStore, null, localTrustStore, null, null);
 		return socketFactory;
 	}
 }
