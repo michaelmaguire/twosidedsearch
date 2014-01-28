@@ -8,8 +8,5 @@
     <header
         android:fragment="com.speedycrew.client.android.ProfileActivity$NotificationPreferenceFragment"
         android:title="@string/pref_header_notifications" />
-    <header
-        android:fragment="com.speedycrew.client.android.ProfileActivity$DataSyncPreferenceFragment"
-        android:title="@string/pref_header_data_sync" />
 
 </preference-headers>

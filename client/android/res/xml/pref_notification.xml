@@ -1,29 +1,24 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
 
-    <!--
-         A 'parent' preference, which enables/disables child preferences (below)
-         when checked/unchecked.
-    -->
-    <CheckBoxPreference
-        android:defaultValue="true"
-        android:key="notifications_new_message"
-        android:title="@string/pref_title_new_message_notifications" />
-
-    <!-- Allows the user to choose a ringtone in the 'notification' category. -->
-    <!-- NOTE: This preference will be enabled only when the checkbox above is checked. -->
-    <!-- NOTE: RingtonePreference's summary should be set to its value by the activity code. -->
-    <RingtonePreference
-        android:defaultValue="content://settings/system/notification_sound"
-        android:dependency="notifications_new_message"
-        android:key="notifications_new_message_ringtone"
-        android:ringtoneType="notification"
-        android:title="@string/pref_title_ringtone" />
-
-    <!-- NOTE: This preference will be enabled only when the checkbox above is checked. -->
-    <CheckBoxPreference
-        android:defaultValue="true"
-        android:dependency="notifications_new_message"
-        android:key="notifications_new_message_vibrate"
-        android:title="@string/pref_title_vibrate" />
+        <EditTextPreference
+        android:capitalize="words"
+        android:defaultValue="@string/pref_default_contact_email"
+        android:inputType="textCapWords"
+        android:key="contact_email"
+        android:maxLines="1"
+        android:selectAllOnFocus="true"
+        android:singleLine="true"
+        android:title="@string/pref_title_contact_email" />
+    
+    
+    <!-- NOTE: ListPreference's summary should be set to its value by the activity code. -->
+    <ListPreference
+        android:defaultValue="-1"
+        android:entries="@array/pref_show_contact_email_titles"
+        android:entryValues="@array/pref_show_contact_email_values"
+        android:key="show_contact_email_list"
+        android:negativeButtonText="@null"
+        android:positiveButtonText="@null"
+        android:title="@string/pref_title_show_contact_email" />
 
 </PreferenceScreen>
