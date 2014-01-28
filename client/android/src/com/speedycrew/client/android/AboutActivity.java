@@ -6,13 +6,13 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 
-public class MainActivity extends Activity {
+public class AboutActivity extends Activity {
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
-		setContentView(R.layout.activity_main);
+		setContentView(R.layout.activity_about);
 
 		// use this to start and trigger a service
 		Intent serviceStartingIntent = new Intent(this, com.speedycrew.client.android.connection.ConnectionService.class);
@@ -26,7 +26,7 @@ public class MainActivity extends Activity {
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu; this adds items to the action bar if it is present.
-		getMenuInflater().inflate(R.menu.main, menu);
+		getMenuInflater().inflate(R.menu.about, menu);
 		return true;
 	}
 
@@ -34,16 +34,13 @@ public class MainActivity extends Activity {
 	public boolean onOptionsItemSelected(MenuItem item) {
 		// Handle item selection
 		switch (item.getItemId()) {
-		case R.id.action_profile:
-		{
-			Intent intent = new Intent(this, ProfileActivity.class);
-			startActivity(intent);
-			return true;
-		}
-		case R.id.action_about:
-		{
-			Intent intent = new Intent(this, AboutActivity.class);
-			startActivity(intent);
+		case R.id.action_send_feedback: {
+			Intent sendFeedbackViaEmail = new Intent(Intent.ACTION_SEND);
+			sendFeedbackViaEmail.setType("text/email");
+			sendFeedbackViaEmail.putExtra(Intent.EXTRA_EMAIL, new String[] { "android-feedback@speedycrew.com" });
+			sendFeedbackViaEmail.putExtra(Intent.EXTRA_SUBJECT, "Feedback");
+			sendFeedbackViaEmail.putExtra(Intent.EXTRA_TEXT, "Dear developer," + "");
+			startActivity(Intent.createChooser(sendFeedbackViaEmail, "Send Feedback:"));
 			return true;
 		}
 		default:
