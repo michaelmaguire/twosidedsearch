@@ -14,6 +14,7 @@
 {
     NSLog(@"application launched");
     self.data = [[SpCData alloc] init];
+    [self.data updateSearches];
     return YES;
 }
 							

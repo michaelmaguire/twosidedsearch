@@ -11,6 +11,6 @@
 
 @interface SpCSearchListener : NSObject
 
-- (void)resultsChanged:(SpCSearch*)search;
+- (void)resultsChanged:(NSObject*)search;
 
 @end

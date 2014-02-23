@@ -8,12 +8,15 @@
 
 #import "SpCData.h"
 #import "SpcDatabase.h"
+#import "SpCSearch.h"
+#import "SpCSearchListener.h"
 #import <Foundation/Foundation.h>
 #import <Foundation/NSJSONSerialization.h>
 
 
 @interface SpCData()
 @property NSString* baseURL;
+@property NSMutableDictionary* listeners;
 @end
 
 @implementation SpCData
@@ -27,6 +30,8 @@
     [self sendHttpRequest: query];
     
     self.searches = [[NSMutableArray alloc] init]; //-dk:TODO recover stored searches
+    self.listeners = [[NSMutableDictionary alloc] init];
+    
     return self;
 }
 
@@ -39,9 +44,43 @@
     [self sendHttpRequest: query];
 }
 
+- (void)updateSearches
+{
+    NSString* query = [NSString stringWithFormat:@"searches?x-id=%@", self.identity];
+    [self sendHttpRequest: query];
+}
+
+
 - (void)receivedResponse:(NSData*)data
 {
     NSLog(@"received reponse: '%@'", [[NSString alloc] initWithData: data encoding: NSUTF8StringEncoding]);
+    NSData* json = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
+    if ([json isKindOfClass: [NSDictionary class]]) {
+        NSDictionary* dict = (NSDictionary*)json;
+        NSString* type = [dict objectForKey: @"message_type"];
+        if (type) {
+            NSArray* array = NULL;
+            if ([type isEqual:@"searches_response"]
+                && (array = [dict objectForKey: @"searches"])) {
+                NSLog(@"processing searches response: %d", [array count]);
+                [self.searches removeAllObjects];
+                for (int i = 0, count = [array count]; i != count; ++i) {
+                    SpCSearch* search = [[SpCSearch alloc] initWithDictionary: [array objectAtIndex: i]];
+                    [self.searches addObject: search];
+                }
+                [self notify];
+            }
+            else {
+                NSLog(@"unprocessed message type=: %@", type);
+            }
+        }
+        else {
+            NSLog(@"no message type found: %@", [[NSString alloc] initWithData: data encoding: NSUTF8StringEncoding]);
+        }
+    }
+    else {
+        NSLog(@"received unknown reponse: '%@'", [[NSString alloc] initWithData: data encoding: NSUTF8StringEncoding]);
+    }
 }
 
 - (void)sendHttpRequest:(NSString*)query
@@ -61,5 +100,29 @@
          }
      }];
 }
+
+- (void)addListener:(NSObject*)listener withId:(NSString*)id
+{
+    [self.listeners setObject:listener forKey:id];
+}
+- (void)removeListenerWithId:(NSString*)id
+{
+    [self.listeners removeObjectForKey:id];
+}
+- (void)notify
+{
+    NSEnumerator *enumerator = [self.listeners objectEnumerator];
+    SpCSearchListener* listener = nil;
+    while ((listener = [enumerator nextObject])) {
+        if (listener != nil) {
+            NSLog(@"sending resultsChanged");
+            [listener resultsChanged: self];
+        }
+        else {
+            NSLog(@"listener is nil");
+        }
+    }
+}
+
 
 @end

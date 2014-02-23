@@ -26,6 +26,7 @@
     self.actions = [[NSMutableArray alloc] initWithObjects:@"User", @"Invites", nil];
     SpCAppDelegate* delegate = (((SpCAppDelegate*) [UIApplication sharedApplication].delegate));
     self.searches = delegate.data.searches;
+    [delegate.data addListener: self withId:@"ViewController"];
     self.currentSearch = [[SpCSearch alloc] init];
     [self.currentSearch addListener:self withId: @"ViewController"];
     self.tableView.bounces = YES;
@@ -164,7 +165,9 @@
 - (void)resultsChanged:(id)sender
 {
     NSLog(@"control control: received change!");
-    NSIndexSet* indices = [[NSIndexSet alloc] initWithIndex:1];
+    NSMutableIndexSet* indices = [[NSMutableIndexSet alloc] init];
+    [indices addIndex: 1];
+    [indices addIndex: 2];
     [self.tableView reloadSections:indices withRowAnimation: UITableViewRowAnimationNone];
 }
 @end
