@@ -7,8 +7,9 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "SpCChanging.h"
 
-@interface SpCSearch : NSObject
+@interface SpCSearch : SpCChanging
 
 @property (readonly) NSString* name;
 @property (readonly) NSString* query;
@@ -20,8 +21,6 @@
 - (SpCSearch*)init;
 - (SpCSearch*)initWithDictionary:(NSDictionary*)dict;
 - (void)updateQueryWith:(NSString*)query;
-- (void)addListener:(NSObject*)listener withId:(NSString*)id;
-- (void)removeListenerWithId:(NSString*)id;
 - (NSString*) encodeURL: (NSString*) str; // this should life in some better place...
 
 @end

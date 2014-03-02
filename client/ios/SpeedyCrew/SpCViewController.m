@@ -26,9 +26,11 @@
     self.actions = [[NSMutableArray alloc] initWithObjects:@"User", @"Invites", nil];
     SpCAppDelegate* delegate = (((SpCAppDelegate*) [UIApplication sharedApplication].delegate));
     self.searches = delegate.data.searches;
-    [delegate.data addListener: self withId:@"ViewController"];
+
     self.currentSearch = [[SpCSearch alloc] init];
-    [self.currentSearch addListener:self withId: @"ViewController"];
+    __weak typeof(self) weakSelf = self;
+    [delegate.data addListener:^(NSString* name, NSObject* object){ [weakSelf resultsChanged: object]; } withId: @"ViewController"];
+    [self.currentSearch addListener:^(NSString* name, NSObject* object){ [weakSelf resultsChanged: object]; } withId: @"ViewController"];
     self.tableView.bounces = YES;
 }
 
@@ -81,7 +83,7 @@
 
 - (NSInteger)tableView:(UITableView *)tv numberOfRowsInSection:(NSInteger)section
 {
-    int result =
+    long result =
           section == 0? 1
         : section == 1? [self.currentSearch.results count]
         : section == 2? [self.searches count]
@@ -142,7 +144,7 @@
     if (0 < self.search.text.length) {
         [self.currentSearch updateQueryWith:self.search.text];
         NSLog(@"adding query %s", self.currentSearch.name.UTF8String);
-        int index = 0, size = [self.searches count];
+        long index = 0, size = [self.searches count];
         for (; index != size; ++index) {
             SpCSearch* search = self.searches[index];
             if ([search.id isEqualToString: self.currentSearch.id]) {

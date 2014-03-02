@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		AB6EDE581875EC0D0026A1AB /* SpCResult.m in Sources */ = {isa = PBXBuildFile; fileRef = AB6EDE571875EC0D0026A1AB /* SpCResult.m */; };
-		AB6EDE5B1875F0220026A1AB /* SpCSearchListener.m in Sources */ = {isa = PBXBuildFile; fileRef = AB6EDE5A1875F0220026A1AB /* SpCSearchListener.m */; };
 		AB6EDE5E187701AE0026A1AB /* SpCSearchViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = AB6EDE5D187701AE0026A1AB /* SpCSearchViewController.m */; };
 		AB6EDE61187799BB0026A1AB /* SpCUserViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = AB6EDE60187799BB0026A1AB /* SpCUserViewController.m */; };
 		AB6EDE64187869E20026A1AB /* SpCDatabase.m in Sources */ = {isa = PBXBuildFile; fileRef = AB6EDE63187869E20026A1AB /* SpCDatabase.m */; };
@@ -30,6 +29,7 @@
 		AB9C2E81185001DB00454DCD /* SpCInvitesController.m in Sources */ = {isa = PBXBuildFile; fileRef = AB9C2E80185001DB00454DCD /* SpCInvitesController.m */; };
 		ABAC2F8718720A4A006D7F7E /* SpCData.m in Sources */ = {isa = PBXBuildFile; fileRef = ABAC2F8618720A4A006D7F7E /* SpCData.m */; };
 		ABAC2F8A18748081006D7F7E /* SpCSearch.m in Sources */ = {isa = PBXBuildFile; fileRef = ABAC2F8918748081006D7F7E /* SpCSearch.m */; };
+		ABEC17E918C3B00E00D54C93 /* SpCChanging.m in Sources */ = {isa = PBXBuildFile; fileRef = ABEC17E818C3B00E00D54C93 /* SpCChanging.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -45,8 +45,6 @@
 /* Begin PBXFileReference section */
 		AB6EDE561875EC0D0026A1AB /* SpCResult.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SpCResult.h; sourceTree = "<group>"; };
 		AB6EDE571875EC0D0026A1AB /* SpCResult.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SpCResult.m; sourceTree = "<group>"; };
-		AB6EDE591875F0220026A1AB /* SpCSearchListener.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SpCSearchListener.h; sourceTree = "<group>"; };
-		AB6EDE5A1875F0220026A1AB /* SpCSearchListener.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SpCSearchListener.m; sourceTree = "<group>"; };
 		AB6EDE5C187701AE0026A1AB /* SpCSearchViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SpCSearchViewController.h; sourceTree = "<group>"; };
 		AB6EDE5D187701AE0026A1AB /* SpCSearchViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SpCSearchViewController.m; sourceTree = "<group>"; };
 		AB6EDE5F187799BB0026A1AB /* SpCUserViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SpCUserViewController.h; sourceTree = "<group>"; };
@@ -79,6 +77,8 @@
 		ABAC2F8618720A4A006D7F7E /* SpCData.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SpCData.m; sourceTree = "<group>"; };
 		ABAC2F8818748081006D7F7E /* SpCSearch.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SpCSearch.h; sourceTree = "<group>"; };
 		ABAC2F8918748081006D7F7E /* SpCSearch.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SpCSearch.m; sourceTree = "<group>"; };
+		ABEC17E718C3B00E00D54C93 /* SpCChanging.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SpCChanging.h; sourceTree = "<group>"; };
+		ABEC17E818C3B00E00D54C93 /* SpCChanging.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SpCChanging.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -145,8 +145,6 @@
 				AB9C2E56184EA15400454DCD /* Main.storyboard */,
 				AB9C2E59184EA15400454DCD /* SpCViewController.h */,
 				AB9C2E5A184EA15400454DCD /* SpCViewController.m */,
-				AB6EDE591875F0220026A1AB /* SpCSearchListener.h */,
-				AB6EDE5A1875F0220026A1AB /* SpCSearchListener.m */,
 				AB9C2E5C184EA15400454DCD /* Images.xcassets */,
 				AB9C2E4B184EA15400454DCD /* Supporting Files */,
 				AB9C2E7F185001DB00454DCD /* SpCInvitesController.h */,
@@ -163,6 +161,8 @@
 				AB6EDE5D187701AE0026A1AB /* SpCSearchViewController.m */,
 				AB6EDE5F187799BB0026A1AB /* SpCUserViewController.h */,
 				AB6EDE60187799BB0026A1AB /* SpCUserViewController.m */,
+				ABEC17E718C3B00E00D54C93 /* SpCChanging.h */,
+				ABEC17E818C3B00E00D54C93 /* SpCChanging.m */,
 			);
 			path = SpeedyCrew;
 			sourceTree = "<group>";
@@ -295,7 +295,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				AB6EDE61187799BB0026A1AB /* SpCUserViewController.m in Sources */,
-				AB6EDE5B1875F0220026A1AB /* SpCSearchListener.m in Sources */,
 				AB9C2E51184EA15400454DCD /* main.m in Sources */,
 				AB6EDE5E187701AE0026A1AB /* SpCSearchViewController.m in Sources */,
 				AB6EDE64187869E20026A1AB /* SpCDatabase.m in Sources */,
@@ -303,6 +302,7 @@
 				ABAC2F8A18748081006D7F7E /* SpCSearch.m in Sources */,
 				AB9C2E81185001DB00454DCD /* SpCInvitesController.m in Sources */,
 				AB9C2E55184EA15400454DCD /* SpCAppDelegate.m in Sources */,
+				ABEC17E918C3B00E00D54C93 /* SpCChanging.m in Sources */,
 				AB9C2E5B184EA15400454DCD /* SpCViewController.m in Sources */,
 				AB6EDE581875EC0D0026A1AB /* SpCResult.m in Sources */,
 			);

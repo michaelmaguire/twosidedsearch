@@ -7,8 +7,9 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "SpCChanging.h"
 
-@interface SpCData : NSObject
+@interface SpCData : SpCChanging
 
 @property NSString*       identity;
 @property NSMutableArray* searches;
@@ -16,9 +17,5 @@
 - (SpCData*)init;
 - (void)updateSetting:(NSString*)name with:(NSString*)value;
 - (void)updateSearches;
-- (void)addListener:(NSObject*)listener withId:(NSString*)id;
-- (void)removeListenerWithId:(NSString*)id;
-- (void)notify;
-
 
 @end

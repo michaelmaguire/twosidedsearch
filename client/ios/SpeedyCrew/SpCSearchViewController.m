@@ -28,7 +28,8 @@
 {
     [super viewDidLoad];
     self.tableView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-    [self.search addListener:self withId:@"Search"];
+    __weak typeof(self) weakSelf = self;
+    [self.search addListener:^(NSString* name, NSObject* object){ [weakSelf resultsChanged: (SpCSearch*)object]; } withId: @"Search"];
 
     // Uncomment the following line to preserve selection between presentations.
     // self.clearsSelectionOnViewWillAppear = NO;

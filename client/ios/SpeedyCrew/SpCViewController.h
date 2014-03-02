@@ -8,7 +8,6 @@
 
 #import <UIKit/UIKit.h>
 #import "SpCSearch.h"
-#import "SpCSearchListener.h"
 
 @interface SpCViewController : UIViewController<UITableViewDataSource, UITableViewDelegate, UISearchBarDelegate>
 

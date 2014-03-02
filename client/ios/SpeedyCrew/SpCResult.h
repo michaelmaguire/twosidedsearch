@@ -14,5 +14,6 @@
 @property NSString* value;
 
 - (SpCResult*)initWithId: (NSString*)id value: (NSString*) value;
+- (SpCResult*)initWithDictionary: (NSDictionary*) dict;
 
 @end

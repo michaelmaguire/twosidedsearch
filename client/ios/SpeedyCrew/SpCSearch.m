@@ -7,7 +7,6 @@
 //
 
 #import "SpCSearch.h"
-#import "SpCSearchListener.h"
 #import "SpCResult.h"
 #import "SpCAppDelegate.h"
 #import "Foundation/Foundation.h"
@@ -17,7 +16,6 @@
 @property NSString*            uid;
 @property NSString*            uuid; // user identifier
 @property NSString*            queryString;
-@property NSMutableDictionary* listeners;
 @property NSString*            side;
 @end
 
@@ -43,7 +41,6 @@ static NSString* baseURL = @"http://captain:cook@dev.speedycrew.com/api/1";
     self.uuid = delegate.data.identity;
     self.queryString = @"";
     self.results = [[NSMutableArray alloc] init];
-    self.listeners = [[NSMutableDictionary alloc] init];
     self.side = @"PROVIDE";
     return self;
 }
@@ -54,6 +51,7 @@ static NSString* baseURL = @"http://captain:cook@dev.speedycrew.com/api/1";
     NSString* tmp = NULL;
     if ((tmp = [dict objectForKey: @"id"])) {
         self.uid  = tmp;
+        [self makeHttpRequestForResults];
     }
     if ((tmp = [dict objectForKey: @"side"])) {
         self.side = tmp;
@@ -89,9 +87,9 @@ static NSString* baseURL = @"http://captain:cook@dev.speedycrew.com/api/1";
     NSData* json = [NSJSONSerialization JSONObjectWithData:response options:0 error:nil];
     if ([json isKindOfClass: [NSArray class]]) {
         NSArray* jsonArray = (NSArray*)json;
-        NSLog(@"JSON array count=%d", [jsonArray count]);
+        NSLog(@"JSON array count=%ld", (long)[jsonArray count]);
         NSMutableArray* results = [[NSMutableArray alloc] init];
-        for (int i = 0, size = [jsonArray count]; i != size; ++i) {
+        for (long i = 0, size = [jsonArray count]; i != size; ++i) {
             NSDictionary* result = [jsonArray objectAtIndex:i];
             NSString* id = [result objectForKey: @"id"];
             NSString* value = [result objectForKey: @"value"];
@@ -99,16 +97,7 @@ static NSString* baseURL = @"http://captain:cook@dev.speedycrew.com/api/1";
         }
         self.results = results;
     
-        NSEnumerator *enumerator = [self.listeners objectEnumerator];
-        SpCSearchListener* listener = nil;
-        while ((listener = [enumerator nextObject])) {
-            if (listener != nil) {
-                [listener resultsChanged: self];
-            }
-            else {
-                NSLog(@"listener is nil");
-            }
-        }
+        [self notify];
     }
     else if ([json isKindOfClass: [NSDictionary class]]) {
         NSLog(@"JSON dictionary");
@@ -118,13 +107,11 @@ static NSString* baseURL = @"http://captain:cook@dev.speedycrew.com/api/1";
     }
 }
 
-- (void)makeHttpRequestForQuery:(NSString*)query
+- (void)makeHttpRequestForResults
 {
-    NSLog(@"making request for query: %s", query.UTF8String);
-    NSString* str =[NSString stringWithFormat: @"%@/create_search?x-id=%@&side=PROVIDE&longitude=-0.15&latitude=51.5&request_id=%@&query=%@",
-                    baseURL, self.uuid, self.uid, [self encodeURL:query]];
+    NSLog(@"making request for results: %@", self.uid);
+    NSString* str =[NSString stringWithFormat: @"%@/search_results?x-id=%@&search=%@", baseURL, self.uuid, self.uid];
     NSLog(@"actual query='%@'", str);
-    // str = [NSString stringWithFormat:@"http://www.dietmar-kuehl.de/%@.json", query];
     NSURL* url = [NSURL URLWithString:str];
     NSURLRequest* request = [NSURLRequest requestWithURL:url];
     NSOperationQueue* q = [NSOperationQueue mainQueue];
@@ -133,7 +120,17 @@ static NSString* baseURL = @"http://captain:cook@dev.speedycrew.com/api/1";
             if (d) {
                 NSString* s = [[NSString alloc] initWithData:d encoding:NSUTF8StringEncoding];
                 NSLog(@"received data: '%@'", s);
-                [self receivedResponse:d];
+                NSData* json = [NSJSONSerialization JSONObjectWithData:d options:0 error:nil];
+                if ([json isKindOfClass: [NSDictionary class]]) {
+                    NSDictionary* dict = (NSDictionary*)json;
+                    NSArray* results = [dict objectForKey: @"results"];
+                    if (results) {
+                        [self.results removeAllObjects];
+                        for (long i = 0, count = [results count]; i != count; ++i) {
+                            [self.results addObject: [[SpCResult alloc] initWithDictionary: [results objectAtIndex: i]]];
+                        }
+                    }
+                }
             }
             else {
                 NSLog(@"received error: %@", [err localizedDescription]);
@@ -141,14 +138,27 @@ static NSString* baseURL = @"http://captain:cook@dev.speedycrew.com/api/1";
         }];
 }
 
-- (void)addListener:(NSObject*)listener withId:(NSString*)id
+- (void)makeHttpRequestForQuery:(NSString*)query
 {
-    [self.listeners setObject:listener forKey:id];
-}
-- (void)removeListenerWithId:(NSString*)id
-{
-    [self.listeners removeObjectForKey:id];
-}
+    NSLog(@"making request for query: %s", query.UTF8String);
+    NSString* str =[NSString stringWithFormat: @"%@/create_search?x-id=%@&side=PROVIDE&longitude=-0.15&latitude=51.5&request_id=%@&query=%@",
+                    baseURL, self.uuid, self.uid, [self encodeURL:query]];
+    NSLog(@"actual query='%@'", str);
+    NSURL* url = [NSURL URLWithString:str];
+    NSURLRequest* request = [NSURLRequest requestWithURL:url];
+    NSOperationQueue* q = [NSOperationQueue mainQueue];
+    [NSURLConnection sendAsynchronousRequest:request queue:q completionHandler:
+     ^(NSURLResponse* resp, NSData* d, NSError* err) {
+         if (d) {
+             NSString* s = [[NSString alloc] initWithData:d encoding:NSUTF8StringEncoding];
+             NSLog(@"received data: '%@'", s);
+             [self receivedResponse:d];
+         }
+         else {
+             NSLog(@"received error: %@", [err localizedDescription]);
+         }
+     }];
 
+}
 
 @end

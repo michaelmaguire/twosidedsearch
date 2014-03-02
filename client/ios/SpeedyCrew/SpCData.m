@@ -9,7 +9,6 @@
 #import "SpCData.h"
 #import "SpcDatabase.h"
 #import "SpCSearch.h"
-#import "SpCSearchListener.h"
 #import <Foundation/Foundation.h>
 #import <Foundation/NSJSONSerialization.h>
 
@@ -62,9 +61,9 @@
             NSArray* array = NULL;
             if ([type isEqual:@"searches_response"]
                 && (array = [dict objectForKey: @"searches"])) {
-                NSLog(@"processing searches response: %d", [array count]);
+                NSLog(@"processing searches response: %ld", (long)[array count]);
                 [self.searches removeAllObjects];
-                for (int i = 0, count = [array count]; i != count; ++i) {
+                for (long i = 0, count = [array count]; i != count; ++i) {
                     SpCSearch* search = [[SpCSearch alloc] initWithDictionary: [array objectAtIndex: i]];
                     [self.searches addObject: search];
                 }
@@ -100,29 +99,5 @@
          }
      }];
 }
-
-- (void)addListener:(NSObject*)listener withId:(NSString*)id
-{
-    [self.listeners setObject:listener forKey:id];
-}
-- (void)removeListenerWithId:(NSString*)id
-{
-    [self.listeners removeObjectForKey:id];
-}
-- (void)notify
-{
-    NSEnumerator *enumerator = [self.listeners objectEnumerator];
-    SpCSearchListener* listener = nil;
-    while ((listener = [enumerator nextObject])) {
-        if (listener != nil) {
-            NSLog(@"sending resultsChanged");
-            [listener resultsChanged: self];
-        }
-        else {
-            NSLog(@"listener is nil");
-        }
-    }
-}
-
 
 @end
