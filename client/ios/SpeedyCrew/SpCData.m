@@ -49,6 +49,19 @@
     [self sendHttpRequest: query];
 }
 
+- (void)deleteSearch:(SpCSearch*)search
+{
+    for (int i = 0, end = [self.searches count]; i != end; ++i) {
+        if (search == [self.searches objectAtIndex:i]) {
+            [self.searches removeObjectAtIndex:i];
+            break;
+        }
+    }
+    NSString* query = [NSString stringWithFormat:@"delete_search?x-id=%@&search=%@",
+                       self.identity, search.id];
+    [self sendHttpRequest: query];
+    [self notify];
+}
 
 - (void)receivedResponse:(NSData*)data
 {

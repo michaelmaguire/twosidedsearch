@@ -8,6 +8,7 @@
 
 #import "SpCSearchViewController.h"
 #import "SpCResult.h"
+#import "SpCAppDelegate.h"
 
 @interface SpCSearchViewController ()
 @property UISearchBar* searchBar;
@@ -48,13 +49,14 @@
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tv
 {
-    return 2;
+    return 3;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
     return 0 == section? 1
          : 1 == section? [self.search.results count]
+         : 2 == section? 1
          : 0;
 }
 
@@ -69,11 +71,26 @@
         }
         return cell;
     }
-    UITableViewCell *cell = [tv dequeueReusableCellWithIdentifier:@"Result" forIndexPath:path];
-    SpCResult* result = [self.search.results objectAtIndex:path.row];
-    cell.textLabel.text = result.value;
+    else if (1 == path.section) {
+        UITableViewCell *cell = [tv dequeueReusableCellWithIdentifier:@"Result" forIndexPath:path];
+        SpCResult* result = [self.search.results objectAtIndex:path.row];
+        cell.textLabel.text = result.value;
+        return cell;
+    }
+    else {
+        UITableViewCell *cell = [tv dequeueReusableCellWithIdentifier:@"DeleteSearch"];
+        return cell;
+    }
     
-    return cell;
+    return nil;
+}
+
+- (IBAction)deleteSearch:(id)sender {
+    NSLog(@"Delete Search was clicked: search=%@", self.search.id);
+    UINavigationController *navController = [self navigationController];
+    [navController popViewControllerAnimated: YES];
+    SpCAppDelegate* delegate = (((SpCAppDelegate*) [UIApplication sharedApplication].delegate));
+    [delegate.data deleteSearch:self.search];
 }
 
 /*

@@ -8,6 +8,7 @@
 
 #import <Foundation/Foundation.h>
 #import "SpCChanging.h"
+#import "SpCSearch.h"
 
 @interface SpCData : SpCChanging
 
@@ -17,5 +18,6 @@
 - (SpCData*)init;
 - (void)updateSetting:(NSString*)name with:(NSString*)value;
 - (void)updateSearches;
+- (void)deleteSearch:(SpCSearch*)search;
 
 @end
