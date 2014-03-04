@@ -100,7 +100,21 @@ static NSString* baseURL = @"http://captain:cook@dev.speedycrew.com/api/1";
         [self notify];
     }
     else if ([json isKindOfClass: [NSDictionary class]]) {
-        NSLog(@"JSON dictionary");
+        NSDictionary* dict = (NSDictionary*)json;
+        NSString* type = [dict objectForKey: @"message_type"];
+        if (type) {
+            NSString* id = nil;
+            if ([type isEqual:@"create_search_response"]
+                && (id = [dict objectForKey: @"search_id"])) {
+                self.uid = id;
+                [self makeHttpRequestForResults];
+                [[SpCAppDelegate instance].data addSearch:self];
+            }
+            else {
+                NSLog(@"unprocessed message type: %@", type);
+            }
+        }
+        
     }
     else {
         NSLog(@"some other JSON object");

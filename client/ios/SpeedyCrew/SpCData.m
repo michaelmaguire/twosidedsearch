@@ -49,6 +49,21 @@
     [self sendHttpRequest: query];
 }
 
+- (void)addSearch:(SpCSearch*)search
+{
+    int i = 0, end = [self.searches count];
+    for (; i != end; ++i) {
+        if (search == [self.searches objectAtIndex: i]) {
+            break;
+        }
+    }
+    if (i == end) {
+        [self.searches insertObject: search atIndex:0];
+    }
+    [self notify];
+}
+
+
 - (void)deleteSearch:(SpCSearch*)search
 {
     for (int i = 0, end = [self.searches count]; i != end; ++i) {

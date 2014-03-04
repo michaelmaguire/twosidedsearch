@@ -10,6 +10,11 @@
 
 @implementation SpCAppDelegate
 
++ (SpCAppDelegate*)instance
+{
+    return (((SpCAppDelegate*) [UIApplication sharedApplication].delegate));
+}
+
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
     NSLog(@"application launched");

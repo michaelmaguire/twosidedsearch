@@ -18,6 +18,7 @@
 - (SpCData*)init;
 - (void)updateSetting:(NSString*)name with:(NSString*)value;
 - (void)updateSearches;
+- (void)addSearch:(SpCSearch*)search;
 - (void)deleteSearch:(SpCSearch*)search;
 
 @end
