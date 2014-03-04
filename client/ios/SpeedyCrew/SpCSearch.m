@@ -155,8 +155,9 @@ static NSString* baseURL = @"http://captain:cook@dev.speedycrew.com/api/1";
 - (void)makeHttpRequestForQuery:(NSString*)query
 {
     NSLog(@"making request for query: %s", query.UTF8String);
-    NSString* str =[NSString stringWithFormat: @"%@/create_search?x-id=%@&side=PROVIDE&longitude=-0.15&latitude=51.5&request_id=%@&query=%@",
-                    baseURL, self.uuid, self.uid, [self encodeURL:query]];
+    NSString* side = [query hasSuffix: @"seek"]? @"SEEK&radius=5000": @"PROVIDE";
+    NSString* str =[NSString stringWithFormat: @"%@/create_search?x-id=%@&side=%@&longitude=-0.15&latitude=51.5&request_id=%@&query=%@",
+                    baseURL, self.uuid, side, self.uid, [self encodeURL:query]];
     NSLog(@"actual query='%@'", str);
     NSURL* url = [NSURL URLWithString:str];
     NSURLRequest* request = [NSURLRequest requestWithURL:url];
