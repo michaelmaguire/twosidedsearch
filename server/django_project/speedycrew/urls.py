@@ -16,6 +16,9 @@ urlpatterns = patterns('',
     url(r'^api/1/search_results$', 'scapi1.views.search_results', name='search_results'),
     url(r'^api/1/delete_search$', 'scapi1.views.delete_search', name='delete_search'),
 
+    url(r'^api/1/media/([0-9a-zA-Z:]+)$', 'scapi1.views.media_list', name='media_list'),
+    url(r'^api/1/media/([0-9a-zA-Z:]+)/([^/?]+)$', 'scapi1.views.media', name='media'),
+
     url(r'^api/1/trending$', 'scapi1.views.trending', name='trending'),
 
     # Examples:

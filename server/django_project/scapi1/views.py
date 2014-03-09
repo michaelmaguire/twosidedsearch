@@ -1,5 +1,5 @@
 from django.db import connection
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseNotFound, HttpResponseForbidden
 from django.shortcuts import render
 import hashlib
 import json
@@ -367,3 +367,135 @@ def trending(request):
                            "request_id" : request_id,
                            "status" : "OK",
                            "results" : results })
+
+def get_media_profile_id(cursor, fingerprint):
+    """Resolve the fingerprint provided in a media URL to a profile
+    ID, or -1 if unknown or banned/cancelled profile."""
+    # TODO the identifiers here are based on fingerprints for
+    # per-device certificates, so we work our way back to a profile
+    # that way (ie you could use the fingerprint for any of the user's
+    # devices); but in discussions we have assumed that there would be
+    # a special fingerprint for a profile, which hasn't been figured
+    # out/implemented yet
+    cursor.execute("""SELECT p.id
+                        FROM speedycrew.profile p
+                        JOIN speedycrew.device d ON d.profile = p.id
+                       WHERE d.id = %s
+                         AND p.status = 'ACTIVE'""",
+                   (fingerprint,))
+    row = cursor.fetchone()
+    if row == None:
+        return -1
+    media_profile_id, = row
+    return media_profile_id
+    
+def media_list(request, fingerprint):
+    """List the media stored for a given profile."""
+    profile_id = begin(request)
+    request_id = param_or_null(request, "request_id")
+    cursor = connection.cursor()
+
+    # whose media are we looking at?
+    media_profile_id = get_media_profile_id(cursor, fingerprint)
+    if media_profile_id == -1:
+        return json_response({ "message_type" : "media_response",
+                               "request_id" : request_id,
+                               "status" : "ERROR",
+                               "reason" : "No such profile" })
+
+    # find all files for that profile
+    cursor.execute("""SELECT name, mime_type, CAST(created AS TEXT), CAST(modified AS TEXT), version, size, public
+                        FROM speedycrew.file
+                       WHERE profile = %s
+                       ORDER BY name""",
+                   (media_profile_id,))
+    results = []
+    for name, mime_type, created, modified, version, size, public in cursor:
+        # if this is not your profile, you can only see things that
+        # are public
+        if public or profile_id == media_profile_id:
+            results.append({ "name" : name,
+                             "size" : size,
+                             "mime_type" : mime_type,
+                             "created" : created,
+                             "modified" : modified,
+                             "version" : version })
+    return json_response({ "message_type" : "media_list",
+                           "request_id" : request_id,
+                           "results" : results } )
+
+def media(request, fingerprint, name):
+    """GET, PUT or DELETE a file (media) for a given profile with a
+    given name."""
+    profile_id = begin(request)
+    cursor = connection.cursor()
+
+    # whose media are we looking at?
+    media_profile_id = get_media_profile_id(cursor, fingerprint)
+    if media_profile_id == -1:
+        return HttpResponseNotFound("Profile not found -- 404")
+    
+    if request.method == "GET":
+        # which file is it?
+        cursor.execute("""SELECT mime_type, data, modified, public
+                            FROM speedycrew.file
+                           WHERE profile = %s
+                             AND name = %s""",
+                       (media_profile_id, name))
+        row = cursor.fetchone()
+        if row == None:
+            return HttpResponseNotFound("File not found -- 404")
+        mime_type, data, modified, public = row
+        if profile_id != media_profile_id and not public:
+            return HttpResponseForbidden("Access denied -- 403")
+        # TODO: do something with modified time; also support HTTP HEAD so
+        # that clients can check if media has changed without fetching it?
+        return HttpResponse(data, content_type=mime_type)
+    elif request.method == "PUT":
+        # you can only PUT your own media
+        if profile_id != media_profile_id:
+            return HttpResponseForbidden("You are not allowed to do that -- 403")
+
+        public = True # TODO get from a header!
+        data = request.raw_post_data
+        size = len(data)
+        mime_type = "plain/text" # TODO get from a header!
+        # this is a lame UPSERT
+        cursor.execute("""SELECT 1
+                            FROM speedycrew.file
+                           WHERE profile = %s
+                             AND name = %s""",
+                       (media_profile_id, name))
+        row = cursor.fetchone()
+        if row == None:
+            cursor.execute("""INSERT INTO speedycrew.file (profile, name, mime_type, version, created, modified, size, data, public)
+                              VALUES (%s, %s, %s, 1, now(), now(), %s, %s, %s)""",
+                           (media_profile_id, name, mime_type, size, data, public))
+        else:
+            cursor.execute("""UPDATE speedycrew.file
+                                 SET data = %s,
+                                     size = %s,
+                                     version = version + 1,
+                                     modified = now(),
+                                     public = %s,
+                                     mime_type = %s
+                               WHERE profile = %s
+                                 AND name = %s""",
+                           (data, size, public, mime_type, media_profile_id, name))
+        return HttpResponse('Thank you!')
+    elif request.method == "DELETE":
+        # you can only DELETE your own media
+        if profile_id != media_profile_id:
+            return HttpResponseForbidden("You are not allowed to do that -- 403")
+        cursor.execute("""DELETE
+                            FROM speedycrew.file
+                           WHERE profile = %s
+                             AND name = %s""",
+                       (media_profile_id, name))
+        if cursor.rowcount == 1:
+            return HttpResponse("OK")
+        else:
+            return HttpResponseNotFound("File not found -- 404")
+        
+
+            

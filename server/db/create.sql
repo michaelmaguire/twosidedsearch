@@ -193,4 +193,19 @@ end;
 $$
 language 'plpgsql';
 
+create table speedycrew.file (
+  profile integer not null references speedycrew.profile(id),
+  name text not null,
+  mime_type text not null,
+  version integer not null,
+  created timestamptz not null,
+  modified timestamptz not null,
+  size integer not null,
+  data bytea not null,
+  public boolean not null,
+  primary key (profile, name)
+);
+
+comment on table speedycrew.file is 'Filesystem-like data storage for holding arbitrary profile data';
+
 commit;
