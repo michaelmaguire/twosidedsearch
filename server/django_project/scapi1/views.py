@@ -168,21 +168,23 @@ def searches(request):
     profile_id = begin(request)
     request_id = param_or_null(request, "request_id")
     cursor = connection.cursor()
-    cursor.execute("""SELECT s.id, s.query, s.side, s.created, array_agg(t.name) AS tags
+    cursor.execute("""SELECT s.id, s.query, s.side, s.created, array_agg(t.name) AS tags, s.status
                         FROM speedycrew.search s
                         JOIN speedycrew.search_tag st ON st.search = s.id
                         JOIN speedycrew.tag t ON st.tag = t.id
                        WHERE s.owner = %s
+                         AND s.status = 'ACTIVE'
                        GROUP BY s.id
                        ORDER BY s.created DESC""",
                    (profile_id, ))
     searches = []
-    for id, query, side, created, tags in cursor:
+    for id, query, side, created, tags, status in cursor:
         searches.append({ "id" : id,
                           "query" : query,
                           "side" : side,
                           "created" : created.isoformat(),
-                          "tags" : tags })
+                          "tags" : tags,
+                          "status" : status })
     return json_response({ "message_type" : "searches_response",
                            "request_id" : request_id,
                            "status" : "OK",
