@@ -7,9 +7,10 @@
 //
 
 #import <UIKit/UIKit.h>
+#import <CoreLocation/CoreLocation.h>
 #import "SpCSearch.h"
 
-@interface SpCViewController : UIViewController<UITableViewDataSource, UITableViewDelegate, UISearchBarDelegate>
+@interface SpCViewController : UIViewController<UITableViewDataSource, UITableViewDelegate, UISearchBarDelegate, CLLocationManagerDelegate>
 
 @property (strong, nonatomic) SpCSearch            *currentSearch;
 @property (strong, nonatomic) NSMutableArray       *searches;

@@ -14,6 +14,8 @@
 
 @property NSString*       identity;
 @property NSMutableArray* searches;
+@property float           longitude;
+@property float           latitude;
 
 - (SpCData*)init;
 - (void)updateSetting:(NSString*)name with:(NSString*)value;

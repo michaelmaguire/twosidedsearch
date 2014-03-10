@@ -74,7 +74,14 @@
     else if (1 == path.section) {
         UITableViewCell *cell = [tv dequeueReusableCellWithIdentifier:@"Result" forIndexPath:path];
         SpCResult* result = [self.search.results objectAtIndex:path.row];
-        cell.textLabel.text = result.value;
+        UIView* view = [cell.contentView viewWithTag:0];
+        if (view && 1 == view.subviews.count) {
+            UILabel* label = [view.subviews objectAtIndex:0];
+            label.text = result.value;
+        }
+        else {
+            cell.textLabel.text = result.value;
+        }
         return cell;
     }
     else {

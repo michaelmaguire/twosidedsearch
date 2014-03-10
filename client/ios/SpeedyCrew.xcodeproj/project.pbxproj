@@ -30,6 +30,7 @@
 		ABAC2F8718720A4A006D7F7E /* SpCData.m in Sources */ = {isa = PBXBuildFile; fileRef = ABAC2F8618720A4A006D7F7E /* SpCData.m */; };
 		ABAC2F8A18748081006D7F7E /* SpCSearch.m in Sources */ = {isa = PBXBuildFile; fileRef = ABAC2F8918748081006D7F7E /* SpCSearch.m */; };
 		ABEC17E918C3B00E00D54C93 /* SpCChanging.m in Sources */ = {isa = PBXBuildFile; fileRef = ABEC17E818C3B00E00D54C93 /* SpCChanging.m */; };
+		ABEE315318CCCADF0054488B /* CoreLocation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ABEE315218CCCADF0054488B /* CoreLocation.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -79,6 +80,7 @@
 		ABAC2F8918748081006D7F7E /* SpCSearch.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SpCSearch.m; sourceTree = "<group>"; };
 		ABEC17E718C3B00E00D54C93 /* SpCChanging.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SpCChanging.h; sourceTree = "<group>"; };
 		ABEC17E818C3B00E00D54C93 /* SpCChanging.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SpCChanging.m; sourceTree = "<group>"; };
+		ABEE315218CCCADF0054488B /* CoreLocation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreLocation.framework; path = System/Library/Frameworks/CoreLocation.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -86,6 +88,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				ABEE315318CCCADF0054488B /* CoreLocation.framework in Frameworks */,
 				AB6EDE6618786E830026A1AB /* libsqlite3.dylib in Frameworks */,
 				AB9C2E47184EA15400454DCD /* CoreGraphics.framework in Frameworks */,
 				AB9C2E49184EA15400454DCD /* UIKit.framework in Frameworks */,
@@ -128,6 +131,7 @@
 		AB9C2E43184EA15400454DCD /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				ABEE315218CCCADF0054488B /* CoreLocation.framework */,
 				AB6EDE6518786E830026A1AB /* libsqlite3.dylib */,
 				AB9C2E44184EA15400454DCD /* Foundation.framework */,
 				AB9C2E46184EA15400454DCD /* CoreGraphics.framework */,

@@ -31,6 +31,8 @@
     self.searches = [[NSMutableArray alloc] init]; //-dk:TODO recover stored searches
     self.listeners = [[NSMutableDictionary alloc] init];
     
+    self.longitude = 0.0; //-dk:TODO use coordinate and deal with no coordinate set!
+    self.latitude  = 0.0;
     return self;
 }
 
@@ -51,7 +53,7 @@
 
 - (void)addSearch:(SpCSearch*)search
 {
-    int i = 0, end = [self.searches count];
+    unsigned long i = 0, end = [self.searches count];
     for (; i != end; ++i) {
         if (search == [self.searches objectAtIndex: i]) {
             break;
@@ -66,7 +68,7 @@
 
 - (void)deleteSearch:(SpCSearch*)search
 {
-    for (int i = 0, end = [self.searches count]; i != end; ++i) {
+    for (unsigned long i = 0, end = [self.searches count]; i != end; ++i) {
         if (search == [self.searches objectAtIndex:i]) {
             [self.searches removeObjectAtIndex:i];
             break;

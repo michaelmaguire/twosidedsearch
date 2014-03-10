@@ -18,7 +18,9 @@
 
 @end
 
-@implementation SpCViewController
+@implementation SpCViewController {
+    CLLocationManager* locationManager;
+}
 
 - (void)viewDidLoad
 {
@@ -32,6 +34,11 @@
     [delegate.data addListener:^(NSString* name, NSObject* object){ [weakSelf resultsChanged: object]; } withId: @"ViewController"];
     [self.currentSearch addListener:^(NSString* name, NSObject* object){ [weakSelf resultsChanged: object]; } withId: @"ViewController"];
     self.tableView.bounces = YES;
+    
+    locationManager = [[CLLocationManager alloc] init];
+    locationManager.delegate = self;
+    locationManager.desiredAccuracy = kCLLocationAccuracyBest;
+    [locationManager startUpdatingLocation];
 }
 
 - (void)didReceiveMemoryWarning
@@ -171,5 +178,25 @@
     [indices addIndex: 1];
     [indices addIndex: 2];
     [self.tableView reloadSections:indices withRowAnimation: UITableViewRowAnimationNone];
+}
+
+- (void)locationManager:(CLLocationManager *)manager didFailWithError:(NSError *)error
+{
+    NSLog(@"didFailWithError: %@", error);
+    UIAlertView *errorAlert = [[UIAlertView alloc]
+                               initWithTitle:@"Error" message:@"Failed to Get Your Location" delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil];
+    [errorAlert show];
+}
+
+- (void)locationManager:(CLLocationManager *)manager didUpdateToLocation:(CLLocation *)newLocation fromLocation:(CLLocation *)oldLocation
+{
+    //-dk:TODO move the location update to the data object itself...?
+    if (newLocation != nil
+        && (newLocation.coordinate.longitude != oldLocation.coordinate.longitude
+            || newLocation.coordinate.latitude != oldLocation.coordinate.latitude)) {
+        SpCAppDelegate* delegate = (((SpCAppDelegate*) [UIApplication sharedApplication].delegate));
+        delegate.data.longitude = newLocation.coordinate.longitude;
+        delegate.data.latitude  = newLocation.coordinate.latitude;
+    }
 }
 @end
