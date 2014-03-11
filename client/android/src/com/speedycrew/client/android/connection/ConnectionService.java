@@ -31,15 +31,87 @@ import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
 import org.apache.http.params.HttpProtocolParams;
 
+import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Intent;
+import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Message;
+import android.os.Messenger;
+import android.os.RemoteException;
 import android.util.Base64;
 import android.util.Log;
 
 public class ConnectionService extends Service {
 
 	private static String LOGTAG = ConnectionService.class.getName();
+
+	ArrayList<Messenger> mClients = new ArrayList<Messenger>(); // Keeps track
+																// of all
+																// current
+																// registered
+																// clients.
+	public static final int MSG_REGISTER_CLIENT = 1;
+	public static final int MSG_UNREGISTER_CLIENT = 2;
+	public static final int MSG_SET_INT_VALUE = 3;
+	public static final int MSG_SET_STRING_VALUE = 4;
+
+	@Override
+	public IBinder onBind(Intent intent) {
+		return mMessenger.getBinder();
+	}
+
+	private class IncomingHandler extends Handler { // Handler of incoming
+													// messages from
+		// clients.
+		@Override
+		public void handleMessage(Message msg) {
+			switch (msg.what) {
+			case MSG_REGISTER_CLIENT:
+				mClients.add(msg.replyTo);
+				break;
+			case MSG_UNREGISTER_CLIENT:
+				mClients.remove(msg.replyTo);
+				break;
+			case MSG_SET_INT_VALUE:
+				Log.i(LOGTAG, "handleMessage: " + msg.arg1);
+				initiateConnection();
+				break;
+			default:
+				super.handleMessage(msg);
+			}
+		}
+	}
+
+	private void sendMessageToUI(int intvaluetosend) {
+		for (int i = mClients.size() - 1; i >= 0; i--) {
+			try {
+				// Send data as an Integer
+				mClients.get(i).send(
+						Message.obtain(null, MSG_SET_INT_VALUE, intvaluetosend,
+								0));
+
+				// Send data as a String
+				Bundle b = new Bundle();
+				b.putString("str1", "ab" + intvaluetosend + "cd");
+				Message msg = Message.obtain(null, MSG_SET_STRING_VALUE);
+				msg.setData(b);
+				mClients.get(i).send(msg);
+
+			} catch (RemoteException e) {
+				// The client is dead. Remove it from the list; we are going
+				// through the list from back to front so this is safe to do
+				// inside the loop.
+				mClients.remove(i);
+			}
+		}
+	}
+
+	/**
+	 * Target we publish for clients to send messages to IncomingHandler.
+	 */
+	private final Messenger mMessenger = new Messenger(new IncomingHandler());
 
 	// Testing -- works enough to get us a valid HTML response.
 	// private static String SPEEDY_URL = "https://www.google.co.uk/";
@@ -59,14 +131,16 @@ public class ConnectionService extends Service {
 	 */
 	@Override
 	public void onCreate() {
+		super.onCreate();
 		Log.i(LOGTAG, "onCreate");
 
 		try {
 			mKeyManager = KeyManager.getInstance();
+
+			Log.i(LOGTAG, "onCreate - ConnectionService is running");
 		} catch (Exception e) {
 			Log.e(LOGTAG, "onCreate UNABLE TO CREATE KEY MANAGER: " + e);
 		}
-
 	}
 
 	/**
@@ -77,15 +151,7 @@ public class ConnectionService extends Service {
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		Log.i(LOGTAG, "onStartCommand");
 
-		initiateConnection();
-
 		return Service.START_STICKY;
-	}
-
-	@Override
-	public IBinder onBind(Intent arg0) {
-		// TODO Auto-generated method stub
-		return null;
 	}
 
 	private void initiateConnection() {
@@ -228,4 +294,10 @@ public class ConnectionService extends Service {
 
 	}
 
+	@Override
+	public void onDestroy() {
+		super.onDestroy();
+
+		Log.i(LOGTAG, "Service Stopped.");
+	}
 }
