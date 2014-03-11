@@ -49,7 +49,7 @@ public class ProfileActivity extends PreferenceActivity {
 	Messenger mService = null;
 	boolean mIsBound;
 
-	private static class IncomingHandler extends Handler {
+	final Messenger mMessenger = new Messenger(new Handler() {
 		@Override
 		public void handleMessage(Message msg) {
 			switch (msg.what) {
@@ -63,9 +63,7 @@ public class ProfileActivity extends PreferenceActivity {
 				super.handleMessage(msg);
 			}
 		}
-	}
-
-	final Messenger mMessenger = new Messenger(new IncomingHandler());
+	});
 
 	private ServiceConnection mConnection = new ServiceConnection() {
 		public void onServiceConnected(ComponentName className, IBinder service) {

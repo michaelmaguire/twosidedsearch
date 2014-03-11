@@ -62,28 +62,6 @@ public class ConnectionService extends Service {
 		return mMessenger.getBinder();
 	}
 
-	private class IncomingHandler extends Handler { // Handler of incoming
-													// messages from
-		// clients.
-		@Override
-		public void handleMessage(Message msg) {
-			switch (msg.what) {
-			case MSG_REGISTER_CLIENT:
-				mClients.add(msg.replyTo);
-				break;
-			case MSG_UNREGISTER_CLIENT:
-				mClients.remove(msg.replyTo);
-				break;
-			case MSG_SET_INT_VALUE:
-				Log.i(LOGTAG, "handleMessage: " + msg.arg1);
-				initiateConnection();
-				break;
-			default:
-				super.handleMessage(msg);
-			}
-		}
-	}
-
 	private void sendMessageToUI(int intvaluetosend) {
 		for (int i = mClients.size() - 1; i >= 0; i--) {
 			try {
@@ -109,9 +87,27 @@ public class ConnectionService extends Service {
 	}
 
 	/**
-	 * Target we publish for clients to send messages to IncomingHandler.
+	 * Target we publish for clients to send messages to Handler.
 	 */
-	private final Messenger mMessenger = new Messenger(new IncomingHandler());
+	private final Messenger mMessenger = new Messenger(new Handler() {
+		@Override
+		public void handleMessage(Message msg) {
+			switch (msg.what) {
+			case MSG_REGISTER_CLIENT:
+				mClients.add(msg.replyTo);
+				break;
+			case MSG_UNREGISTER_CLIENT:
+				mClients.remove(msg.replyTo);
+				break;
+			case MSG_SET_INT_VALUE:
+				Log.i(LOGTAG, "handleMessage: " + msg.arg1);
+				initiateConnection();
+				break;
+			default:
+				super.handleMessage(msg);
+			}
+		}
+	});
 
 	// Testing -- works enough to get us a valid HTML response.
 	// private static String SPEEDY_URL = "https://www.google.co.uk/";
