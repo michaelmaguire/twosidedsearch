@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
+	<false/>
+	<key>IDESourceControlProjectIdentifier</key>
+	<string>A5E3D062-508B-4249-90E6-B6114A37ABCF</string>
+	<key>IDESourceControlProjectName</key>
+	<string>SpeedyCrew</string>
+	<key>IDESourceControlProjectOriginsDictionary</key>
+	<dict>
+		<key>8010CE24-AD1C-45A4-AA00-9F861B32F56F</key>
+		<string>https://bitbucket.org/michaelupstairs/upstairsdownstairs.git</string>
+	</dict>
+	<key>IDESourceControlProjectPath</key>
+	<string>client/ios/SpeedyCrew.xcodeproj/project.xcworkspace</string>
+	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
+	<dict>
+		<key>8010CE24-AD1C-45A4-AA00-9F861B32F56F</key>
+		<string>../../../..</string>
+	</dict>
+	<key>IDESourceControlProjectURL</key>
+	<string>https://bitbucket.org/michaelupstairs/upstairsdownstairs.git</string>
+	<key>IDESourceControlProjectVersion</key>
+	<integer>110</integer>
+	<key>IDESourceControlProjectWCCIdentifier</key>
+	<string>8010CE24-AD1C-45A4-AA00-9F861B32F56F</string>
+	<key>IDESourceControlProjectWCConfigurations</key>
+	<array>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.git</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>8010CE24-AD1C-45A4-AA00-9F861B32F56F</string>
+			<key>IDESourceControlWCCName</key>
+			<string>speedycrew</string>
+		</dict>
+	</array>
+</dict>
+</plist>

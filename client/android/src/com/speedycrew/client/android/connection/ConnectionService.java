@@ -3,8 +3,6 @@ package com.speedycrew.client.android.connection;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.Authenticator;
-import java.net.PasswordAuthentication;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -32,19 +30,12 @@ import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
 import org.apache.http.params.HttpProtocolParams;
 
-import com.speedycrew.client.util.BaseService;
-
-import android.app.NotificationManager;
-import android.app.Service;
-import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.IBinder;
 import android.os.Message;
-import android.os.Messenger;
-import android.os.RemoteException;
 import android.util.Base64;
 import android.util.Log;
+
+import com.speedycrew.client.util.BaseService;
 
 /**
  * This Android service runs in the background and allows UI Activities to issue
@@ -152,10 +143,12 @@ public class ConnectionService extends BaseService {
 												Base64.NO_WRAP));
 
 						// Set post data.
-						List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(
-								2);
 
 						Set<String> keys = parameters.keySet();
+
+						List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(
+								keys.size());
+
 						for (String key : keys) {
 							nameValuePairs.add(new BasicNameValuePair(key,
 									parameters.getString(key)));

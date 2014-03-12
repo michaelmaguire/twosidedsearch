@@ -1,9 +1,5 @@
 package com.speedycrew.client.util;
 
-import com.speedycrew.client.android.connection.ConnectionService;
-
-import android.app.ActivityManager;
-import android.app.ActivityManager.RunningServiceInfo;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;

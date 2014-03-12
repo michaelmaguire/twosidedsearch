@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
 import java.math.BigInteger;
-import java.security.cert.Certificate;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.KeyManagementException;
@@ -20,6 +19,7 @@ import java.security.PublicKey;
 import java.security.SignatureException;
 import java.security.UnrecoverableEntryException;
 import java.security.UnrecoverableKeyException;
+import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.security.spec.AlgorithmParameterSpec;
@@ -27,6 +27,7 @@ import java.security.spec.RSAKeyGenParameterSpec;
 import java.util.Calendar;
 
 import javax.net.ssl.KeyManagerFactory;
+import javax.security.auth.x500.X500Principal;
 
 import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.bouncycastle.cert.X509v3CertificateBuilder;
@@ -35,9 +36,6 @@ import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
-import org.bouncycastle.x509.X509V3CertificateGenerator;
-
-import javax.security.auth.x500.X500Principal;
 
 import android.content.Context;
 import android.provider.Settings.Secure;

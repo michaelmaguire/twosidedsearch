@@ -1,20 +1,14 @@
 package com.speedycrew.client.android;
 
+import java.util.List;
+
 import android.annotation.TargetApi;
-import android.content.ComponentName;
 import android.content.Context;
-import android.content.Intent;
-import android.content.ServiceConnection;
 import android.content.res.Configuration;
-import android.media.Ringtone;
-import android.media.RingtoneManager;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.IBinder;
 import android.os.Message;
-import android.os.Messenger;
 import android.os.RemoteException;
 import android.preference.ListPreference;
 import android.preference.Preference;
@@ -22,15 +16,10 @@ import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
-import android.preference.RingtonePreference;
-import android.text.TextUtils;
 import android.util.Log;
-
-import java.util.List;
 
 import com.speedycrew.client.android.connection.BundleProducer;
 import com.speedycrew.client.android.connection.ConnectionService;
-import com.speedycrew.client.android.connection.KeyManager;
 import com.speedycrew.client.util.ServiceConnector;
 
 /**
@@ -180,6 +169,8 @@ public class ProfileActivity extends PreferenceActivity {
 				preference.setSummary(stringValue);
 			}
 
+			// TODO mmaguire: This is lame. I should only make the call to
+			// server side when the use clicks Done or something.
 			Message msg = Message.obtain();
 			msg.setData(BundleProducer.produceProfileUpdateBundle("real_name1",
 					"message1", "email1"));
