@@ -31,6 +31,8 @@ import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
 import org.apache.http.params.HttpProtocolParams;
 
+import com.speedycrew.client.util.BaseService;
+
 import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Intent;
@@ -43,71 +45,16 @@ import android.os.RemoteException;
 import android.util.Base64;
 import android.util.Log;
 
-public class ConnectionService extends Service {
+/**
+ * This Android service runs in the background and allows UI Activities to issue
+ * requests which will then be made as HTTP requests to the SpeedyCrew servers.
+ */
+public class ConnectionService extends BaseService {
 
 	private static String LOGTAG = ConnectionService.class.getName();
 
-	ArrayList<Messenger> mClients = new ArrayList<Messenger>(); // Keeps track
-																// of all
-																// current
-																// registered
-																// clients.
-	public static final int MSG_REGISTER_CLIENT = 1;
-	public static final int MSG_UNREGISTER_CLIENT = 2;
 	public static final int MSG_SET_INT_VALUE = 3;
 	public static final int MSG_SET_STRING_VALUE = 4;
-
-	@Override
-	public IBinder onBind(Intent intent) {
-		return mMessenger.getBinder();
-	}
-
-	private void sendMessageToUI(int intvaluetosend) {
-		for (int i = mClients.size() - 1; i >= 0; i--) {
-			try {
-				// Send data as an Integer
-				mClients.get(i).send(
-						Message.obtain(null, MSG_SET_INT_VALUE, intvaluetosend,
-								0));
-
-				// Send data as a String
-				Bundle b = new Bundle();
-				b.putString("str1", "ab" + intvaluetosend + "cd");
-				Message msg = Message.obtain(null, MSG_SET_STRING_VALUE);
-				msg.setData(b);
-				mClients.get(i).send(msg);
-
-			} catch (RemoteException e) {
-				// The client is dead. Remove it from the list; we are going
-				// through the list from back to front so this is safe to do
-				// inside the loop.
-				mClients.remove(i);
-			}
-		}
-	}
-
-	/**
-	 * Target we publish for clients to send messages to Handler.
-	 */
-	private final Messenger mMessenger = new Messenger(new Handler() {
-		@Override
-		public void handleMessage(Message msg) {
-			switch (msg.what) {
-			case MSG_REGISTER_CLIENT:
-				mClients.add(msg.replyTo);
-				break;
-			case MSG_UNREGISTER_CLIENT:
-				mClients.remove(msg.replyTo);
-				break;
-			case MSG_SET_INT_VALUE:
-				Log.i(LOGTAG, "handleMessage: " + msg.arg1);
-				initiateConnection();
-				break;
-			default:
-				super.handleMessage(msg);
-			}
-		}
-	});
 
 	// Testing -- works enough to get us a valid HTML response.
 	// private static String SPEEDY_URL = "https://www.google.co.uk/";
@@ -120,35 +67,6 @@ public class ConnectionService extends Service {
 	// private static String X_SPEEDY_CREW_USER_ID = "X-SpeedyCrew-UserId";
 
 	private KeyManager mKeyManager;
-
-	/**
-	 * Do any one-time initialization here -- this only gets called first time
-	 * Service is started.
-	 */
-	@Override
-	public void onCreate() {
-		super.onCreate();
-		Log.i(LOGTAG, "onCreate");
-
-		try {
-			mKeyManager = KeyManager.getInstance();
-
-			Log.i(LOGTAG, "onCreate - ConnectionService is running");
-		} catch (Exception e) {
-			Log.e(LOGTAG, "onCreate UNABLE TO CREATE KEY MANAGER: " + e);
-		}
-	}
-
-	/**
-	 * This gets called any time anyone sends us an Intent. Don't do any
-	 * one-time initialization -- do that in onCreate.
-	 */
-	@Override
-	public int onStartCommand(Intent intent, int flags, int startId) {
-		Log.i(LOGTAG, "onStartCommand");
-
-		return Service.START_STICKY;
-	}
 
 	private void initiateConnection() {
 		new Thread(new Runnable() {
@@ -291,9 +209,31 @@ public class ConnectionService extends Service {
 	}
 
 	@Override
-	public void onDestroy() {
-		super.onDestroy();
+	public void onStartingService() {
+		try {
+			mKeyManager = KeyManager.getInstance();
 
-		Log.i(LOGTAG, "Service Stopped.");
+			Log.i(LOGTAG, "onStartService - ConnectionService is running");
+		} catch (Exception e) {
+			Log.e(LOGTAG, "onStartService UNABLE TO CREATE KEY MANAGER: " + e);
+		}
+
+	}
+
+	@Override
+	public void onStoppingService() {
+		Log.i(LOGTAG, "onStopService - ConnectionService is stopping");
+	}
+
+	@Override
+	public void onReceiveMessage(Message msg) {
+
+		switch (msg.what) {
+		case MSG_SET_STRING_VALUE:
+			// Do something, e.g.:
+			initiateConnection();
+			break;
+
+		}
 	}
 }

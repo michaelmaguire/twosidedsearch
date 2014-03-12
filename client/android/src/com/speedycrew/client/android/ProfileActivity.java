@@ -30,6 +30,7 @@ import java.util.List;
 
 import com.speedycrew.client.android.connection.ConnectionService;
 import com.speedycrew.client.android.connection.KeyManager;
+import com.speedycrew.client.util.ServiceConnector;
 
 /**
  * A {@link PreferenceActivity} that presents a set of application settings. On
@@ -46,96 +47,7 @@ public class ProfileActivity extends PreferenceActivity {
 
 	private static String LOGTAG = ProfileActivity.class.getName();
 
-	Messenger mService = null;
-	boolean mIsBound;
-
-	final Messenger mMessenger = new Messenger(new Handler() {
-		@Override
-		public void handleMessage(Message msg) {
-			switch (msg.what) {
-			case ConnectionService.MSG_SET_INT_VALUE:
-				Log.i(LOGTAG, "handleMessage MSG_SET_INT_VALUE: " + msg.arg1);
-				break;
-			case ConnectionService.MSG_SET_STRING_VALUE:
-				Log.i(LOGTAG, "handleMessage MSG_SET_STRING_VALUE: " + msg.arg1);
-				break;
-			default:
-				super.handleMessage(msg);
-			}
-		}
-	});
-
-	private ServiceConnection mConnection = new ServiceConnection() {
-		public void onServiceConnected(ComponentName className, IBinder service) {
-			mService = new Messenger(service);
-			Log.i(LOGTAG, "onServiceConnected");
-			try {
-				Message msg = Message.obtain(null,
-						ConnectionService.MSG_REGISTER_CLIENT);
-				msg.replyTo = mMessenger;
-				mService.send(msg);
-			} catch (RemoteException e) {
-				Log.e(LOGTAG,
-						"onServiceConnected: the service has crashed before we could even do anything with it",
-						e);
-			}
-		}
-
-		public void onServiceDisconnected(ComponentName className) {
-			// This is called when the connection with the service has been
-			// unexpectedly disconnected - process crashed.
-			mService = null;
-			Log.i(LOGTAG, "onServiceDisconnected");
-		}
-	};
-
-	void doBindService() {
-		Log.i(LOGTAG, "doBindService Binding");
-		if (bindService(new Intent(this, ConnectionService.class), mConnection,
-				Context.BIND_AUTO_CREATE)) {
-			mIsBound = true;
-			Log.i(LOGTAG, "doBindService Bound");
-		} else {
-			Log.e(LOGTAG, "doBindService Unable to bind");
-		}
-	}
-
-	void doUnbindService() {
-		if (mIsBound) {
-			// If we have received the service, and hence registered with it,
-			// then now is the time to unregister.
-			if (mService != null) {
-				try {
-					Message msg = Message.obtain(null,
-							ConnectionService.MSG_UNREGISTER_CLIENT);
-					msg.replyTo = mMessenger;
-					mService.send(msg);
-				} catch (RemoteException e) {
-					// There is nothing special we need to do if the service has
-					// crashed.
-				}
-			}
-			// Detach our existing connection.
-			unbindService(mConnection);
-			mIsBound = false;
-			Log.i(LOGTAG, "doUnbindService Unbinding");
-		}
-	}
-
-	private void sendMessageToService(int intvaluetosend) {
-		if (mIsBound) {
-			if (mService != null) {
-				try {
-					Message msg = Message.obtain(null,
-							ConnectionService.MSG_SET_INT_VALUE,
-							intvaluetosend, 0);
-					msg.replyTo = mMessenger;
-					mService.send(msg);
-				} catch (RemoteException e) {
-				}
-			}
-		}
-	}
+	ServiceConnector mConnectionServiceManager;
 
 	/**
 	 * Determines whether to always show the simplified settings UI, where
@@ -146,12 +58,37 @@ public class ProfileActivity extends PreferenceActivity {
 	private static final boolean ALWAYS_SIMPLE_PREFS = false;
 
 	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+
+		mConnectionServiceManager = new ServiceConnector(this,
+				ConnectionService.class, new Handler() {
+					@Override
+					public void handleMessage(Message msg) {
+						switch (msg.what) {
+						case ConnectionService.MSG_SET_INT_VALUE:
+							Log.i(LOGTAG, "handleMessage MSG_SET_INT_VALUE: "
+									+ msg.arg1);
+							break;
+						case ConnectionService.MSG_SET_STRING_VALUE:
+							Log.i(LOGTAG,
+									"handleMessage MSG_SET_STRING_VALUE: "
+											+ msg.arg1);
+							break;
+						}
+					}
+				});
+
+		mConnectionServiceManager.start();
+
+	}
+
+	@Override
 	protected void onPostCreate(Bundle savedInstanceState) {
 		super.onPostCreate(savedInstanceState);
 
 		setupSimplePreferencesScreen();
 
-		doBindService();
 	}
 
 	/**
@@ -247,7 +184,16 @@ public class ProfileActivity extends PreferenceActivity {
 				preference.setSummary(stringValue);
 			}
 
-			sendMessageToService(5);
+			Bundle bundle = new Bundle();
+			bundle.putString(preference.getKey(), stringValue);
+			Message msg = Message.obtain();
+			msg.what = ConnectionService.MSG_SET_STRING_VALUE;
+			msg.setData(bundle);
+			try {
+				mConnectionServiceManager.send(msg);
+			} catch (RemoteException e) {
+				Log.e(LOGTAG, "send error: " + e);
+			}
 
 			return true;
 		}
@@ -329,10 +275,7 @@ public class ProfileActivity extends PreferenceActivity {
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
-		try {
-			doUnbindService();
-		} catch (Throwable t) {
-			Log.e(LOGTAG, "Failed to unbind from the service", t);
-		}
+
+		this.mConnectionServiceManager.unbind();
 	}
 }
