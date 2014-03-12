@@ -15,4 +15,18 @@ public class BundleProducer {
 		return bundle;
 	}
 
+	public static Bundle produceCreateSearchBundle(boolean provide,
+			String queryString) {
+		Bundle bundle = new Bundle();
+
+		if (provide) {
+			bundle.putString("side", "PROVIDE");
+		} else {
+			bundle.putString("side", "SEEK");
+		}
+		bundle.putString("query", queryString);
+
+		return bundle;
+	}
+
 }

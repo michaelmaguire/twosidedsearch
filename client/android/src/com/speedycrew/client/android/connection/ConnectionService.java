@@ -226,8 +226,9 @@ public class ConnectionService extends BaseService {
 
 		switch (msg.what) {
 		case MSG_MAKE_REQUEST_WITH_PARAMETERS:
-			// Do something, e.g.:
-			makeRequestWithParameters("1/update_profile", msg.getData());
+			String relativeUrl = (String) msg.obj;
+			Log.i(LOGTAG, "onReceiveMessage relativeUrl[" + relativeUrl + "]");
+			makeRequestWithParameters((String) msg.obj, msg.getData());
 			break;
 
 		}

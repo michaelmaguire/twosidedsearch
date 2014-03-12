@@ -172,6 +172,7 @@ public class ProfileActivity extends PreferenceActivity {
 			// TODO mmaguire: This is lame. I should only make the call to
 			// server side when the use clicks Done or something.
 			Message msg = Message.obtain();
+			msg.obj = new String("1/update_profile");
 			msg.setData(BundleProducer.produceProfileUpdateBundle("real_name1",
 					"message1", "email1"));
 			msg.what = ConnectionService.MSG_MAKE_REQUEST_WITH_PARAMETERS;

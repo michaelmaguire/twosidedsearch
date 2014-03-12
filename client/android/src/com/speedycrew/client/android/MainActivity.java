@@ -1,6 +1,8 @@
 package com.speedycrew.client.android;
 
+import com.speedycrew.client.android.connection.BundleProducer;
 import com.speedycrew.client.android.connection.ConnectionService;
+import com.speedycrew.client.util.ServiceConnector;
 
 import android.app.ActionBar;
 import android.app.ActionBar.Tab;
@@ -9,6 +11,9 @@ import android.app.Fragment;
 import android.app.FragmentTransaction;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
+import android.os.RemoteException;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -22,30 +27,33 @@ import android.widget.Toast;
 public class MainActivity extends Activity {
 	private static String LOGTAG = MainActivity.class.getName();
 
-	public static class CrewFragment extends Fragment implements
+	static ServiceConnector sConnectionServiceManager;
+
+	public static class SearchFragment extends Fragment implements
 			View.OnClickListener {
-		@Override
-		public View onCreateView(LayoutInflater inflater, ViewGroup container,
-				Bundle savedInstanceState) {
-			// Inflate the layout for this fragment
-			View view = inflater.inflate(R.layout.crew_fragment, container,
-					false);
-			Button searchButton = (Button) view.findViewById(R.id.search);
-			searchButton.setOnClickListener(this);
-			return view;
-		}
 
 		@Override
 		public void onClick(View view) {
-			Log.i(LOGTAG, "CrewFragment onClick");
+			Log.i(LOGTAG, "SearchFragment onClick");
 			EditText searchText = (EditText) ((View) view.getParent())
-					.findViewById(R.id.crew_search);
+					.findViewById(R.id.queryString);
 			String searchString = searchText.getText().toString();
-			Log.i(LOGTAG, "CrewFragment searchString[" + searchString + ']');
+			Log.i(LOGTAG, "SearchFragment searchString[" + searchString + ']');
+
+			Message msg = Message.obtain();
+			msg.obj = new String("1/create_search");
+			msg.setData(BundleProducer.produceCreateSearchBundle(
+					this instanceof HiringFragment, searchString));
+			msg.what = ConnectionService.MSG_MAKE_REQUEST_WITH_PARAMETERS;
+			try {
+				sConnectionServiceManager.send(msg);
+			} catch (RemoteException e) {
+				Log.e(LOGTAG, "send error: " + e);
+			}
 		}
 	}
 
-	public static class HiringFragment extends Fragment implements
+	public static class HiringFragment extends SearchFragment implements
 			View.OnClickListener {
 		@Override
 		public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -53,19 +61,26 @@ public class MainActivity extends Activity {
 			// Inflate the layout for this fragment
 			View view = inflater.inflate(R.layout.hiring_fragment, container,
 					false);
-			Button searchButton = (Button) view.findViewById(R.id.search);
+			Button searchButton = (Button) view.findViewById(R.id.searchButton);
 			searchButton.setOnClickListener(this);
 			return view;
 		}
 
+	}
+
+	public static class CrewFragment extends SearchFragment implements
+			View.OnClickListener {
 		@Override
-		public void onClick(View view) {
-			Log.i(LOGTAG, "HiringFragment onClick");
-			EditText searchText = (EditText) ((View) view.getParent())
-					.findViewById(R.id.hiring_search);
-			String searchString = searchText.getText().toString();
-			Log.i(LOGTAG, "HiringFragment searchString[" + searchString + ']');
+		public View onCreateView(LayoutInflater inflater, ViewGroup container,
+				Bundle savedInstanceState) {
+			// Inflate the layout for this fragment
+			View view = inflater.inflate(R.layout.crew_fragment, container,
+					false);
+			Button searchButton = (Button) view.findViewById(R.id.searchButton);
+			searchButton.setOnClickListener(this);
+			return view;
 		}
+
 	}
 
 	@Override
@@ -103,6 +118,22 @@ public class MainActivity extends Activity {
 		if (savedInstanceState != null) {
 			bar.setSelectedNavigationItem(savedInstanceState.getInt("tab", 0));
 		}
+
+		sConnectionServiceManager = new ServiceConnector(this,
+				ConnectionService.class, new Handler() {
+					@Override
+					public void handleMessage(Message msg) {
+						switch (msg.what) {
+						case ConnectionService.MSG_JSON_RESPONSE:
+							Log.i(LOGTAG, "handleMessage MSG_JSON_RESPONSE: "
+									+ msg.arg1);
+							break;
+						}
+					}
+				});
+
+		sConnectionServiceManager.start();
+
 	}
 
 	@Override

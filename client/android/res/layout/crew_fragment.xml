@@ -9,7 +9,7 @@
     tools:context=".MainActivity" >
 
     <EditText
-        android:id="@+id/crew_search"
+        android:id="@+id/queryString"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
@@ -19,15 +19,14 @@
 
         <requestFocus />
     </EditText>
-    
-        <Button
-        android:id="@+id/search"
+
+    <Button
+        android:id="@+id/searchButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/crew_search"
+        android:layout_below="@+id/queryString"
         android:layout_marginTop="22dp"
-        android:layout_toRightOf="@+id/crew_search"
+        android:layout_toRightOf="@+id/queryString"
         android:text="Search" />
-    
 
 </RelativeLayout>
