@@ -7,6 +7,7 @@ import java.net.Authenticator;
 import java.net.PasswordAuthentication;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -53,22 +54,23 @@ public class ConnectionService extends BaseService {
 
 	private static String LOGTAG = ConnectionService.class.getName();
 
-	public static final int MSG_SET_INT_VALUE = 3;
-	public static final int MSG_SET_STRING_VALUE = 4;
+	public static final int MSG_MAKE_REQUEST_WITH_PARAMETERS = 3;
+	public static final int MSG_JSON_RESPONSE = 4;
 
 	// Testing -- works enough to get us a valid HTML response.
 	// private static String SPEEDY_URL = "https://www.google.co.uk/";
 
 	// Temporary -- since HTTPS gets us told to piss off -- still can't get past
 	// captain cook, though -- must be doing basic auth wrong.
-	private static String UPDATE_SPEEDY_URL = "https://dev.speedycrew.com/api/1/update_profile";
+	private static String SPEEDY_API_URL_PREFIX = "https://dev.speedycrew.com/api/";
 
 	// This was only needed initially before we got SSL working.
 	// private static String X_SPEEDY_CREW_USER_ID = "X-SpeedyCrew-UserId";
 
 	private KeyManager mKeyManager;
 
-	private void initiateConnection() {
+	private void makeRequestWithParameters(final String relativeUrl,
+			final Bundle parameters) {
 		new Thread(new Runnable() {
 			public void run() {
 				try {
@@ -133,7 +135,8 @@ public class ConnectionService extends BaseService {
 
 					HttpPost httpPost = null;
 					try {
-						httpPost = new HttpPost(UPDATE_SPEEDY_URL);
+						httpPost = new HttpPost(SPEEDY_API_URL_PREFIX
+								+ relativeUrl);
 
 						// This was only needed initially before we got SSL
 						// working.
@@ -151,12 +154,12 @@ public class ConnectionService extends BaseService {
 						// Set post data.
 						List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(
 								2);
-						nameValuePairs.add(new BasicNameValuePair("real_name",
-								"michael1234"));
-						nameValuePairs.add(new BasicNameValuePair("message",
-								"MichaelTestMessage"));
-						nameValuePairs.add(new BasicNameValuePair("email",
-								"speedytest2@michaelmaguire.ca"));
+
+						Set<String> keys = parameters.keySet();
+						for (String key : keys) {
+							nameValuePairs.add(new BasicNameValuePair(key,
+									parameters.getString(key)));
+						}
 
 						// Not needed with our new public key mechanism -- there
 						// will be no subsequent /api/1/login calls anymore, so
@@ -229,9 +232,9 @@ public class ConnectionService extends BaseService {
 	public void onReceiveMessage(Message msg) {
 
 		switch (msg.what) {
-		case MSG_SET_STRING_VALUE:
+		case MSG_MAKE_REQUEST_WITH_PARAMETERS:
 			// Do something, e.g.:
-			initiateConnection();
+			makeRequestWithParameters("1/update_profile", msg.getData());
 			break;
 
 		}

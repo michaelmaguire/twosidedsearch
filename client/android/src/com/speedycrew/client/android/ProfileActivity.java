@@ -28,6 +28,7 @@ import android.util.Log;
 
 import java.util.List;
 
+import com.speedycrew.client.android.connection.BundleProducer;
 import com.speedycrew.client.android.connection.ConnectionService;
 import com.speedycrew.client.android.connection.KeyManager;
 import com.speedycrew.client.util.ServiceConnector;
@@ -66,14 +67,9 @@ public class ProfileActivity extends PreferenceActivity {
 					@Override
 					public void handleMessage(Message msg) {
 						switch (msg.what) {
-						case ConnectionService.MSG_SET_INT_VALUE:
-							Log.i(LOGTAG, "handleMessage MSG_SET_INT_VALUE: "
+						case ConnectionService.MSG_JSON_RESPONSE:
+							Log.i(LOGTAG, "handleMessage MSG_JSON_RESPONSE: "
 									+ msg.arg1);
-							break;
-						case ConnectionService.MSG_SET_STRING_VALUE:
-							Log.i(LOGTAG,
-									"handleMessage MSG_SET_STRING_VALUE: "
-											+ msg.arg1);
 							break;
 						}
 					}
@@ -184,11 +180,10 @@ public class ProfileActivity extends PreferenceActivity {
 				preference.setSummary(stringValue);
 			}
 
-			Bundle bundle = new Bundle();
-			bundle.putString(preference.getKey(), stringValue);
 			Message msg = Message.obtain();
-			msg.what = ConnectionService.MSG_SET_STRING_VALUE;
-			msg.setData(bundle);
+			msg.setData(BundleProducer.produceProfileUpdateBundle("real_name1",
+					"message1", "email1"));
+			msg.what = ConnectionService.MSG_MAKE_REQUEST_WITH_PARAMETERS;
 			try {
 				mConnectionServiceManager.send(msg);
 			} catch (RemoteException e) {
