@@ -322,7 +322,9 @@ def search_results(request):
                              s2.postcode, 
                              s2.city, 
                              s2.country, 
-                             st_distance(s1.geography, s2.geography) AS distance
+                             st_distance(s1.geography, s2.geography) AS distance,
+                             st_x(s2.geography::geometry) AS longitude,
+                             st_y(s2.geography::geometry) AS latitude
                         FROM speedycrew.match m
                         JOIN speedycrew.search s1 ON m.a = s1.id
                         JOIN speedycrew.search s2 ON m.b = s2.id
@@ -332,7 +334,7 @@ def search_results(request):
                          AND s2.status = 'ACTIVE'""",
                    (search_id, profile_id))
     results = []
-    for id, username, real_name, email, address, postcode, city, country, distance in cursor:
+    for id, username, real_name, email, address, postcode, city, country, distance, longitude, latitude in cursor:
         results.append({ "id" : id,
                          "username" : username,
                          "real_name" : real_name,
@@ -341,7 +343,9 @@ def search_results(request):
                          "postcode" : postcode,
                          "city" : city,
                          "country" : country,
-                         "distance" : distance })
+                         "distance" : distance,
+                         "longitude" : longitude,
+                         "latitude" : latitude })
     return json_response({ "message_type" : "search_results_response",
                            "request_id" : request_id,
                            "status" : "OK",
