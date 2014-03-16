@@ -14,13 +14,6 @@ public class AboutActivity extends Activity {
 
 		setContentView(R.layout.activity_about);
 
-		// use this to start and trigger a service
-		Intent serviceStartingIntent = new Intent(this, com.speedycrew.client.android.connection.ConnectionService.class);
-		// potentially add data to the intent
-		// serviceStartingIntent.putExtra("KEY1",
-		// "Value to be used by the service");
-		startService(serviceStartingIntent);
-
 	}
 
 	@Override
@@ -37,10 +30,13 @@ public class AboutActivity extends Activity {
 		case R.id.action_send_feedback: {
 			Intent sendFeedbackViaEmail = new Intent(Intent.ACTION_SEND);
 			sendFeedbackViaEmail.setType("text/email");
-			sendFeedbackViaEmail.putExtra(Intent.EXTRA_EMAIL, new String[] { "android-feedback@speedycrew.com" });
+			sendFeedbackViaEmail.putExtra(Intent.EXTRA_EMAIL,
+					new String[] { "android-feedback@speedycrew.com" });
 			sendFeedbackViaEmail.putExtra(Intent.EXTRA_SUBJECT, "Feedback");
-			sendFeedbackViaEmail.putExtra(Intent.EXTRA_TEXT, "Dear developer," + "");
-			startActivity(Intent.createChooser(sendFeedbackViaEmail, "Send Feedback:"));
+			sendFeedbackViaEmail.putExtra(Intent.EXTRA_TEXT, "Dear developer,"
+					+ "");
+			startActivity(Intent.createChooser(sendFeedbackViaEmail,
+					"Send Feedback:"));
 			return true;
 		}
 		default:

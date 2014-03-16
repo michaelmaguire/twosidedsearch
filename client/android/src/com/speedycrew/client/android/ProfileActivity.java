@@ -1,23 +1,26 @@
 package com.speedycrew.client.android;
 
+import java.util.List;
+
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.res.Configuration;
-import android.media.Ringtone;
-import android.media.RingtoneManager;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
+import android.os.RemoteException;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
-import android.preference.RingtonePreference;
-import android.text.TextUtils;
+import android.util.Log;
 
-import java.util.List;
+import com.speedycrew.client.android.connection.BundleProducer;
+import com.speedycrew.client.android.connection.ConnectionService;
+import com.speedycrew.client.util.ServiceConnector;
 
 /**
  * A {@link PreferenceActivity} that presents a set of application settings. On
@@ -31,6 +34,11 @@ import java.util.List;
  * API Guide</a> for more information on developing a Settings UI.
  */
 public class ProfileActivity extends PreferenceActivity {
+
+	private static String LOGTAG = ProfileActivity.class.getName();
+
+	ServiceConnector mConnectionServiceManager;
+
 	/**
 	 * Determines whether to always show the simplified settings UI, where
 	 * settings are presented in a single list. When false, settings are shown
@@ -40,10 +48,32 @@ public class ProfileActivity extends PreferenceActivity {
 	private static final boolean ALWAYS_SIMPLE_PREFS = false;
 
 	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+
+		mConnectionServiceManager = new ServiceConnector(this,
+				ConnectionService.class, new Handler() {
+					@Override
+					public void handleMessage(Message msg) {
+						switch (msg.what) {
+						case ConnectionService.MSG_JSON_RESPONSE:
+							Log.i(LOGTAG, "handleMessage MSG_JSON_RESPONSE: "
+									+ msg.arg1);
+							break;
+						}
+					}
+				});
+
+		mConnectionServiceManager.start();
+
+	}
+
+	@Override
 	protected void onPostCreate(Bundle savedInstanceState) {
 		super.onPostCreate(savedInstanceState);
 
 		setupSimplePreferencesScreen();
+
 	}
 
 	/**
@@ -99,7 +129,9 @@ public class ProfileActivity extends PreferenceActivity {
 	 * "simplified" settings UI should be shown.
 	 */
 	private static boolean isSimplePreferences(Context context) {
-		return ALWAYS_SIMPLE_PREFS || Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB || !isXLargeTablet(context);
+		return ALWAYS_SIMPLE_PREFS
+				|| Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB
+				|| !isXLargeTablet(context);
 	}
 
 	/** {@inheritDoc} */
@@ -115,7 +147,7 @@ public class ProfileActivity extends PreferenceActivity {
 	 * A preference value change listener that updates the preference's summary
 	 * to reflect its new value.
 	 */
-	private static Preference.OnPreferenceChangeListener sBindPreferenceSummaryToValueListener = new Preference.OnPreferenceChangeListener() {
+	private Preference.OnPreferenceChangeListener mBindPreferenceSummaryToValueListener = new Preference.OnPreferenceChangeListener() {
 		@Override
 		public boolean onPreferenceChange(Preference preference, Object value) {
 			String stringValue = value.toString();
@@ -127,13 +159,29 @@ public class ProfileActivity extends PreferenceActivity {
 				int index = listPreference.findIndexOfValue(stringValue);
 
 				// Set the summary to reflect the new value.
-				preference.setSummary(index >= 0 ? listPreference.getEntries()[index] : null);
+				preference
+						.setSummary(index >= 0 ? listPreference.getEntries()[index]
+								: null);
 
 			} else {
 				// For all other preferences, set the summary to the value's
 				// simple string representation.
 				preference.setSummary(stringValue);
 			}
+
+			// TODO mmaguire: This is lame. I should only make the call to
+			// server side when the use clicks Done or something.
+			Message msg = Message.obtain();
+			msg.obj = new String("1/update_profile");
+			msg.setData(BundleProducer.produceProfileUpdateBundle("real_name1",
+					"message1", "email1"));
+			msg.what = ConnectionService.MSG_MAKE_REQUEST_WITH_PARAMETERS;
+			try {
+				mConnectionServiceManager.send(msg);
+			} catch (RemoteException e) {
+				Log.e(LOGTAG, "send error: " + e);
+			}
+
 			return true;
 		}
 	};
@@ -147,14 +195,18 @@ public class ProfileActivity extends PreferenceActivity {
 	 * 
 	 * @see #sBindPreferenceSummaryToValueListener
 	 */
-	private static void bindPreferenceSummaryToValue(Preference preference) {
+	private void bindPreferenceSummaryToValue(Preference preference) {
 		// Set the listener to watch for value changes.
-		preference.setOnPreferenceChangeListener(sBindPreferenceSummaryToValueListener);
+		preference
+				.setOnPreferenceChangeListener(mBindPreferenceSummaryToValueListener);
 
 		// Trigger the listener immediately with the preference's
 		// current value.
-		sBindPreferenceSummaryToValueListener.onPreferenceChange(preference,
-				PreferenceManager.getDefaultSharedPreferences(preference.getContext()).getString(preference.getKey(), ""));
+		mBindPreferenceSummaryToValueListener.onPreferenceChange(
+				preference,
+				PreferenceManager.getDefaultSharedPreferences(
+						preference.getContext()).getString(preference.getKey(),
+						""));
 	}
 
 	/**
@@ -168,14 +220,18 @@ public class ProfileActivity extends PreferenceActivity {
 			super.onCreate(savedInstanceState);
 			addPreferencesFromResource(R.xml.pref_general);
 
+			// TODO: mmaguire -- how do I get this Fragment which is supposed to
+			// be inner static to be able to call things that require member
+			// variable access?
+
 			// Bind the summaries of EditText/List/Dialog/Ringtone preferences
 			// to their values. When their values change, their summaries are
 			// updated to reflect the new value, per the Android Design
 			// guidelines.
-			bindPreferenceSummaryToValue(findPreference("display_name"));
-			bindPreferenceSummaryToValue(findPreference("blurb_message"));
-			bindPreferenceSummaryToValue(findPreference("contact_email"));
-			bindPreferenceSummaryToValue(findPreference("show_contact_email_list"));
+			// bindPreferenceSummaryToValue(findPreference("display_name"));
+			// bindPreferenceSummaryToValue(findPreference("blurb_message"));
+			// bindPreferenceSummaryToValue(findPreference("contact_email"));
+			// bindPreferenceSummaryToValue(findPreference("show_contact_email_list"));
 		}
 	}
 
@@ -184,18 +240,29 @@ public class ProfileActivity extends PreferenceActivity {
 	 * activity is showing a two-pane settings UI.
 	 */
 	@TargetApi(Build.VERSION_CODES.HONEYCOMB)
-	public static class NotificationPreferenceFragment extends PreferenceFragment {
+	public static class NotificationPreferenceFragment extends
+			PreferenceFragment {
 		@Override
 		public void onCreate(Bundle savedInstanceState) {
 			super.onCreate(savedInstanceState);
 			addPreferencesFromResource(R.xml.pref_notification);
 
+			// TODO: mmaguire -- how do I get this Fragment which is supposed to
+			// be inner static to be able to call things that require member
+			// variable access?
+
 			// Bind the summaries of EditText/List/Dialog/Ringtone preferences
 			// to their values. When their values change, their summaries are
 			// updated to reflect the new value, per the Android Design
 			// guidelines.
-			bindPreferenceSummaryToValue(findPreference("notifications_new_message_ringtone"));
+			// bindPreferenceSummaryToValue(findPreference("notifications_new_message_ringtone"));
 		}
 	}
 
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
+
+		this.mConnectionServiceManager.unbind();
+	}
 }
