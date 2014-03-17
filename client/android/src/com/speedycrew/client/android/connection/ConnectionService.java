@@ -228,7 +228,16 @@ public class ConnectionService extends BaseService {
 		case MSG_MAKE_REQUEST_WITH_PARAMETERS:
 			String relativeUrl = (String) msg.obj;
 			Log.i(LOGTAG, "onReceiveMessage relativeUrl[" + relativeUrl + "]");
-			makeRequestWithParameters((String) msg.obj, msg.getData());
+			
+			Bundle bundle = msg.getData();
+			
+			// Enrich the bundle with geo location -- probably best not
+			// to try this on the UI thread.
+			bundle.putString("longitude", "-0.15");
+			bundle.putString("latitude", "51.5");
+			bundle.putString("radius", "5000");
+						
+			makeRequestWithParameters((String) msg.obj, bundle);
 			break;
 
 		}
