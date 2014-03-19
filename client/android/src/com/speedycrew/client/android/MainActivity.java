@@ -1,5 +1,7 @@
 package com.speedycrew.client.android;
 
+import org.json.JSONObject;
+
 import com.speedycrew.client.android.connection.BundleProducer;
 import com.speedycrew.client.android.connection.ConnectionService;
 import com.speedycrew.client.util.ServiceConnector;
@@ -32,6 +34,10 @@ public class MainActivity extends Activity {
 
 	public static class SearchFragment extends Fragment implements View.OnClickListener {
 
+		protected static final String JSON_KEY_SEARCH_ID = "search_id";
+		protected static final String JSON_KEY_STATUS = "status";
+		protected static final String JSON_KEY_MESSAGE = "message";
+
 		@Override
 		public void onClick(View view) {
 			Log.i(LOGTAG, "SearchFragment onClick");
@@ -39,17 +45,68 @@ public class MainActivity extends Activity {
 			String searchString = searchText.getText().toString();
 			Log.i(LOGTAG, "SearchFragment searchString[" + searchString + ']');
 
-			Message msg = Message.obtain();
-			msg.obj = new String("1/create_search");
-			msg.setData(BundleProducer.produceCreateSearchBundle(this instanceof HiringFragment, searchString));
-			msg.what = ConnectionService.MSG_MAKE_REQUEST_WITH_PARAMETERS;
+			Message createMessage = Message.obtain();
+			createMessage.obj = new String("1/create_search");
+			createMessage.setData(BundleProducer.produceCreateSearchBundle(this instanceof HiringFragment, searchString));
+			createMessage.what = ConnectionService.MSG_MAKE_REQUEST_WITH_PARAMETERS;
 			try {
-				sConnectionServiceManager.send(msg, new Messenger(new Handler() {
+				sConnectionServiceManager.send(createMessage, new Messenger(new Handler() {
 					@Override
-					public void handleMessage(Message msg) {
-						switch (msg.what) {
+					public void handleMessage(Message responseMessage) {
+						switch (responseMessage.what) {
 						case ConnectionService.MSG_JSON_RESPONSE:
-							Log.i(LOGTAG, "handleMessage MSG_JSON_RESPONSE: " + msg.obj);
+							final String responseString = responseMessage.obj.toString();
+							Log.i(LOGTAG, "handleMessage create search MSG_JSON_RESPONSE: " + responseString);
+
+							{
+								JSONObject responseJson = new JSONObject(responseString);
+								String status = responseJson.getString(JSON_KEY_STATUS);
+								if (!"OK".equalsIgnoreCase(status)) {
+									String errorMessage = responseJson.getString(JSON_KEY_MESSAGE);
+
+									Toast.makeText(getActivity(), errorMessage, Toast.LENGTH_SHORT).show();
+									
+
+								} else {
+									String searchId = responseJson.getString(JSON_KEY_SEARCH_ID);
+
+									Message fetchResultsMessage = Message.obtain();
+									fetchResultsMessage.obj = new String("1/search_results");
+									fetchResultsMessage.setData(BundleProducer.produceCreateSearchResultsBundle(searchId));
+									fetchResultsMessage.what = ConnectionService.MSG_MAKE_REQUEST_WITH_PARAMETERS;
+									try {
+										sConnectionServiceManager.send(fetchResultsMessage, new Messenger(new Handler() {
+											@Override
+											public void handleMessage(Message responseMessage) {
+												switch (responseMessage.what) {
+												case ConnectionService.MSG_JSON_RESPONSE:
+													final String responseString = responseMessage.obj.toString();
+
+													Log.i(LOGTAG, "handleMessage search results MSG_JSON_RESPONSE: " + responseString);
+
+													{
+														JSONObject responseJson = new JSONObject(responseString);
+														String status = responseJson.getString(JSON_KEY_STATUS);
+														if (!"OK".equalsIgnoreCase(status)) {
+															String errorMessage = responseJson.getString(JSON_KEY_MESSAGE);
+
+															Toast.makeText(getActivity(), errorMessage, Toast.LENGTH_SHORT).show();
+															
+														} else {
+
+														}
+													}
+
+													break;
+												}
+											}
+										}));
+									} catch (RemoteException e) {
+										Log.e(LOGTAG, "send error: " + e);
+									}
+								}
+							}
+
 							break;
 						}
 					}

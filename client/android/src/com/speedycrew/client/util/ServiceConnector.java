@@ -76,6 +76,7 @@ public class ServiceConnector {
 		if (mIsBound) {
 			if (mService != null) {
 				msg.replyTo = replyTo;
+				msg.arg2 = msg.hashCode();
 				mService.send(msg);
 			}
 		}

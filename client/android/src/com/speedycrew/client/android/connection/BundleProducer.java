@@ -4,8 +4,7 @@ import android.os.Bundle;
 
 public class BundleProducer {
 
-	public static Bundle produceProfileUpdateBundle(String real_name,
-			String message, String email) {
+	public static Bundle produceProfileUpdateBundle(String real_name, String message, String email) {
 		Bundle bundle = new Bundle();
 
 		bundle.putString("real_name", real_name);
@@ -15,8 +14,7 @@ public class BundleProducer {
 		return bundle;
 	}
 
-	public static Bundle produceCreateSearchBundle(boolean provide,
-			String queryString) {
+	public static Bundle produceCreateSearchBundle(boolean provide, String queryString) {
 		Bundle bundle = new Bundle();
 
 		if (provide) {
@@ -25,6 +23,14 @@ public class BundleProducer {
 			bundle.putString("side", "SEEK");
 		}
 		bundle.putString("query", queryString);
+
+		return bundle;
+	}
+
+	public static Bundle produceCreateSearchResultsBundle(String searchId) {
+		Bundle bundle = new Bundle();
+
+		bundle.putString("search", searchId);
 
 		return bundle;
 	}
