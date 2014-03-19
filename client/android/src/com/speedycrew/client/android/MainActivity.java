@@ -1,11 +1,5 @@
 package com.speedycrew.client.android;
 
-import org.json.JSONObject;
-
-import com.speedycrew.client.android.connection.BundleProducer;
-import com.speedycrew.client.android.connection.ConnectionService;
-import com.speedycrew.client.util.ServiceConnector;
-
 import android.app.ActionBar;
 import android.app.ActionBar.Tab;
 import android.app.Activity;
@@ -13,133 +7,13 @@ import android.app.Fragment;
 import android.app.FragmentTransaction;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
-import android.os.Messenger;
-import android.os.RemoteException;
-import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.EditText;
 import android.widget.Toast;
 
 public class MainActivity extends Activity {
-	private static String LOGTAG = MainActivity.class.getName();
+	private static final String LOGTAG = MainActivity.class.getName();
 
-	static ServiceConnector sConnectionServiceManager;
-
-	public static class SearchFragment extends Fragment implements View.OnClickListener {
-
-		protected static final String JSON_KEY_SEARCH_ID = "search_id";
-		protected static final String JSON_KEY_STATUS = "status";
-		protected static final String JSON_KEY_MESSAGE = "message";
-
-		@Override
-		public void onClick(View view) {
-			Log.i(LOGTAG, "SearchFragment onClick");
-			EditText searchText = (EditText) ((View) view.getParent()).findViewById(R.id.queryString);
-			String searchString = searchText.getText().toString();
-			Log.i(LOGTAG, "SearchFragment searchString[" + searchString + ']');
-
-			Message createMessage = Message.obtain();
-			createMessage.obj = new String("1/create_search");
-			createMessage.setData(BundleProducer.produceCreateSearchBundle(this instanceof HiringFragment, searchString));
-			createMessage.what = ConnectionService.MSG_MAKE_REQUEST_WITH_PARAMETERS;
-			try {
-				sConnectionServiceManager.send(createMessage, new Messenger(new Handler() {
-					@Override
-					public void handleMessage(Message responseMessage) {
-						switch (responseMessage.what) {
-						case ConnectionService.MSG_JSON_RESPONSE:
-							final String responseString = responseMessage.obj.toString();
-							Log.i(LOGTAG, "handleMessage create search MSG_JSON_RESPONSE: " + responseString);
-
-							{
-								JSONObject responseJson = new JSONObject(responseString);
-								String status = responseJson.getString(JSON_KEY_STATUS);
-								if (!"OK".equalsIgnoreCase(status)) {
-									String errorMessage = responseJson.getString(JSON_KEY_MESSAGE);
-
-									Toast.makeText(getActivity(), errorMessage, Toast.LENGTH_SHORT).show();
-									
-
-								} else {
-									String searchId = responseJson.getString(JSON_KEY_SEARCH_ID);
-
-									Message fetchResultsMessage = Message.obtain();
-									fetchResultsMessage.obj = new String("1/search_results");
-									fetchResultsMessage.setData(BundleProducer.produceCreateSearchResultsBundle(searchId));
-									fetchResultsMessage.what = ConnectionService.MSG_MAKE_REQUEST_WITH_PARAMETERS;
-									try {
-										sConnectionServiceManager.send(fetchResultsMessage, new Messenger(new Handler() {
-											@Override
-											public void handleMessage(Message responseMessage) {
-												switch (responseMessage.what) {
-												case ConnectionService.MSG_JSON_RESPONSE:
-													final String responseString = responseMessage.obj.toString();
-
-													Log.i(LOGTAG, "handleMessage search results MSG_JSON_RESPONSE: " + responseString);
-
-													{
-														JSONObject responseJson = new JSONObject(responseString);
-														String status = responseJson.getString(JSON_KEY_STATUS);
-														if (!"OK".equalsIgnoreCase(status)) {
-															String errorMessage = responseJson.getString(JSON_KEY_MESSAGE);
-
-															Toast.makeText(getActivity(), errorMessage, Toast.LENGTH_SHORT).show();
-															
-														} else {
-
-														}
-													}
-
-													break;
-												}
-											}
-										}));
-									} catch (RemoteException e) {
-										Log.e(LOGTAG, "send error: " + e);
-									}
-								}
-							}
-
-							break;
-						}
-					}
-				}));
-			} catch (RemoteException e) {
-				Log.e(LOGTAG, "send error: " + e);
-			}
-		}
-	}
-
-	public static class HiringFragment extends SearchFragment implements View.OnClickListener {
-		@Override
-		public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-			// Inflate the layout for this fragment
-			View view = inflater.inflate(R.layout.hiring_fragment, container, false);
-			Button searchButton = (Button) view.findViewById(R.id.searchButton);
-			searchButton.setOnClickListener(this);
-			return view;
-		}
-
-	}
-
-	public static class CrewFragment extends SearchFragment implements View.OnClickListener {
-		@Override
-		public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-			// Inflate the layout for this fragment
-			View view = inflater.inflate(R.layout.crew_fragment, container, false);
-			Button searchButton = (Button) view.findViewById(R.id.searchButton);
-			searchButton.setOnClickListener(this);
-			return view;
-		}
-
-	}
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -158,16 +32,13 @@ public class MainActivity extends Activity {
 		bar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
 		bar.setDisplayOptions(0, ActionBar.DISPLAY_SHOW_TITLE);
 
-		bar.addTab(bar.newTab().setText("Crew").setTabListener(new TabListener<CrewFragment>(this, "crew", CrewFragment.class)));
-		bar.addTab(bar.newTab().setText("Hiring").setTabListener(new TabListener<HiringFragment>(this, "hiring", HiringFragment.class)));
+		bar.addTab(bar.newTab().setText("I'm Crew").setTabListener(new TabListener<CrewFragment>(this, "crew", CrewFragment.class)));
+		bar.addTab(bar.newTab().setText("I'm Hiring").setTabListener(new TabListener<HiringFragment>(this, "hiring", HiringFragment.class)));
 
 		if (savedInstanceState != null) {
 			bar.setSelectedNavigationItem(savedInstanceState.getInt("tab", 0));
 		}
 
-		sConnectionServiceManager = new ServiceConnector(this, ConnectionService.class);
-
-		sConnectionServiceManager.start();
 
 	}
 

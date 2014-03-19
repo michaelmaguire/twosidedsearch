@@ -31,7 +31,6 @@ import org.json.JSONObject;
 import android.os.Bundle;
 import android.os.Message;
 import android.os.Messenger;
-import android.os.RemoteException;
 import android.util.Base64;
 import android.util.Log;
 
@@ -73,6 +72,10 @@ public class ConnectionService extends BaseService {
 	public static final String BUNDLE_KEY_REQUEST_ID = "request_id";
 
 	private KeyManager mKeyManager;
+
+	public static final String JSON_KEY_MESSAGE = "message";
+
+	public static final String JSON_KEY_STATUS = "status";
 
 	private void makeRequestWithParameters(final String relativeUrl, final Bundle parameters, final Messenger replyTo) {
 		new Thread(new Runnable() {
@@ -194,7 +197,8 @@ public class ConnectionService extends BaseService {
 					Log.e(LOGTAG, errorMessage);
 
 					jsonResponse = new JSONObject();
-					jsonResponse.put("error", errorMessage);
+					jsonResponse.put(ConnectionService.JSON_KEY_STATUS, errorMessage);
+					jsonResponse.put(ConnectionService.JSON_KEY_MESSAGE, errorMessage);
 
 				} finally {
 					if (replyTo != null) {

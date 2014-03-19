@@ -10,8 +10,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.os.Messenger;
-import android.os.RemoteException;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
@@ -20,9 +18,8 @@ import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
-import com.speedycrew.client.android.connection.BundleProducer;
 import com.speedycrew.client.android.connection.ConnectionService;
-import com.speedycrew.client.util.ServiceConnector;
+import com.speedycrew.client.util.RequestHelperServiceConnector;
 
 /**
  * A {@link PreferenceActivity} that presents a set of application settings. On
@@ -39,7 +36,7 @@ public class ProfileActivity extends PreferenceActivity {
 
 	private static String LOGTAG = ProfileActivity.class.getName();
 
-	ServiceConnector mConnectionServiceManager;
+	RequestHelperServiceConnector mRequestHelperServiceConnector;
 
 	/**
 	 * Determines whether to always show the simplified settings UI, where
@@ -53,9 +50,9 @@ public class ProfileActivity extends PreferenceActivity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
-		mConnectionServiceManager = new ServiceConnector(this, ConnectionService.class);
+		mRequestHelperServiceConnector = new RequestHelperServiceConnector(this, ConnectionService.class);
 
-		mConnectionServiceManager.start();
+		mRequestHelperServiceConnector.start();
 
 	}
 
@@ -161,28 +158,26 @@ public class ProfileActivity extends PreferenceActivity {
 			}
 
 			if (oldValue != newValue) {
-				Message msg = Message.obtain();
-				msg.obj = new String("1/update_profile");
-
 				String displayName = preferences.getString("display_name", "DEFAULTNAME");
 				String blurbMessage = preferences.getString("blurb_message", "DEFAULTBLURB");
 				String contactEmail = preferences.getString("contact_email", "DEFAULTEMAIL");
 
-				msg.setData(BundleProducer.produceProfileUpdateBundle(displayName, blurbMessage, contactEmail));
-				msg.what = ConnectionService.MSG_MAKE_REQUEST_WITH_PARAMETERS;
 				try {
-					mConnectionServiceManager.send(msg, new Messenger(new Handler() {
+					mRequestHelperServiceConnector.updateProfile(displayName, blurbMessage, contactEmail, new Handler.Callback() {
+
 						@Override
-						public void handleMessage(Message msg) {
+						public boolean handleMessage(Message msg) {
 							switch (msg.what) {
 							case ConnectionService.MSG_JSON_RESPONSE:
 								Log.i(LOGTAG, "handleMessage MSG_JSON_RESPONSE: " + msg.obj);
-								break;
+								return true;
+								// break;
 							}
+							return false;
 						}
-					}));
-				} catch (RemoteException e) {
-					Log.e(LOGTAG, "send error: " + e);
+					});
+				} catch (Exception e) {
+					Log.e(LOGTAG, "onPreferenceChange error: " + e);
 				}
 			}
 
@@ -262,6 +257,6 @@ public class ProfileActivity extends PreferenceActivity {
 	protected void onDestroy() {
 		super.onDestroy();
 
-		this.mConnectionServiceManager.unbind();
+		this.mRequestHelperServiceConnector.unbind();
 	}
 }

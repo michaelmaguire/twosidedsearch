@@ -1,6 +1,7 @@
 package com.speedycrew.client.util;
 
 import java.util.ArrayList;
+
 import android.app.Service;
 import android.content.Intent;
 import android.os.Handler;
