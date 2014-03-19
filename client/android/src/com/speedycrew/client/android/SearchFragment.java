@@ -2,6 +2,7 @@ package com.speedycrew.client.android;
 
 import java.util.Vector;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import android.app.Fragment;
@@ -40,50 +41,55 @@ public class SearchFragment extends Fragment implements View.OnClickListener {
 
 		mRequestHelperServiceConnector.start();
 
-		// TESTING
-		SearchResult a = new SearchResult("a");
-		SearchResult b = new SearchResult("b");
-		Search s1 = new Search("42", "Chef");
-		s1.addSearchResult(a);
-		s1.addSearchResult(b);
-		SearchResult c = new SearchResult("c");
-		SearchResult d = new SearchResult("d");
+	}
 
-		Search s2 = new Search("43", "Buttler");
-		s2.addSearchResult(c);
-		s2.addSearchResult(d);
-
-		mSearchGroups.add(s1);
-
-		mSearchGroups.add(s2);
-
+	void addSearch(Search search) {
+		mSearchGroups.add(search);
 	}
 
 	private class SearchResultsHandlerCallback implements Handler.Callback {
+
+		private static final String JSON_KEY_RESULTS = "results";
+		private final Search mSearch;
+
+		SearchResultsHandlerCallback(Search search) {
+			mSearch = search;
+		}
+
 		@Override
 		public boolean handleMessage(Message responseMessage) {
-			switch (responseMessage.what) {
-			case ConnectionService.MSG_JSON_RESPONSE:
-				final String responseString = responseMessage.obj.toString();
+			try {
+				switch (responseMessage.what) {
+				case ConnectionService.MSG_JSON_RESPONSE:
+					final String responseString = responseMessage.obj.toString();
 
-				Log.i(LOGTAG, "handleMessage search results MSG_JSON_RESPONSE: " + responseString);
+					Log.i(LOGTAG, "handleMessage search results MSG_JSON_RESPONSE: " + responseString);
 
-				{
-					JSONObject responseJson = new JSONObject(responseString);
-					String status = responseJson.getString(ConnectionService.JSON_KEY_STATUS);
-					if (!"OK".equalsIgnoreCase(status)) {
-						String errorMessage = responseJson.getString(ConnectionService.JSON_KEY_MESSAGE);
+					{
+						JSONObject responseJson = new JSONObject(responseString);
+						String status = responseJson.getString(ConnectionService.JSON_KEY_STATUS);
+						if (!"OK".equalsIgnoreCase(status)) {
+							String errorMessage = responseJson.getString(ConnectionService.JSON_KEY_MESSAGE);
 
-						Toast.makeText(getActivity(), errorMessage, Toast.LENGTH_SHORT).show();
+							Toast.makeText(getActivity(), errorMessage, Toast.LENGTH_SHORT).show();
 
-					} else {
+						} else {
 
+							JSONArray results = responseJson.getJSONArray(JSON_KEY_RESULTS);
+
+							for (int i = 0; i < results.length(); ++i) {
+								SearchResult sr = new SearchResult(results.getJSONObject(i));
+								mSearch.addSearchResult(sr);
+							}
+
+						}
 					}
+
+					return true;
+					// break;
 				}
-
-				return true;
-				// break;
-
+			} catch (Exception e) {
+				Log.i(LOGTAG, "SearchResultsHandlerCallback handleMessage error: " + e);
 			}
 			return false;
 		}
@@ -93,11 +99,11 @@ public class SearchFragment extends Fragment implements View.OnClickListener {
 	public void onClick(View view) {
 		Log.i(LOGTAG, "SearchFragment onClick");
 		EditText searchText = (EditText) ((View) view.getParent()).findViewById(R.id.queryString);
-		String searchString = searchText.getText().toString();
-		Log.i(LOGTAG, "SearchFragment searchString[" + searchString + ']');
+		final String queryString = searchText.getText().toString();
+		Log.i(LOGTAG, "SearchFragment queryString[" + queryString + ']');
 
 		try {
-			mRequestHelperServiceConnector.createSearch(searchString, this instanceof HiringFragment, new Handler.Callback() {
+			mRequestHelperServiceConnector.createSearch(queryString, this instanceof HiringFragment, new Handler.Callback() {
 				@Override
 				public boolean handleMessage(Message responseMessage) {
 					switch (responseMessage.what) {
@@ -116,7 +122,10 @@ public class SearchFragment extends Fragment implements View.OnClickListener {
 							} else {
 								String searchId = responseJson.getString(RequestHelperServiceConnector.JSON_KEY_SEARCH_ID);
 
-								mRequestHelperServiceConnector.getSearchResults(searchId, new SearchResultsHandlerCallback());
+								Search search = new Search(searchId, queryString);
+								addSearch(search);
+
+								mRequestHelperServiceConnector.getSearchResults(searchId, new SearchResultsHandlerCallback(search));
 							}
 						} catch (Exception e) {
 							Log.e(LOGTAG, "onClick get results error: " + e);
