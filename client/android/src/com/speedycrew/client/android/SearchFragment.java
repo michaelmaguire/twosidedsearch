@@ -8,7 +8,10 @@ import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.BaseExpandableListAdapter;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.speedycrew.client.android.connection.ConnectionService;
@@ -105,4 +108,67 @@ public class SearchFragment extends Fragment implements View.OnClickListener {
 			Log.e(LOGTAG, "onClick error: " + e);
 		}
 	}
+
+	public class SearchResultsListAdapter extends BaseExpandableListAdapter {
+
+		private String[] groups = { "People Names", "Dog Names", "Cat Names", "Fish Names" };
+
+		private String[][] children = { { "Arnold", "Barry", "Chuck", "David" }, { "Ace", "Bandit", "Cha-Cha", "Deuce" }, { "Fluffy", "Snuggles" }, { "Goldy", "Bubbles" } };
+
+		@Override
+		public int getGroupCount() {
+			return groups.length;
+		}
+
+		@Override
+		public int getChildrenCount(int i) {
+			return children[i].length;
+		}
+
+		@Override
+		public Object getGroup(int i) {
+			return groups[i];
+		}
+
+		@Override
+		public Object getChild(int i, int i1) {
+			return children[i][i1];
+		}
+
+		@Override
+		public long getGroupId(int i) {
+			return i;
+		}
+
+		@Override
+		public long getChildId(int i, int i1) {
+			return i1;
+		}
+
+		@Override
+		public boolean hasStableIds() {
+			return true;
+		}
+
+		@Override
+		public View getGroupView(int i, boolean b, View view, ViewGroup viewGroup) {
+			TextView textView = new TextView(SearchFragment.this.getActivity());
+			textView.setText(getGroup(i).toString());
+			return textView;
+		}
+
+		@Override
+		public View getChildView(int i, int i1, boolean b, View view, ViewGroup viewGroup) {
+			TextView textView = new TextView(SearchFragment.this.getActivity());
+			textView.setText(getChild(i, i1).toString());
+			return textView;
+		}
+
+		@Override
+		public boolean isChildSelectable(int i, int i1) {
+			return true;
+		}
+
+	}
+
 }

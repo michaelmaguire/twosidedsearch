@@ -10,23 +10,32 @@
 
     <EditText
         android:id="@+id/queryString"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
         android:layout_alignParentTop="true"
+        android:layout_toLeftOf="@+id/searchButton"
         android:ems="10"
         android:inputType="textMultiLine" >
 
         <requestFocus />
     </EditText>
 
+    <ExpandableListView
+        android:id="@+id/list"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentRight="true"
+        android:layout_below="@+id/searchButton" />
+
     <Button
         android:id="@+id/searchButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/queryString"
-        android:layout_marginTop="22dp"
-        android:layout_toRightOf="@+id/queryString"
-        android:text="Search" />
+        android:layout_alignBaseline="@+id/queryString"
+        android:layout_alignBottom="@+id/queryString"
+        android:layout_alignRight="@+id/list"
+        android:text="@string/search_button" />
 
 </RelativeLayout>
