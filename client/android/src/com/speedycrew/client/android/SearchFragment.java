@@ -1,5 +1,7 @@
 package com.speedycrew.client.android;
 
+import java.util.Vector;
+
 import org.json.JSONObject;
 
 import android.app.Fragment;
@@ -15,12 +17,16 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.speedycrew.client.android.connection.ConnectionService;
+import com.speedycrew.client.android.model.Search;
+import com.speedycrew.client.android.model.SearchResult;
 import com.speedycrew.client.util.RequestHelperServiceConnector;
 
 public class SearchFragment extends Fragment implements View.OnClickListener {
 	private static final String LOGTAG = SearchFragment.class.getName();
 
 	private RequestHelperServiceConnector mRequestHelperServiceConnector;
+
+	Vector<Search> mSearchGroups = new Vector<Search>();
 
 	@Override
 	public void onCreate(Bundle saved) {
@@ -33,6 +39,24 @@ public class SearchFragment extends Fragment implements View.OnClickListener {
 		mRequestHelperServiceConnector = new RequestHelperServiceConnector(getActivity(), ConnectionService.class);
 
 		mRequestHelperServiceConnector.start();
+
+		// TESTING
+		SearchResult a = new SearchResult("a");
+		SearchResult b = new SearchResult("b");
+		Search s1 = new Search("42", "Chef");
+		s1.addSearchResult(a);
+		s1.addSearchResult(b);
+		SearchResult c = new SearchResult("c");
+		SearchResult d = new SearchResult("d");
+
+		Search s2 = new Search("43", "Buttler");
+		s2.addSearchResult(c);
+		s2.addSearchResult(d);
+
+		mSearchGroups.add(s1);
+
+		mSearchGroups.add(s2);
+
 	}
 
 	private class SearchResultsHandlerCallback implements Handler.Callback {
@@ -111,28 +135,24 @@ public class SearchFragment extends Fragment implements View.OnClickListener {
 
 	public class SearchResultsListAdapter extends BaseExpandableListAdapter {
 
-		private String[] groups = { "People Names", "Dog Names", "Cat Names", "Fish Names" };
-
-		private String[][] children = { { "Arnold", "Barry", "Chuck", "David" }, { "Ace", "Bandit", "Cha-Cha", "Deuce" }, { "Fluffy", "Snuggles" }, { "Goldy", "Bubbles" } };
-
 		@Override
 		public int getGroupCount() {
-			return groups.length;
+			return mSearchGroups.size();
 		}
 
 		@Override
 		public int getChildrenCount(int i) {
-			return children[i].length;
+			return mSearchGroups.elementAt(i).getNumberOfSearchResults();
 		}
 
 		@Override
 		public Object getGroup(int i) {
-			return groups[i];
+			return mSearchGroups.elementAt(i);
 		}
 
 		@Override
 		public Object getChild(int i, int i1) {
-			return children[i][i1];
+			return mSearchGroups.elementAt(i).getSearchResultAt(i1);
 		}
 
 		@Override
