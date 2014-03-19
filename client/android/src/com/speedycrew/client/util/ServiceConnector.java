@@ -19,16 +19,10 @@ public class ServiceConnector {
 	private Context mContext;
 	private boolean mIsBound;
 	private Messenger mService;
-	private Handler mRegisteredHandler;
-	private final Messenger mMessenger = new Messenger(new Handler() {
+	private final Messenger mServiceRegistrationMessenger = new Messenger(new Handler() {
 		@Override
 		public void handleMessage(Message msg) {
-			if (mRegisteredHandler != null) {
-				Log.i(LOGTAG,
-						"handleMessage - Delegating to registered handler: "
-								+ msg);
-				mRegisteredHandler.handleMessage(msg);
-			}
+			Log.i(LOGTAG, "handleMessage: " + msg);
 		}
 	});
 
@@ -38,13 +32,11 @@ public class ServiceConnector {
 			// textStatus.setText("Attached.");
 			Log.i(LOGTAG, "onServiceConnected");
 			try {
-				Message msg = Message.obtain(null,
-						BaseService.MSG_REGISTER_CLIENT);
-				msg.replyTo = mMessenger;
+				Message msg = Message.obtain(null, BaseService.MSG_REGISTER_CLIENT);
+				msg.replyTo = mServiceRegistrationMessenger;
 				mService.send(msg);
 			} catch (RemoteException e) {
-				Log.e("ServiceConnector",
-						"onServiceConnected - the service has crashed before we could even do anything with it");
+				Log.e("ServiceConnector", "onServiceConnected - the service has crashed before we could even do anything with it");
 			}
 		}
 
@@ -56,11 +48,9 @@ public class ServiceConnector {
 		}
 	};
 
-	public ServiceConnector(Context context,
-			Class<? extends BaseService> serviceClass, Handler registeredHandler) {
+	public ServiceConnector(Context context, Class<? extends BaseService> serviceClass) {
 		this.mContext = context;
 		this.mServiceClass = serviceClass;
-		this.mRegisteredHandler = registeredHandler;
 
 		doBindService();
 	}
@@ -82,9 +72,10 @@ public class ServiceConnector {
 		doUnbindService();
 	}
 
-	public void send(Message msg) throws RemoteException {
+	public void send(Message msg, Messenger replyTo) throws RemoteException {
 		if (mIsBound) {
 			if (mService != null) {
+				msg.replyTo = replyTo;
 				mService.send(msg);
 			}
 		}
@@ -99,8 +90,7 @@ public class ServiceConnector {
 	}
 
 	private void doBindService() {
-		mContext.bindService(new Intent(mContext, mServiceClass), mConnection,
-				Context.BIND_AUTO_CREATE);
+		mContext.bindService(new Intent(mContext, mServiceClass), mConnection, Context.BIND_AUTO_CREATE);
 		mIsBound = true;
 	}
 
@@ -110,9 +100,8 @@ public class ServiceConnector {
 			// then now is the time to unregister.
 			if (mService != null) {
 				try {
-					Message msg = Message.obtain(null,
-							BaseService.MSG_UNREGISTER_CLIENT);
-					msg.replyTo = mMessenger;
+					Message msg = Message.obtain(null, BaseService.MSG_UNREGISTER_CLIENT);
+					msg.replyTo = mServiceRegistrationMessenger;
 					mService.send(msg);
 				} catch (RemoteException e) {
 					// There is nothing special we need to do if the service has

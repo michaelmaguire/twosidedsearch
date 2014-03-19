@@ -4,11 +4,13 @@ import java.util.List;
 
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.os.Messenger;
 import android.os.RemoteException;
 import android.preference.ListPreference;
 import android.preference.Preference;
@@ -51,18 +53,7 @@ public class ProfileActivity extends PreferenceActivity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
-		mConnectionServiceManager = new ServiceConnector(this,
-				ConnectionService.class, new Handler() {
-					@Override
-					public void handleMessage(Message msg) {
-						switch (msg.what) {
-						case ConnectionService.MSG_JSON_RESPONSE:
-							Log.i(LOGTAG, "handleMessage MSG_JSON_RESPONSE: "
-									+ msg.arg1);
-							break;
-						}
-					}
-				});
+		mConnectionServiceManager = new ServiceConnector(this, ConnectionService.class);
 
 		mConnectionServiceManager.start();
 
@@ -129,9 +120,7 @@ public class ProfileActivity extends PreferenceActivity {
 	 * "simplified" settings UI should be shown.
 	 */
 	private static boolean isSimplePreferences(Context context) {
-		return ALWAYS_SIMPLE_PREFS
-				|| Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB
-				|| !isXLargeTablet(context);
+		return ALWAYS_SIMPLE_PREFS || Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB || !isXLargeTablet(context);
 	}
 
 	/** {@inheritDoc} */
@@ -149,8 +138,12 @@ public class ProfileActivity extends PreferenceActivity {
 	 */
 	private Preference.OnPreferenceChangeListener mBindPreferenceSummaryToValueListener = new Preference.OnPreferenceChangeListener() {
 		@Override
-		public boolean onPreferenceChange(Preference preference, Object value) {
-			String stringValue = value.toString();
+		public boolean onPreferenceChange(Preference preference, Object newValue) {
+			String stringValue = newValue.toString();
+
+			SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(ProfileActivity.this);
+
+			String oldValue = preferences.getString(preference.getKey(), "DEFAULTVALUE");
 
 			if (preference instanceof ListPreference) {
 				// For list preferences, look up the correct display value in
@@ -159,9 +152,7 @@ public class ProfileActivity extends PreferenceActivity {
 				int index = listPreference.findIndexOfValue(stringValue);
 
 				// Set the summary to reflect the new value.
-				preference
-						.setSummary(index >= 0 ? listPreference.getEntries()[index]
-								: null);
+				preference.setSummary(index >= 0 ? listPreference.getEntries()[index] : null);
 
 			} else {
 				// For all other preferences, set the summary to the value's
@@ -169,17 +160,30 @@ public class ProfileActivity extends PreferenceActivity {
 				preference.setSummary(stringValue);
 			}
 
-			// TODO mmaguire: This is lame. I should only make the call to
-			// server side when the use clicks Done or something.
-			Message msg = Message.obtain();
-			msg.obj = new String("1/update_profile");
-			msg.setData(BundleProducer.produceProfileUpdateBundle("real_name1",
-					"message1", "email1"));
-			msg.what = ConnectionService.MSG_MAKE_REQUEST_WITH_PARAMETERS;
-			try {
-				mConnectionServiceManager.send(msg);
-			} catch (RemoteException e) {
-				Log.e(LOGTAG, "send error: " + e);
+			if (oldValue != newValue) {
+				Message msg = Message.obtain();
+				msg.obj = new String("1/update_profile");
+
+				String displayName = preferences.getString("display_name", "DEFAULTNAME");
+				String blurbMessage = preferences.getString("blurb_message", "DEFAULTBLURB");
+				String contactEmail = preferences.getString("contact_email", "DEFAULTEMAIL");
+
+				msg.setData(BundleProducer.produceProfileUpdateBundle(displayName, blurbMessage, contactEmail));
+				msg.what = ConnectionService.MSG_MAKE_REQUEST_WITH_PARAMETERS;
+				try {
+					mConnectionServiceManager.send(msg, new Messenger(new Handler() {
+						@Override
+						public void handleMessage(Message msg) {
+							switch (msg.what) {
+							case ConnectionService.MSG_JSON_RESPONSE:
+								Log.i(LOGTAG, "handleMessage MSG_JSON_RESPONSE: " + msg.obj);
+								break;
+							}
+						}
+					}));
+				} catch (RemoteException e) {
+					Log.e(LOGTAG, "send error: " + e);
+				}
 			}
 
 			return true;
@@ -197,16 +201,12 @@ public class ProfileActivity extends PreferenceActivity {
 	 */
 	private void bindPreferenceSummaryToValue(Preference preference) {
 		// Set the listener to watch for value changes.
-		preference
-				.setOnPreferenceChangeListener(mBindPreferenceSummaryToValueListener);
+		preference.setOnPreferenceChangeListener(mBindPreferenceSummaryToValueListener);
 
 		// Trigger the listener immediately with the preference's
 		// current value.
-		mBindPreferenceSummaryToValueListener.onPreferenceChange(
-				preference,
-				PreferenceManager.getDefaultSharedPreferences(
-						preference.getContext()).getString(preference.getKey(),
-						""));
+		mBindPreferenceSummaryToValueListener.onPreferenceChange(preference,
+				PreferenceManager.getDefaultSharedPreferences(preference.getContext()).getString(preference.getKey(), ""));
 	}
 
 	/**
@@ -240,8 +240,7 @@ public class ProfileActivity extends PreferenceActivity {
 	 * activity is showing a two-pane settings UI.
 	 */
 	@TargetApi(Build.VERSION_CODES.HONEYCOMB)
-	public static class NotificationPreferenceFragment extends
-			PreferenceFragment {
+	public static class NotificationPreferenceFragment extends PreferenceFragment {
 		@Override
 		public void onCreate(Bundle savedInstanceState) {
 			super.onCreate(savedInstanceState);
