@@ -34,7 +34,7 @@ public class SearchResult {
 	}
 
 	public String toString() {
-		return mUsername + " " + mEmail;
+		return mUsername + " " + mRealName + " " + mEmail + " " + mCity;
 	}
 
 }

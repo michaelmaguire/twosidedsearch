@@ -6,11 +6,15 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import android.app.Fragment;
+import android.content.Context;
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.BaseExpandableListAdapter;
 import android.widget.EditText;
@@ -28,6 +32,8 @@ public class SearchFragment extends Fragment implements View.OnClickListener {
 
 	private RequestHelperServiceConnector mRequestHelperServiceConnector;
 
+	protected SearchResultsListAdapter mSearchResultsListAdapter;
+
 	Vector<Search> mSearchGroups = new Vector<Search>();
 
 	@Override
@@ -44,8 +50,22 @@ public class SearchFragment extends Fragment implements View.OnClickListener {
 
 	}
 
-	void addSearch(Search search) {
-		mSearchGroups.add(search);
+	void addSearch(final Search search) {
+		getActivity().runOnUiThread(new Runnable() {
+			public void run() {
+				mSearchGroups.add(search);
+				mSearchResultsListAdapter.notifyDataSetChanged();
+			}
+		});
+	}
+
+	void addSearchResultToSearch(final Search search, final SearchResult searchResult) {
+		getActivity().runOnUiThread(new Runnable() {
+			public void run() {
+				search.addSearchResult(searchResult);
+				mSearchResultsListAdapter.notifyDataSetChanged();
+			}
+		});
 	}
 
 	private class SearchResultsHandlerCallback implements Handler.Callback {
@@ -80,7 +100,7 @@ public class SearchFragment extends Fragment implements View.OnClickListener {
 
 							for (int i = 0; i < results.length(); ++i) {
 								SearchResult sr = new SearchResult(results.getJSONObject(i));
-								mSearch.addSearchResult(sr);
+								addSearchResultToSearch(mSearch, sr);
 							}
 
 						}
@@ -124,6 +144,7 @@ public class SearchFragment extends Fragment implements View.OnClickListener {
 								String searchId = responseJson.getString(ConnectionService.Key.SEARCH_ID);
 
 								Search search = new Search(searchId, queryString);
+
 								addSearch(search);
 
 								mRequestHelperServiceConnector.getSearchResults(searchId, new SearchResultsHandlerCallback(search));
@@ -181,17 +202,39 @@ public class SearchFragment extends Fragment implements View.OnClickListener {
 		}
 
 		@Override
-		public View getGroupView(int i, boolean b, View view, ViewGroup viewGroup) {
-			TextView textView = new TextView(SearchFragment.this.getActivity());
-			textView.setText(getGroup(i).toString());
-			return textView;
+		public View getGroupView(int groupPosition, boolean isExpanded, View convertView, ViewGroup parent) {
+			String searchName = getGroup(groupPosition).toString();
+			if (convertView == null) {
+				LayoutInflater inflater = (LayoutInflater) getActivity().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+				convertView = inflater.inflate(R.layout.search_group, null);
+			}
+			TextView item = (TextView) convertView.findViewById(R.id.queryString);
+			item.setTypeface(null, Typeface.BOLD);
+			item.setText(searchName);
+			return convertView;
 		}
 
 		@Override
-		public View getChildView(int i, int i1, boolean b, View view, ViewGroup viewGroup) {
-			TextView textView = new TextView(SearchFragment.this.getActivity());
-			textView.setText(getChild(i, i1).toString());
-			return textView;
+		public View getChildView(final int groupPosition, final int childPosition, boolean isLastChild, View convertView, ViewGroup parent) {
+			final String searchResult = getChild(groupPosition, childPosition).toString();
+			LayoutInflater inflater = getActivity().getLayoutInflater();
+
+			if (convertView == null) {
+				convertView = inflater.inflate(R.layout.search_result_child, null);
+			}
+
+			TextView item = (TextView) convertView.findViewById(R.id.result);
+
+			convertView.setOnClickListener(new OnClickListener() {
+
+				public void onClick(View v) {
+					Log.e(LOGTAG, "onClick for search result: " + searchResult);
+
+				}
+			});
+
+			item.setText(searchResult);
+			return convertView;
 		}
 
 		@Override

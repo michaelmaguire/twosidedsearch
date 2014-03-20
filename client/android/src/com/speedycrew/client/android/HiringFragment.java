@@ -12,10 +12,11 @@ public class HiringFragment extends SearchFragment implements View.OnClickListen
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		// Inflate the layout for this fragment
 		View view = inflater.inflate(R.layout.hiring_fragment, container, false);
-		
+
+		mSearchResultsListAdapter = new SearchResultsListAdapter();
 		ExpandableListView elv = (ExpandableListView) view.findViewById(R.id.list);
-		elv.setAdapter(new SearchResultsListAdapter());
-		
+		elv.setAdapter(mSearchResultsListAdapter);
+
 		Button searchButton = (Button) view.findViewById(R.id.searchButton);
 		searchButton.setOnClickListener(this);
 		return view;
