@@ -91,11 +91,13 @@ public class ConnectionService extends BaseService {
 	 */
 	public static final String RESERVED_INTERPROCESS_PREFIX = "RESERVED_INTERPROCESS_PREFIX-";
 
-	public static final String BUNDLE_KEY_RESPONSE_JSON = RESERVED_INTERPROCESS_PREFIX + "response-json";
+	public static final String BUNDLE_KEY_RESPONSE_JSON = RESERVED_INTERPROCESS_PREFIX
+			+ "response-json";
 
 	private KeyManager mKeyManager;
 
-	private void makeRequestWithParameters(final String relativeUrl, final Bundle parameters, final Messenger replyTo) {
+	private void makeRequestWithParameters(final String relativeUrl,
+			final Bundle parameters, final Messenger replyTo) {
 		new Thread(new Runnable() {
 			public void run() {
 
@@ -110,29 +112,36 @@ public class ConnectionService extends BaseService {
 						uniqueUserId = mKeyManager.getUserId();
 						Log.i(LOGTAG, "uniqueUserId[" + uniqueUserId + "]");
 					} catch (Exception e) {
-						Log.e(LOGTAG, "makeRequestWithParameters getUserId: " + e.getMessage());
+						Log.e(LOGTAG, "makeRequestWithParameters getUserId: "
+								+ e.getMessage());
 						throw e;
 					}
 
 					DefaultHttpClient httpsClient = null;
 					try {
-						SSLSocketFactory socketFactory = mKeyManager.getSSLSocketFactory();
+						SSLSocketFactory socketFactory = mKeyManager
+								.getSSLSocketFactory();
 
 						// Set parameter data.
 						HttpParams params = new BasicHttpParams();
-						HttpProtocolParams.setVersion(params, HttpVersion.HTTP_1_1);
+						HttpProtocolParams.setVersion(params,
+								HttpVersion.HTTP_1_1);
 						HttpProtocolParams.setContentCharset(params, "UTF-8");
 						HttpProtocolParams.setUseExpectContinue(params, true);
-						HttpProtocolParams.setUserAgent(params, "Android SpeedyCrew/1.0.0");
+						HttpProtocolParams.setUserAgent(params,
+								"Android SpeedyCrew/1.0.0");
 
 						// Make connection pool.
 						ConnPerRoute connPerRoute = new ConnPerRouteBean(12);
-						ConnManagerParams.setMaxConnectionsPerRoute(params, connPerRoute);
+						ConnManagerParams.setMaxConnectionsPerRoute(params,
+								connPerRoute);
 						ConnManagerParams.setMaxTotalConnections(params, 20);
 
 						// Set timeout.
-						HttpConnectionParams.setStaleCheckingEnabled(params, false);
-						HttpConnectionParams.setConnectionTimeout(params, 30 * 1000);
+						HttpConnectionParams.setStaleCheckingEnabled(params,
+								false);
+						HttpConnectionParams.setConnectionTimeout(params,
+								30 * 1000);
 						HttpConnectionParams.setSoTimeout(params, 30 * 1000);
 						HttpConnectionParams.setSocketBufferSize(params, 8192);
 
@@ -140,18 +149,23 @@ public class ConnectionService extends BaseService {
 						HttpClientParams.setRedirecting(params, false);
 
 						SchemeRegistry schReg = new SchemeRegistry();
-						schReg.register(new Scheme("http", PlainSocketFactory.getSocketFactory(), 80));
+						schReg.register(new Scheme("http", PlainSocketFactory
+								.getSocketFactory(), 80));
 						schReg.register(new Scheme("https", socketFactory, 443));
-						ClientConnectionManager conMgr = new ThreadSafeClientConnManager(params, schReg);
+						ClientConnectionManager conMgr = new ThreadSafeClientConnManager(
+								params, schReg);
 						httpsClient = new DefaultHttpClient(conMgr, params);
 					} catch (Exception e) {
-						Log.e(LOGTAG, "makeRequestWithParameters: error creating DefaultHttpClient: " + e.getMessage());
+						Log.e(LOGTAG,
+								"makeRequestWithParameters: error creating DefaultHttpClient: "
+										+ e.getMessage());
 						throw e;
 					}
 
 					HttpPost httpPost = null;
 					try {
-						httpPost = new HttpPost(SPEEDY_API_URL_PREFIX + relativeUrl);
+						httpPost = new HttpPost(SPEEDY_API_URL_PREFIX
+								+ relativeUrl);
 
 						// This was only needed initially before we got SSL
 						// working.
@@ -159,18 +173,25 @@ public class ConnectionService extends BaseService {
 						// uniqueUserId);
 
 						// Needed for **dev**.speedycrew.com
-						httpPost.setHeader("Authorization", "Basic " + Base64.encodeToString("captain:cook".getBytes(), Base64.NO_WRAP));
+						httpPost.setHeader(
+								"Authorization",
+								"Basic "
+										+ Base64.encodeToString(
+												"captain:cook".getBytes(),
+												Base64.NO_WRAP));
 
 						// Set post data.
 
 						Set<String> keys = parameters.keySet();
 
-						List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(keys.size());
+						List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(
+								keys.size());
 
 						for (String key : keys) {
 
 							if (!key.startsWith(RESERVED_INTERPROCESS_PREFIX)) {
-								nameValuePairs.add(new BasicNameValuePair(key, parameters.getString(key)));
+								nameValuePairs.add(new BasicNameValuePair(key,
+										parameters.getString(key)));
 							}
 						}
 
@@ -181,10 +202,13 @@ public class ConnectionService extends BaseService {
 						// nameValuePairs.add(new BasicNameValuePair("password",
 						// "N/A"));
 
-						httpPost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
+						httpPost.setEntity(new UrlEncodedFormEntity(
+								nameValuePairs));
 
 					} catch (Exception e) {
-						Log.e(LOGTAG, "makeRequestWithParameters: error HttpGet: " + e.getMessage());
+						Log.e(LOGTAG,
+								"makeRequestWithParameters: error HttpGet: "
+										+ e.getMessage());
 						throw e;
 					}
 
@@ -192,43 +216,57 @@ public class ConnectionService extends BaseService {
 					try {
 						response = httpsClient.execute(httpPost);
 					} catch (Exception e) {
-						Log.e(LOGTAG, "makeRequestWithParameters: error execute: " + e.getMessage());
+						Log.e(LOGTAG,
+								"makeRequestWithParameters: error execute: "
+										+ e.getMessage());
 						throw e;
 					}
 
 					try {
-						final int statusCode = response.getStatusLine().getStatusCode();
+						final int statusCode = response.getStatusLine()
+								.getStatusCode();
 						if (statusCode < 200 || statusCode >= 300) {
 							throw new Exception("HTTP statusCode " + statusCode);
 						}
 
-						String resultString = EntityUtils.toString(response.getEntity());
+						String resultString = EntityUtils.toString(response
+								.getEntity());
 
 						jsonResponse = new JSONObject(resultString);
 
 					} catch (Exception e) {
-						Log.e(LOGTAG, "makeRequestWithParameters: error reading response: " + e.getMessage());
+						Log.e(LOGTAG,
+								"makeRequestWithParameters: error reading response: "
+										+ e.getMessage());
 						throw e;
 					}
 				} catch (Throwable t) {
-					final String errorMessage = "makeRequestWithParameters: " + t.getMessage();
+					final String errorMessage = "makeRequestWithParameters: "
+							+ t.getMessage();
 					Log.e(LOGTAG, errorMessage);
 
-					jsonResponse = new JSONObject();
-					jsonResponse.put(Key.STATUS, errorMessage);
-					jsonResponse.put(ConnectionService.Key.MESSAGE, errorMessage);
-
+					try {
+						jsonResponse = new JSONObject();
+						jsonResponse.put(Key.STATUS, errorMessage);
+						jsonResponse.put(ConnectionService.Key.MESSAGE,
+								errorMessage);
+					} catch (Exception e) {
+						Log.e(LOGTAG, "Unable to report error to UI");
+					}
 				} finally {
 					if (replyTo != null) {
 						try {
-							final String jsonResponseString = jsonResponse.toString();
+							final String jsonResponseString = jsonResponse
+									.toString();
 
 							Message responseMessage = new Message();
 							responseMessage.what = ConnectionService.MSG_JSON_RESPONSE;
 							responseMessage.obj = jsonResponseString;
 							replyTo.send(responseMessage);
 						} catch (Exception e) {
-							Log.e(LOGTAG, "makeRequestWithParameters: error sending response to calling process: " + e.getMessage());
+							Log.e(LOGTAG,
+									"makeRequestWithParameters: error sending response to calling process: "
+											+ e.getMessage());
 						}
 					}
 
@@ -261,7 +299,8 @@ public class ConnectionService extends BaseService {
 			switch (message.what) {
 			case MSG_MAKE_REQUEST_WITH_PARAMETERS:
 				final String relativeUrl = (String) message.obj;
-				Log.i(LOGTAG, "onReceiveMessage relativeUrl[" + relativeUrl + "]");
+				Log.i(LOGTAG, "onReceiveMessage relativeUrl[" + relativeUrl
+						+ "]");
 
 				Bundle bundle = message.getData();
 				// Enrich the bundle with geo location -- probably best not
@@ -269,7 +308,8 @@ public class ConnectionService extends BaseService {
 				bundle.putString(ConnectionService.Key.LONGITUDE, "-0.15");
 				bundle.putString(ConnectionService.Key.LATITUDE, "51.5");
 
-				if (ConnectionService.Key.VALUE_SIDE_SEEK.equals(bundle.getString(ConnectionService.Key.SIDE))) {
+				if (ConnectionService.Key.VALUE_SIDE_SEEK.equals(bundle
+						.getString(ConnectionService.Key.SIDE))) {
 					// Radius must be present for SEEK, absent for PROVIDE.
 					bundle.putString("radius", "5000");
 				}
@@ -277,7 +317,8 @@ public class ConnectionService extends BaseService {
 				int requestId = message.arg2;
 				final Bundle parameters = message.getData();
 				if (!parameters.containsKey(Key.BUNDLE_KEY_REQUEST_ID)) {
-					parameters.putString(Key.BUNDLE_KEY_REQUEST_ID, Integer.toString(requestId));
+					parameters.putString(Key.BUNDLE_KEY_REQUEST_ID,
+							Integer.toString(requestId));
 				}
 
 				makeRequestWithParameters(relativeUrl, bundle, message.replyTo);

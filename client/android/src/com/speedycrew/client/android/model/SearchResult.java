@@ -1,5 +1,6 @@
 package com.speedycrew.client.android.model;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.speedycrew.client.android.connection.ConnectionService;
@@ -18,7 +19,7 @@ public class SearchResult {
 	private final String mCity;
 	private final String mCountry;
 
-	public SearchResult(JSONObject json) {
+	public SearchResult(JSONObject json) throws JSONException {
 
 		mId = json.getLong(ConnectionService.Key.ID);
 		mDistance = json.getDouble(ConnectionService.Key.DISTANCE);
