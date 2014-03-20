@@ -18,6 +18,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.speedycrew.client.android.connection.ConnectionService;
+import com.speedycrew.client.android.connection.ConnectionService.Key;
 import com.speedycrew.client.android.model.Search;
 import com.speedycrew.client.android.model.SearchResult;
 import com.speedycrew.client.util.RequestHelperServiceConnector;
@@ -67,9 +68,9 @@ public class SearchFragment extends Fragment implements View.OnClickListener {
 
 					{
 						JSONObject responseJson = new JSONObject(responseString);
-						String status = responseJson.getString(ConnectionService.JSON_KEY_STATUS);
+						String status = responseJson.getString(Key.STATUS);
 						if (!"OK".equalsIgnoreCase(status)) {
-							String errorMessage = responseJson.getString(ConnectionService.JSON_KEY_MESSAGE);
+							String errorMessage = responseJson.getString(Key.MESSAGE);
 
 							Toast.makeText(getActivity(), errorMessage, Toast.LENGTH_SHORT).show();
 
@@ -113,14 +114,14 @@ public class SearchFragment extends Fragment implements View.OnClickListener {
 							Log.i(LOGTAG, "handleMessage create search MSG_JSON_RESPONSE: " + responseString);
 
 							JSONObject responseJson = new JSONObject(responseString);
-							String status = responseJson.getString(ConnectionService.JSON_KEY_STATUS);
+							String status = responseJson.getString(Key.STATUS);
 							if (!"OK".equalsIgnoreCase(status)) {
-								String errorMessage = responseJson.getString(ConnectionService.JSON_KEY_MESSAGE);
+								String errorMessage = responseJson.getString(ConnectionService.Key.MESSAGE);
 
 								Toast.makeText(getActivity(), errorMessage, Toast.LENGTH_SHORT).show();
 
 							} else {
-								String searchId = responseJson.getString(RequestHelperServiceConnector.JSON_KEY_SEARCH_ID);
+								String searchId = responseJson.getString(ConnectionService.Key.SEARCH_ID);
 
 								Search search = new Search(searchId, queryString);
 								addSearch(search);

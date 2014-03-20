@@ -2,6 +2,8 @@ package com.speedycrew.client.android.model;
 
 import org.json.JSONObject;
 
+import com.speedycrew.client.android.connection.ConnectionService;
+
 public class SearchResult {
 
 	private final long mId;
@@ -18,17 +20,17 @@ public class SearchResult {
 
 	public SearchResult(JSONObject json) {
 
-		mId = json.getLong("id");
-		mDistance = json.getDouble("distance");
-		mUsername = json.getString("username");
-		mEmail = json.getString("email");
-		mAddress = json.getString("address");
-		mRealName = json.getString("real_name");
-		mLongitude = json.getDouble("longitude");
-		mLatitude = json.getDouble("latitude");
-		mPostcode = json.getString("postcode");
-		mCity = json.getString("city");
-		mCountry = json.getString("country");
+		mId = json.getLong(ConnectionService.Key.ID);
+		mDistance = json.getDouble(ConnectionService.Key.DISTANCE);
+		mUsername = json.getString(ConnectionService.Key.USERNAME);
+		mEmail = json.getString(ConnectionService.Key.EMAIL);
+		mAddress = json.getString(ConnectionService.Key.ADDRESS);
+		mRealName = json.getString(ConnectionService.Key.REAL_NAME);
+		mLongitude = json.getDouble(ConnectionService.Key.LONGITUDE);
+		mLatitude = json.getDouble(ConnectionService.Key.LATITUDE);
+		mPostcode = json.getString(ConnectionService.Key.POSTCODE);
+		mCity = json.getString(ConnectionService.Key.CITY);
+		mCountry = json.getString(ConnectionService.Key.COUNTRY);
 	}
 
 	public String toString() {

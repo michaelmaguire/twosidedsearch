@@ -11,8 +11,6 @@ import com.speedycrew.client.android.connection.ConnectionService;
 
 public class RequestHelperServiceConnector extends ServiceConnector {
 
-	public static final String JSON_KEY_SEARCH_ID = "search_id";
-
 	public RequestHelperServiceConnector(Context context, Class<? extends BaseService> serviceClass) {
 		super(context, serviceClass);
 	}
@@ -61,9 +59,9 @@ public class RequestHelperServiceConnector extends ServiceConnector {
 	private static Bundle produceProfileUpdateBundle(String real_name, String message, String email) {
 		Bundle bundle = new Bundle();
 
-		bundle.putString("real_name", real_name);
-		bundle.putString("message", message);
-		bundle.putString("email", email);
+		bundle.putString(ConnectionService.Key.REAL_NAME, real_name);
+		bundle.putString(ConnectionService.Key.MESSAGE, message);
+		bundle.putString(ConnectionService.Key.EMAIL, email);
 
 		return bundle;
 	}
@@ -72,11 +70,11 @@ public class RequestHelperServiceConnector extends ServiceConnector {
 		Bundle bundle = new Bundle();
 
 		if (provide) {
-			bundle.putString("side", "PROVIDE");
+			bundle.putString(ConnectionService.Key.SIDE, ConnectionService.Key.VALUE_SIDE_PROVIDE);
 		} else {
-			bundle.putString("side", "SEEK");
+			bundle.putString(ConnectionService.Key.SIDE, ConnectionService.Key.VALUE_SIDE_SEEK);
 		}
-		bundle.putString("query", queryString);
+		bundle.putString(ConnectionService.Key.QUERY, queryString);
 
 		return bundle;
 	}
@@ -84,7 +82,7 @@ public class RequestHelperServiceConnector extends ServiceConnector {
 	private static Bundle produceCreateSearchResultsBundle(String searchId) {
 		Bundle bundle = new Bundle();
 
-		bundle.putString("search", searchId);
+		bundle.putString(ConnectionService.Key.SEARCH, searchId);
 
 		return bundle;
 	}

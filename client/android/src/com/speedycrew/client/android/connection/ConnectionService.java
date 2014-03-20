@@ -42,6 +42,33 @@ import com.speedycrew.client.util.BaseService;
  */
 public class ConnectionService extends BaseService {
 
+	public interface Key {
+		public static final String SEARCH_ID = "search_id";
+		public static final String SIDE = "side";
+		public static final String QUERY = "query";
+		public static final String VALUE_SIDE_PROVIDE = "PROVIDE";
+		public static final String VALUE_SIDE_SEEK = "SEEK";
+		public static final String ID = "id";
+		public static final String DISTANCE = "distance";
+		public static final String USERNAME = "username";
+		public static final String EMAIL = "email";
+		public static final String ADDRESS = "address";
+		public static final String REAL_NAME = "real_name";
+		public static final String LONGITUDE = "longitude";
+		public static final String LATITUDE = "latitude";
+		public static final String POSTCODE = "postcode";
+		public static final String CITY = "city";
+		public static final String COUNTRY = "country";
+		public static final String MESSAGE = "message";
+		public static final String SEARCH = "search";
+		public static final String STATUS = "status";
+		/**
+		 * This is actually a SpeedyCrew server parameter name passed right
+		 * through.
+		 */
+		public static final String BUNDLE_KEY_REQUEST_ID = "request_id";
+	}
+
 	private static String LOGTAG = ConnectionService.class.getName();
 
 	public static final int MSG_MAKE_REQUEST_WITH_PARAMETERS = 3;
@@ -66,16 +93,7 @@ public class ConnectionService extends BaseService {
 
 	public static final String BUNDLE_KEY_RESPONSE_JSON = RESERVED_INTERPROCESS_PREFIX + "response-json";
 
-	/**
-	 * This is actually a SpeedyCrew server parameter name passed right through.
-	 */
-	public static final String BUNDLE_KEY_REQUEST_ID = "request_id";
-
 	private KeyManager mKeyManager;
-
-	public static final String JSON_KEY_MESSAGE = "message";
-
-	public static final String JSON_KEY_STATUS = "status";
 
 	private void makeRequestWithParameters(final String relativeUrl, final Bundle parameters, final Messenger replyTo) {
 		new Thread(new Runnable() {
@@ -197,8 +215,8 @@ public class ConnectionService extends BaseService {
 					Log.e(LOGTAG, errorMessage);
 
 					jsonResponse = new JSONObject();
-					jsonResponse.put(ConnectionService.JSON_KEY_STATUS, errorMessage);
-					jsonResponse.put(ConnectionService.JSON_KEY_MESSAGE, errorMessage);
+					jsonResponse.put(Key.STATUS, errorMessage);
+					jsonResponse.put(ConnectionService.Key.MESSAGE, errorMessage);
 
 				} finally {
 					if (replyTo != null) {
@@ -248,14 +266,18 @@ public class ConnectionService extends BaseService {
 				Bundle bundle = message.getData();
 				// Enrich the bundle with geo location -- probably best not
 				// to try this on the UI thread.
-				bundle.putString("longitude", "-0.15");
-				bundle.putString("latitude", "51.5");
-				bundle.putString("radius", "5000");
+				bundle.putString(ConnectionService.Key.LONGITUDE, "-0.15");
+				bundle.putString(ConnectionService.Key.LATITUDE, "51.5");
+
+				if (ConnectionService.Key.VALUE_SIDE_SEEK.equals(bundle.getString(ConnectionService.Key.SIDE))) {
+					// Radius must be present for SEEK, absent for PROVIDE.
+					bundle.putString("radius", "5000");
+				}
 
 				int requestId = message.arg2;
 				final Bundle parameters = message.getData();
-				if (!parameters.containsKey(BUNDLE_KEY_REQUEST_ID)) {
-					parameters.putString(BUNDLE_KEY_REQUEST_ID, Integer.toString(requestId));
+				if (!parameters.containsKey(Key.BUNDLE_KEY_REQUEST_ID)) {
+					parameters.putString(Key.BUNDLE_KEY_REQUEST_ID, Integer.toString(requestId));
 				}
 
 				makeRequestWithParameters(relativeUrl, bundle, message.replyTo);
