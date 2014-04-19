@@ -4,7 +4,8 @@ development, on a Debian or Ubuntu system.
 1.  Install packages.
 
     sudo apt-get install postgresql-9.3 postgresql-contrib-9.3 \
-    python-django python-psycopg postgresql-9.3-postgis-2.1
+    python-django python-psycopg2 postgresql-9.3-postgis-2.1 \
+    python-m2crypto
 
 Note about postgresql-9.3: the package name changes for each Debian or
 Ubuntu release (see how the version is included in the package name --

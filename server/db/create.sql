@@ -35,7 +35,7 @@ comment on table device is 'A device used by a person to access the system';
 
 create table client_certificate (
   device text not null references device(id),
-  certificate bytea not null
+  certificate text not null
 );
 
 comment on table client_certificate is 'Public certificate data for a device';
@@ -67,14 +67,14 @@ create type search_status as enum ('ACTIVE', 'DELETED');
 create table search (
   id serial primary key,
   owner integer not null references profile(id),
-  name text,
-  side search_side,
+  query text not null,
+  side search_side not null,
   address text,
   postcode text,
   city text,
   country varchar(2) references country(id),
   geography geography not null,
-  radius float,
+  radius float check ((radius is null) = (side = 'PROVIDE')),
   status search_status not null,
   created timestamptz not null
 );
@@ -114,6 +114,17 @@ create table match (
 
 comment on table match is 'A match between two searches';
 
+create table tag_count (
+  tag integer not null primary key,
+  provide_counter integer not null,
+  seek_counter integer not null,
+  counter integer not null
+);
+
+comment on table tag_count is 'Recent tag usage counters';
+
+create index tag_count_counter_idx on tag_count(counter);
+
 create or replace function make_geo(long double precision, lat double precision)
 returns geography as $$
   select st_geographyfromtext('POINT(' || long::text || ' ' || $2::text || ')');
@@ -142,17 +153,14 @@ begin
     into v_tag_ids
     from speedycrew.search_tag st
    where st.search = i_search_id;
-  -- in this version, we only support PROVIDE (a service, like being a chef)
-  -- with a location and a radius, or SEEK (a chef), with a fixed location
-  -- and a null radius;  we implement this with two different queries, but
-  -- the results should be the same whichever way around it is done!
-  if v_side = 'PROVIDE' then
+   -- SEEK has a radius (SEEKers are mobile)
+  if v_side = 'SEEK' then
     for v_id in select s.id
                   from speedycrew.search s
                   join speedycrew.search_tag st on st.search = s.id
                  where st_dwithin(s.geography, v_geography, v_radius)
                    and st.tag = any (v_tag_ids)
-                   and s.side = 'SEEK'
+                   and s.side = 'PROVIDE'
     loop
       begin
         insert into speedycrew.match (a, b, status, created)
@@ -163,13 +171,13 @@ begin
       end;
     end loop;
   else
-    -- v_side = 'SEEK'
+    -- v_side = 'PROVIDE'
     for v_id in select s.id
                   from speedycrew.search s
                   join speedycrew.search_tag st on st.search = s.id
                  where st_dwithin(s.geography, v_geography, s.radius)
                    and st.tag = any (v_tag_ids)                  
-                   and s.side = 'PROVIDE'
+                   and s.side = 'SEEK'
     loop
       -- TODO avoid this duplicated code
       begin
@@ -184,5 +192,20 @@ begin
 end;
 $$
 language 'plpgsql';
+
+create table speedycrew.file (
+  profile integer not null references speedycrew.profile(id),
+  name text not null,
+  mime_type text not null,
+  version integer not null,
+  created timestamptz not null,
+  modified timestamptz not null,
+  size integer not null,
+  data bytea not null,
+  public boolean not null,
+  primary key (profile, name)
+);
+
+comment on table speedycrew.file is 'Filesystem-like data storage for holding arbitrary profile data';
 
 commit;

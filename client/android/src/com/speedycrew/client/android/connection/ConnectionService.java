@@ -1,14 +1,9 @@
 package com.speedycrew.client.android.connection;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.Authenticator;
-import java.net.PasswordAuthentication;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
-import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpVersion;
 import org.apache.http.NameValuePair;
@@ -30,70 +25,84 @@ import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
 import org.apache.http.params.HttpProtocolParams;
+import org.apache.http.util.EntityUtils;
+import org.json.JSONObject;
 
-import android.app.Service;
-import android.content.Intent;
-import android.os.IBinder;
+import android.os.Bundle;
+import android.os.Message;
+import android.os.Messenger;
 import android.util.Base64;
 import android.util.Log;
 
-public class ConnectionService extends Service {
+import com.speedycrew.client.util.BaseService;
+
+/**
+ * This Android service runs in the background and allows UI Activities to issue
+ * requests which will then be made as HTTP requests to the SpeedyCrew servers.
+ */
+public class ConnectionService extends BaseService {
+
+	public interface Key {
+		public static final String SEARCH_ID = "search_id";
+		public static final String SIDE = "side";
+		public static final String QUERY = "query";
+		public static final String VALUE_SIDE_PROVIDE = "PROVIDE";
+		public static final String VALUE_SIDE_SEEK = "SEEK";
+		public static final String ID = "id";
+		public static final String DISTANCE = "distance";
+		public static final String USERNAME = "username";
+		public static final String EMAIL = "email";
+		public static final String ADDRESS = "address";
+		public static final String REAL_NAME = "real_name";
+		public static final String LONGITUDE = "longitude";
+		public static final String LATITUDE = "latitude";
+		public static final String POSTCODE = "postcode";
+		public static final String CITY = "city";
+		public static final String COUNTRY = "country";
+		public static final String MESSAGE = "message";
+		public static final String SEARCH = "search";
+		public static final String STATUS = "status";
+		/**
+		 * This is actually a SpeedyCrew server parameter name passed right
+		 * through.
+		 */
+		public static final String BUNDLE_KEY_REQUEST_ID = "request_id";
+	}
 
 	private static String LOGTAG = ConnectionService.class.getName();
 
-	// Intended -- but currently we get told to piss off:
-	// private static String SPEEDY_URL =
-	// "http://dev.speedycrew.com/api/1/create";
+	public static final int MSG_MAKE_REQUEST_WITH_PARAMETERS = 3;
+	public static final int MSG_JSON_RESPONSE = 4;
 
 	// Testing -- works enough to get us a valid HTML response.
 	// private static String SPEEDY_URL = "https://www.google.co.uk/";
 
 	// Temporary -- since HTTPS gets us told to piss off -- still can't get past
 	// captain cook, though -- must be doing basic auth wrong.
-	private static String SPEEDY_URL = "http://dev.speedycrew.com/api/1/create";
+	private static final String SPEEDY_API_URL_PREFIX = "https://dev.speedycrew.com/api/";
 
-	private static String X_SPEEDY_CREW_USER_ID = "X-SpeedyCrew-UserId";
+	// This was only needed initially before we got SSL working.
+	// private static String X_SPEEDY_CREW_USER_ID = "X-SpeedyCrew-UserId";
+
+	/**
+	 * Begin bundle data items with this prefix if you *DON'T* wish them to be
+	 * passed to the server. This is to allow some items to be used in
+	 * communication between UI and ConnectionService.
+	 */
+	public static final String RESERVED_INTERPROCESS_PREFIX = "RESERVED_INTERPROCESS_PREFIX-";
+
+	public static final String BUNDLE_KEY_RESPONSE_JSON = RESERVED_INTERPROCESS_PREFIX
+			+ "response-json";
 
 	private KeyManager mKeyManager;
 
-	/**
-	 * Do any one-time initialization here -- this only gets called first time
-	 * Service is started.
-	 */
-	@Override
-	public void onCreate() {
-		Log.i(LOGTAG, "onCreate");
-
-		try {
-			mKeyManager = KeyManager.getInstance();
-		} catch (Exception e) {
-			Log.e(LOGTAG, "onCreate UNABLE TO CREATE KEY MANAGER");
-		}
-
-	}
-
-	/**
-	 * This gets called any time anyone sends us an Intent. Don't do any
-	 * one-time initialization -- do that in onCreate.
-	 */
-	@Override
-	public int onStartCommand(Intent intent, int flags, int startId) {
-		Log.i(LOGTAG, "onStartCommand");
-
-		initiateConnection();
-
-		return Service.START_STICKY;
-	}
-
-	@Override
-	public IBinder onBind(Intent arg0) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	private void initiateConnection() {
+	private void makeRequestWithParameters(final String relativeUrl,
+			final Bundle parameters, final Messenger replyTo) {
 		new Thread(new Runnable() {
 			public void run() {
+
+				JSONObject jsonResponse = new JSONObject();
+
 				try {
 					// This is the hex-encoded SHA1 hash of the public key.
 					// It's the best thing to use as a unique identifying ID for
@@ -103,29 +112,36 @@ public class ConnectionService extends Service {
 						uniqueUserId = mKeyManager.getUserId();
 						Log.i(LOGTAG, "uniqueUserId[" + uniqueUserId + "]");
 					} catch (Exception e) {
-						Log.e(LOGTAG, "initiateConnection getUserId: " + e.getMessage());
+						Log.e(LOGTAG, "makeRequestWithParameters getUserId: "
+								+ e.getMessage());
 						throw e;
 					}
 
 					DefaultHttpClient httpsClient = null;
 					try {
-						SSLSocketFactory socketFactory = mKeyManager.getSSLSocketFactory();
+						SSLSocketFactory socketFactory = mKeyManager
+								.getSSLSocketFactory();
 
 						// Set parameter data.
 						HttpParams params = new BasicHttpParams();
-						HttpProtocolParams.setVersion(params, HttpVersion.HTTP_1_1);
+						HttpProtocolParams.setVersion(params,
+								HttpVersion.HTTP_1_1);
 						HttpProtocolParams.setContentCharset(params, "UTF-8");
 						HttpProtocolParams.setUseExpectContinue(params, true);
-						HttpProtocolParams.setUserAgent(params, "Android SpeedyCrew/1.0.0");
+						HttpProtocolParams.setUserAgent(params,
+								"Android SpeedyCrew/1.0.0");
 
 						// Make connection pool.
 						ConnPerRoute connPerRoute = new ConnPerRouteBean(12);
-						ConnManagerParams.setMaxConnectionsPerRoute(params, connPerRoute);
+						ConnManagerParams.setMaxConnectionsPerRoute(params,
+								connPerRoute);
 						ConnManagerParams.setMaxTotalConnections(params, 20);
 
 						// Set timeout.
-						HttpConnectionParams.setStaleCheckingEnabled(params, false);
-						HttpConnectionParams.setConnectionTimeout(params, 30 * 1000);
+						HttpConnectionParams.setStaleCheckingEnabled(params,
+								false);
+						HttpConnectionParams.setConnectionTimeout(params,
+								30 * 1000);
 						HttpConnectionParams.setSoTimeout(params, 30 * 1000);
 						HttpConnectionParams.setSocketBufferSize(params, 8192);
 
@@ -133,32 +149,51 @@ public class ConnectionService extends Service {
 						HttpClientParams.setRedirecting(params, false);
 
 						SchemeRegistry schReg = new SchemeRegistry();
-						schReg.register(new Scheme("http", PlainSocketFactory.getSocketFactory(), 80));
+						schReg.register(new Scheme("http", PlainSocketFactory
+								.getSocketFactory(), 80));
 						schReg.register(new Scheme("https", socketFactory, 443));
-						ClientConnectionManager conMgr = new ThreadSafeClientConnManager(params, schReg);
+						ClientConnectionManager conMgr = new ThreadSafeClientConnManager(
+								params, schReg);
 						httpsClient = new DefaultHttpClient(conMgr, params);
 					} catch (Exception e) {
-						Log.e(LOGTAG, "initiateConnection: error creating DefaultHttpClient: " + e.getMessage());
+						Log.e(LOGTAG,
+								"makeRequestWithParameters: error creating DefaultHttpClient: "
+										+ e.getMessage());
 						throw e;
 					}
 
 					HttpPost httpPost = null;
 					try {
-						httpPost = new HttpPost(SPEEDY_URL);
+						httpPost = new HttpPost(SPEEDY_API_URL_PREFIX
+								+ relativeUrl);
 
-						httpPost.addHeader(X_SPEEDY_CREW_USER_ID, uniqueUserId);
+						// This was only needed initially before we got SSL
+						// working.
+						// httpPost.addHeader(X_SPEEDY_CREW_USER_ID,
+						// uniqueUserId);
 
-						// Try adding in our test dev server credentials.
-						// Hmmm. Still not doing this right... getting "401
-						// Authorization Required".
-						httpPost.addHeader("Authorization", "basic " + Base64.encode("captain:cook".getBytes(), Base64.NO_WRAP));
+						// Needed for **dev**.speedycrew.com
+						httpPost.setHeader(
+								"Authorization",
+								"Basic "
+										+ Base64.encodeToString(
+												"captain:cook".getBytes(),
+												Base64.NO_WRAP));
 
 						// Set post data.
-						List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(2);
-						nameValuePairs.add(new BasicNameValuePair("username", "michael1234"));
-						nameValuePairs.add(new BasicNameValuePair("firstname", "MichaelTest"));
-						nameValuePairs.add(new BasicNameValuePair("lastname", "LastnameTest"));
-						nameValuePairs.add(new BasicNameValuePair("email", "speedytest@michaelmaguire.ca"));
+
+						Set<String> keys = parameters.keySet();
+
+						List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(
+								keys.size());
+
+						for (String key : keys) {
+
+							if (!key.startsWith(RESERVED_INTERPROCESS_PREFIX)) {
+								nameValuePairs.add(new BasicNameValuePair(key,
+										parameters.getString(key)));
+							}
+						}
 
 						// Not needed with our new public key mechanism -- there
 						// will be no subsequent /api/1/login calls anymore, so
@@ -167,10 +202,13 @@ public class ConnectionService extends Service {
 						// nameValuePairs.add(new BasicNameValuePair("password",
 						// "N/A"));
 
-						httpPost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
+						httpPost.setEntity(new UrlEncodedFormEntity(
+								nameValuePairs));
 
 					} catch (Exception e) {
-						Log.e(LOGTAG, "initiateConnection: error HttpGet: " + e.getMessage());
+						Log.e(LOGTAG,
+								"makeRequestWithParameters: error HttpGet: "
+										+ e.getMessage());
 						throw e;
 					}
 
@@ -178,28 +216,117 @@ public class ConnectionService extends Service {
 					try {
 						response = httpsClient.execute(httpPost);
 					} catch (Exception e) {
-						Log.e(LOGTAG, "initiateConnection: error execute: " + e.getMessage());
+						Log.e(LOGTAG,
+								"makeRequestWithParameters: error execute: "
+										+ e.getMessage());
 						throw e;
 					}
 
 					try {
-						HttpEntity httpEntity = response.getEntity();
-						InputStream is = httpEntity.getContent();
-						BufferedReader read = new BufferedReader(new InputStreamReader(is));
-						String query = null;
-						while ((query = read.readLine()) != null)
-							System.out.println(query);
+						final int statusCode = response.getStatusLine()
+								.getStatusCode();
+						if (statusCode < 200 || statusCode >= 300) {
+							throw new Exception("HTTP statusCode " + statusCode);
+						}
+
+						String resultString = EntityUtils.toString(response
+								.getEntity());
+
+						jsonResponse = new JSONObject(resultString);
 
 					} catch (Exception e) {
-						Log.e(LOGTAG, "initiateConnection: error reading response: " + e.getMessage());
+						Log.e(LOGTAG,
+								"makeRequestWithParameters: error reading response: "
+										+ e.getMessage());
 						throw e;
 					}
 				} catch (Throwable t) {
-					Log.e(LOGTAG, "initiateConnection: " + t.getMessage());
+					final String errorMessage = "makeRequestWithParameters: "
+							+ t.getMessage();
+					Log.e(LOGTAG, errorMessage);
+
+					try {
+						jsonResponse = new JSONObject();
+						jsonResponse.put(Key.STATUS, errorMessage);
+						jsonResponse.put(ConnectionService.Key.MESSAGE,
+								errorMessage);
+					} catch (Exception e) {
+						Log.e(LOGTAG, "Unable to report error to UI");
+					}
+				} finally {
+					if (replyTo != null) {
+						try {
+							final String jsonResponseString = jsonResponse
+									.toString();
+
+							Message responseMessage = new Message();
+							responseMessage.what = ConnectionService.MSG_JSON_RESPONSE;
+							responseMessage.obj = jsonResponseString;
+							replyTo.send(responseMessage);
+						} catch (Exception e) {
+							Log.e(LOGTAG,
+									"makeRequestWithParameters: error sending response to calling process: "
+											+ e.getMessage());
+						}
+					}
+
 				}
 			}
 		}).start();
 
 	}
 
+	@Override
+	public void onStartingService() {
+		try {
+			mKeyManager = KeyManager.getInstance();
+
+			Log.i(LOGTAG, "onStartService - ConnectionService is running");
+		} catch (Exception e) {
+			Log.e(LOGTAG, "onStartService UNABLE TO CREATE KEY MANAGER: " + e);
+		}
+
+	}
+
+	@Override
+	public void onStoppingService() {
+		Log.i(LOGTAG, "onStopService - ConnectionService is stopping");
+	}
+
+	@Override
+	public void onReceiveMessage(Message message) {
+		try {
+			switch (message.what) {
+			case MSG_MAKE_REQUEST_WITH_PARAMETERS:
+				final String relativeUrl = (String) message.obj;
+				Log.i(LOGTAG, "onReceiveMessage relativeUrl[" + relativeUrl
+						+ "]");
+
+				Bundle bundle = message.getData();
+				// Enrich the bundle with geo location -- probably best not
+				// to try this on the UI thread.
+				bundle.putString(ConnectionService.Key.LONGITUDE, "-0.15");
+				bundle.putString(ConnectionService.Key.LATITUDE, "51.5");
+
+				if (ConnectionService.Key.VALUE_SIDE_SEEK.equals(bundle
+						.getString(ConnectionService.Key.SIDE))) {
+					// Radius must be present for SEEK, absent for PROVIDE.
+					bundle.putString("radius", "5000");
+				}
+
+				int requestId = message.arg2;
+				final Bundle parameters = message.getData();
+				if (!parameters.containsKey(Key.BUNDLE_KEY_REQUEST_ID)) {
+					parameters.putString(Key.BUNDLE_KEY_REQUEST_ID,
+							Integer.toString(requestId));
+				}
+
+				makeRequestWithParameters(relativeUrl, bundle, message.replyTo);
+				break;
+
+			}
+		} catch (Throwable t) {
+			Log.e(LOGTAG, "onReceiveMessage exception: " + t);
+		}
+	}
 }

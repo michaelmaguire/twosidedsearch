@@ -1,10 +1,13 @@
 package com.speedycrew.client.android.connection;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.StringWriter;
 import java.math.BigInteger;
 import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
 import java.security.KeyManagementException;
+import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
 import java.security.KeyStore.PrivateKeyEntry;
@@ -12,52 +15,98 @@ import java.security.KeyStoreException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
+import java.security.PublicKey;
+import java.security.SignatureException;
 import java.security.UnrecoverableEntryException;
 import java.security.UnrecoverableKeyException;
+import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.security.spec.AlgorithmParameterSpec;
+import java.security.spec.RSAKeyGenParameterSpec;
 import java.util.Calendar;
 
 import javax.net.ssl.KeyManagerFactory;
+import javax.security.auth.x500.X500Principal;
 
 import org.apache.http.conn.ssl.SSLSocketFactory;
-
-import javax.security.auth.x500.X500Principal;
+import org.bouncycastle.cert.X509v3CertificateBuilder;
+import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
+import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
+import org.bouncycastle.operator.ContentSigner;
+import org.bouncycastle.operator.OperatorCreationException;
+import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 
 import android.content.Context;
 import android.provider.Settings.Secure;
 import android.security.KeyPairGeneratorSpec;
+import android.util.Log;
 
+import com.speedycrew.client.android.R;
 import com.speedycrew.client.android.SpeedyCrewApplication;
 
 public final class KeyManager {
 
+	private static String LOGTAG = KeyManager.class.getName();
+
 	private static KeyManager sInstance;
 	private static String IDENTITY_KEY_NAME = "identityKey";
+
+	private static class KeyStoreAndProviderPreference {
+		final String mKeyStoreType;
+		final String mProvider;
+
+		KeyStoreAndProviderPreference(final String keyStoreType,
+				final String provider) {
+			mKeyStoreType = keyStoreType;
+			mProvider = provider;
+		}
+	}
+
+	private static final String ANDROID_KEY_STORE = "AndroidKeyStore";
 
 	// Using "AndroidKeyStore" indicates the new AndroidKeyStoreProvider JCE
 	// which uses hardware storage when possible.
 	// @see
 	// http://developer.android.com/about/versions/android-4.3.html#Security
-	private static String ANDROID_KEY_STORE = "AndroidKeyStore";
+	// If you use "AndroidKeyStore" for KeyStore 'type', then you should use
+	// "AndroidKeyStore" as
+	// KeyPairGenerator 'provider'.
+	// If however, you want to use getDetaultType KeyStore type which is usually
+	// 'BKS' then
+	// strangely the appropriate provider type to use is 'BC'.
+	private static final KeyStoreAndProviderPreference sKeyStoreAndProviderPreferences[] = {
+			new KeyStoreAndProviderPreference(ANDROID_KEY_STORE,
+					ANDROID_KEY_STORE),
+			new KeyStoreAndProviderPreference("BKS", "BC") };
+
+	private KeyStoreAndProviderPreference mKeyStoreToUse = sKeyStoreAndProviderPreferences[1];
 
 	private static String ENCRYPTION_ALGORITHM_RSA = "RSA";
 
 	private static String FINGERPRINT_ALGORITHM_SHA1 = "SHA1";
 
-	public static synchronized KeyManager getInstance() throws NoSuchAlgorithmException, NoSuchProviderException, InvalidAlgorithmParameterException, UnrecoverableEntryException,
-			KeyStoreException, CertificateException, IOException {
+	private static final int KEY_SIZE_IN_BITS = 2048;
+
+	private KeyStore mKeyStore;
+
+	public static synchronized KeyManager getInstance() throws Exception {
 		if (sInstance == null) {
 			sInstance = new KeyManager();
 		}
 		return sInstance;
 	}
 
-	private KeyManager() throws NoSuchAlgorithmException, NoSuchProviderException, InvalidAlgorithmParameterException, UnrecoverableEntryException, KeyStoreException,
-			CertificateException, IOException {
+	private KeyManager() throws Exception {
+		Log.i(LOGTAG, "getPrivateKey KeyManager(): " + mKeyStoreToUse);
 
-		if (null == getPrivateKeyEntry()) {
-			initKey();
+		try {
+			if (null == getPrivateKeyEntry()) {
+				initKey();
+			}
+		} catch (Exception e) {
+			Log.i(LOGTAG, "getPrivateKey KeyManager(): " + e);
+			throw e;
 		}
 	}
 
@@ -77,7 +126,8 @@ public final class KeyManager {
 	private static String generateCommonName(Context context) {
 		StringWriter commonName = new StringWriter();
 
-		String androidId = Secure.getString(context.getContentResolver(), Secure.ANDROID_ID);
+		String androidId = Secure.getString(context.getContentResolver(),
+				Secure.ANDROID_ID);
 		if (androidId == null) {
 			androidId = "null_ANDROID_ID";
 		}
@@ -90,16 +140,60 @@ public final class KeyManager {
 	}
 
 	/**
+	 * TODO: Use the public key material in our original, generated self-signed
+	 * certificate to create a CSR which we signed with our trusted root, then
+	 * call this method to replace the cert entry corresponding to our private
+	 * key with the signed cert.
+	 * 
+	 * @param trustedRootCertSignedCertificate
+	 * @throws KeyStoreException
+	 * @throws IOException
+	 * @throws CertificateException
+	 * @throws NoSuchAlgorithmException
+	 */
+	private void replaceSelfSignedCertificate(
+			java.security.cert.X509Certificate trustedRootCertSignedCertificate)
+			throws KeyStoreException, NoSuchAlgorithmException,
+			CertificateException, IOException {
+		mKeyStore.setCertificateEntry(IDENTITY_KEY_NAME,
+				trustedRootCertSignedCertificate);
+	}
+
+	/**
+	 * This method is complicated by the fact that we try to handle creation and
+	 * storage of an RSA keypair in two different ways -- one is using the
+	 * Android default storage type and the other is using the Android hardware
+	 * keystore. Sadly, although the same information is needed for both cases,
+	 * sometimes must be supplied at different stages of the creation/storage
+	 * process.
+	 * 
+	 * 
 	 * @see http 
 	 *      ://nelenkov.blogspot.co.uk/2013/08/credential-storage-enhancements
 	 *      -android-43.html
 	 * @throws NoSuchAlgorithmException
 	 * @throws NoSuchProviderException
 	 * @throws InvalidAlgorithmParameterException
+	 * @throws KeyStoreException
+	 * @throws IOException
+	 * @throws CertificateException
+	 * @throws SignatureException
+	 * @throws IllegalStateException
+	 * @throws InvalidKeyException
+	 * @throws OperatorCreationException
+	 * @throws UnrecoverableEntryException
 	 */
-
-	private void initKey() throws NoSuchAlgorithmException, NoSuchProviderException, InvalidAlgorithmParameterException {
+	private void initKey() throws NoSuchAlgorithmException,
+			NoSuchProviderException, InvalidAlgorithmParameterException,
+			KeyStoreException, CertificateException, IOException,
+			InvalidKeyException, IllegalStateException, SignatureException,
+			OperatorCreationException, UnrecoverableEntryException {
 		Context context = SpeedyCrewApplication.getAppContext();
+
+		// TODO: For non-Android-hardware types, need to load this KeyStore from
+		// flash.
+		mKeyStore = KeyStore.getInstance(mKeyStoreToUse.mKeyStoreType);
+		mKeyStore.load(null);
 
 		String commonName = generateCommonName(context);
 
@@ -107,24 +201,76 @@ public final class KeyManager {
 		// track users -- we have no control over certificate creation, so we
 		// have no way of guaranteeing uniqueness of serial numbers. We SHOULD
 		// instead use public key fingerprints as a unique handle on users.
-		BigInteger serialNumber = BigInteger.valueOf(System.currentTimeMillis());
+		BigInteger serialNumber = BigInteger
+				.valueOf(System.currentTimeMillis());
 
-		X500Principal subject = new X500Principal(String.format("CN=%s,OU=%s", commonName, context.getPackageName()));
+		X500Principal subject = new X500Principal(String.format("CN=%s,OU=%s",
+				commonName, context.getPackageName()));
 
 		Calendar notBefore = Calendar.getInstance();
 		Calendar notAfter = Calendar.getInstance();
 		notAfter.add(1, Calendar.YEAR);
-		KeyPairGeneratorSpec spec = new KeyPairGeneratorSpec.Builder(context).setAlias(IDENTITY_KEY_NAME).setSubject(subject).setSerialNumber(serialNumber)
-				.setStartDate(notBefore.getTime()).setEndDate(notAfter.getTime()).build();
 
-		// 2nd parameter "AndroidKeyStore" provider here indicates the new
-		// AndroidKeyStoreProvider JCE which uses hardware storage when
+		AlgorithmParameterSpec spec = null;
+		if (ANDROID_KEY_STORE.equals(mKeyStoreToUse.mKeyStoreType)) {
+			spec = new KeyPairGeneratorSpec.Builder(context)
+					.setAlias(IDENTITY_KEY_NAME).setSubject(subject)
+					.setSerialNumber(serialNumber)
+					.setStartDate(notBefore.getTime())
+					.setEndDate(notAfter.getTime()).build();
+		} else {
+			spec = new RSAKeyGenParameterSpec(KEY_SIZE_IN_BITS,
+					RSAKeyGenParameterSpec.F4);
+		}
+
+		// If 2nd parameter provider here is "AndroidKeyStore" it indicates the
+		// new AndroidKeyStoreProvider JCE which uses hardware storage when
 		// possible.
-		KeyPairGenerator kpGenerator = KeyPairGenerator.getInstance(ENCRYPTION_ALGORITHM_RSA, ANDROID_KEY_STORE);
+		KeyPairGenerator kpGenerator = KeyPairGenerator.getInstance(
+				ENCRYPTION_ALGORITHM_RSA, mKeyStoreToUse.mProvider);
 		kpGenerator.initialize(spec);
 
-		// No need to store -- it will be stored for us in hardware.
-		/* KeyPair kp = */kpGenerator.generateKeyPair();
+		KeyPair keyPair = kpGenerator.generateKeyPair();
+		if (ANDROID_KEY_STORE.equals(mKeyStoreToUse.mKeyStoreType)) {
+			// No need to store -- it will be stored for us in hardware.
+		} else {
+			ContentSigner sigGen = new JcaContentSignerBuilder(
+					"SHA256WithRSAEncryption").setProvider(
+					mKeyStoreToUse.mProvider).build(keyPair.getPrivate());
+			X509v3CertificateBuilder certGen = new JcaX509v3CertificateBuilder(
+					subject, serialNumber, notBefore.getTime(),
+					notAfter.getTime(), subject, keyPair.getPublic());
+
+			X509Certificate cert = new JcaX509CertificateConverter()
+					.setProvider(mKeyStoreToUse.mProvider).getCertificate(
+							certGen.build(sigGen));
+
+			Certificate[] certChain = { cert };
+			KeyStore.PrivateKeyEntry privateKeyEntry = new KeyStore.PrivateKeyEntry(
+					keyPair.getPrivate(), certChain);
+			mKeyStore.setEntry(IDENTITY_KEY_NAME, privateKeyEntry, null);
+
+			// Test fetch.
+			KeyStore.PrivateKeyEntry keyEntry = (KeyStore.PrivateKeyEntry) mKeyStore
+					.getEntry(IDENTITY_KEY_NAME, null);
+
+			Certificate certTest = keyEntry.getCertificate();
+
+			System.out.println(certTest.toString());
+
+		}
+
+		// TODO: Fetch the public key from the generated pair, turn it into a
+		// CSR, and obtain a certificate over the public key signed signed by a
+		// trusted root, then call replaceSelfSignedCertificate().
+		PublicKey publicKey = keyPair.getPublic();
+
+		// Need spongycastle, or is there a way to do this in Android already?
+		// We examples use com.sun.security.pkcs.PKCS10, which isn't available
+		// on Android.
+		// PKCS10CertificationRequest request = new
+		// PKCS10CertificationRequest();
+
 	}
 
 	/**
@@ -139,11 +285,18 @@ public final class KeyManager {
 	 * @throws CertificateException
 	 * @throws IOException
 	 */
-	PrivateKeyEntry getPrivateKeyEntry() throws NoSuchAlgorithmException, UnrecoverableEntryException, KeyStoreException, CertificateException, IOException {
-		KeyStore keyStore = KeyStore.getInstance(ANDROID_KEY_STORE);
-		keyStore.load(null);
-		KeyStore.PrivateKeyEntry keyEntry = (KeyStore.PrivateKeyEntry) keyStore.getEntry(IDENTITY_KEY_NAME, null);
-		return keyEntry;
+	PrivateKeyEntry getPrivateKeyEntry() throws NoSuchAlgorithmException,
+			UnrecoverableEntryException, KeyStoreException,
+			CertificateException, IOException {
+
+		try {
+			KeyStore.PrivateKeyEntry keyEntry = (KeyStore.PrivateKeyEntry) mKeyStore
+					.getEntry(IDENTITY_KEY_NAME, null);
+			return keyEntry;
+		} catch (Exception e) {
+			Log.i(LOGTAG, "getPrivateKey exception: " + e.getMessage());
+			return null;
+		}
 	}
 
 	/**
@@ -156,10 +309,13 @@ public final class KeyManager {
 	 * @throws UnrecoverableEntryException
 	 * @throws NoSuchAlgorithmException
 	 */
-	public String getUserId() throws NoSuchAlgorithmException, UnrecoverableEntryException, KeyStoreException, CertificateException, IOException {
+	public String getUserId() throws NoSuchAlgorithmException,
+			UnrecoverableEntryException, KeyStoreException,
+			CertificateException, IOException {
 		PrivateKeyEntry privateKeyEntry = getPrivateKeyEntry();
 
-		X509Certificate certificate = (X509Certificate) privateKeyEntry.getCertificate();
+		X509Certificate certificate = (X509Certificate) privateKeyEntry
+				.getCertificate();
 
 		return getPublicKeySHA1Fingerprint(certificate);
 	}
@@ -175,15 +331,20 @@ public final class KeyManager {
 	 * @return
 	 * @throws NoSuchAlgorithmException
 	 */
-	public static String getPublicKeySHA1Fingerprint(java.security.cert.X509Certificate certificate) throws NoSuchAlgorithmException {
+	public static String getPublicKeySHA1Fingerprint(
+			java.security.cert.X509Certificate certificate)
+			throws NoSuchAlgorithmException {
 
-		MessageDigest md = MessageDigest.getInstance(FINGERPRINT_ALGORITHM_SHA1);
-		byte[] asn1EncodedPublicKey = md.digest(certificate.getPublicKey().getEncoded());
+		MessageDigest md = MessageDigest
+				.getInstance(FINGERPRINT_ALGORITHM_SHA1);
+		byte[] asn1EncodedPublicKey = md.digest(certificate.getPublicKey()
+				.getEncoded());
 
 		// Hex encode.
 		StringBuffer hexString = new StringBuffer();
 		for (int i = 0; i < asn1EncodedPublicKey.length; i++) {
-			String appendString = Integer.toHexString(0xFF & asn1EncodedPublicKey[i]);
+			String appendString = Integer
+					.toHexString(0xFF & asn1EncodedPublicKey[i]);
 			// Left pad with zero if necessary.
 			if (appendString.length() == 1) {
 				hexString.append("0");
@@ -193,19 +354,28 @@ public final class KeyManager {
 		return hexString.toString();
 	}
 
-	public SSLSocketFactory getSSLSocketFactory() throws KeyStoreException, NoSuchAlgorithmException, UnrecoverableKeyException, CertificateException, IOException,
-			KeyManagementException {
-		KeyStore keyStore = KeyStore.getInstance(ANDROID_KEY_STORE);
-		keyStore.load(null);
+	public SSLSocketFactory getSSLSocketFactory() throws KeyStoreException,
+			NoSuchAlgorithmException, UnrecoverableKeyException,
+			CertificateException, IOException, KeyManagementException {
+		Context context = SpeedyCrewApplication.getAppContext();
 
-		// initialize key manager factory with the read client certificate
-		KeyManagerFactory keyManagerFactory = null;
-		keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-		keyManagerFactory.init(keyStore, "MyPassword".toCharArray());
+		// Initialize key manager factory with the client certificate.
+		KeyManagerFactory clientKeyManagerFactory = null;
+		clientKeyManagerFactory = KeyManagerFactory
+				.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+		clientKeyManagerFactory.init(mKeyStore, "MyPassword".toCharArray());
+
+		// Read in the root CA certs for speedycrew.com which we'll trust from
+		// the server.
+		KeyStore localTrustStore = KeyStore.getInstance("BKS");
+		InputStream in = context.getResources().openRawResource(
+				R.raw.mytruststore);
+		localTrustStore.load(in, "secret".toCharArray());
 
 		// initialize SSLSocketFactory to use the certificates
 		SSLSocketFactory socketFactory = null;
-		socketFactory = new SSLSocketFactory(SSLSocketFactory.TLS, keyStore, null, null, null, null);
+		socketFactory = new SSLSocketFactory(SSLSocketFactory.TLS, mKeyStore,
+				null, localTrustStore, null, null);
 		return socketFactory;
 	}
 }

@@ -31,6 +31,16 @@
             android:icon="@drawable/ic_launcher"
             android:label="@string/connection_service_name" >
         </service>
-    </application>
+
+        <activity
+            android:name="com.speedycrew.client.android.ProfileActivity"
+            android:label="@string/title_activity_profile" >
+        </activity>
+        
+        <activity
+            android:name="com.speedycrew.client.android.AboutActivity"
+            android:label="@string/title_activity_about" >
+        </activity>
+        </application>
 
 </manifest>

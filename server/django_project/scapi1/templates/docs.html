@@ -2,6 +2,8 @@
   <body>
     <h1>Speedycrew API v1 test page</h1>
 
+    <p>All requests can take an optional parameter request_id, which will appear in the response.</p>
+
     <h2>Device IDs</h2>
 
     <p>We will use device IDs based on client certificates.  But for
@@ -22,16 +24,25 @@
     <h2>Search management</h2>
     <ol>
       <li><a href="searches?x-id=1234">/api/1/searches?x-id=1234</a> to list all active searches for this profile</li>
-      <li><a href="create_search?x-id=1234&side=PROVIDE&tags=sushi-chef,slice,dice&longitude=-0.15&latitude=51.5&radius=5000">/api/1/create_search?x-id=1234&amp;side=PROVIDE&amp;tags=sushi-chef,slice,dice&amp;longitude=-0.15&amp;latitude=51.5&amp;radius=5000</a> with optional extra parameters city, country, address, postcode (radius is required for side=PROVIDE, should not be present for side=SEEK for now, to discuss)</li>
+      <li><a href="create_search?x-id=1234&side=SEEK&query=I+am+a+%23chef&longitude=-0.15&latitude=51.5&radius=5000">/api/1/create_search?x-id=1234&amp;side=PROVIDE&amp;query=I+am+a+%23chef&amp;longitude=-0.15&amp;latitude=51.5&amp;radius=5000</a> with optional extra parameters city, country, address, postcode (radius is required for side=SEEK, absent for side=PROVIDE)</li>
       <li><a href="search_results?x-id=1234&search=1">/api/1/search_results?x-id=1234&amp;search=1</a> to fetch results for one search</li>
       <li><a href="delete_search?x-id=1234&search=1">/api/1/delete_search?x-id=1234&amp;search=1</a></li>
       <li>TODO: incremental search results (with high water sequence number retained by devices)</li>
       <li>TODO: no tracking/filtering of available dates yet (searches match based on location + tags only for now)</li>
     </ol>
 
+    <h2>Media management</h2>
+    <ol>
+      <li><a href="media/1234?x-id=1234">/api/1/media/1234?x-id=1234</a> to list all media files available for the profile in the URL (ie the part before ?, the part after is just the caller's identity when not using SSL cert identification, and happens to be the same here for simplicity)</li>
+      <li><a href="media/1234/test?x-id=1234">/api/1/media/1234/test?x-id=1234</a> to GET file 'test' belonging to profile fingerprint 1234</li>
+      <li><code>curl --upload-file foo.jpg -u captain:cook https://dev.speedycrew.com/api/1/media/1234/foo?x-id=1234</code> to PUT a new media file</li>
+      <li><code>curl -X DELETE -u captain:cook https://dev.speedycrew.com/api/1/media/1234/foo?x-id=1234</code> to DELETE a new media file</li>
+    </ol>
+
     <h2>Miscellaneous</h2>
     <ol>
       <li><a href="tags?x-id=1234&prefix=s">/api/1/tags?x-id=1234&amp;prefix=s</a> to fetch tags with a certain prefix, for auto-complete (?!)</li>
+      <li><a href="trending?x-id=1234">/api/1/trending?x-id=1234</a> to get some trending tags</li>
     </ol>
   </body>
 </html>
