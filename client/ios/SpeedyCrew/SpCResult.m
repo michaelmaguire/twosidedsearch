@@ -48,6 +48,7 @@
     if ((tmp = [dict objectForKey: @"country"]) && [tmp isKindOfClass: [NSString class]]) {
         self.value = [NSString stringWithFormat: @"%@country=%@ ", self.value, tmp];
     }
+    NSLog(@"got result: %@", self.value);
     return self;
 }
 

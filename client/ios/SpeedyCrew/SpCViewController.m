@@ -197,6 +197,10 @@
         SpCAppDelegate* delegate = (((SpCAppDelegate*) [UIApplication sharedApplication].delegate));
         delegate.data.longitude = newLocation.coordinate.longitude;
         delegate.data.latitude  = newLocation.coordinate.latitude;
-    }
+#if 0
+        delegate.data.longitude = -0.15001;
+        delegate.data.latitude  = 51.5;
+#endif
+        }
 }
 @end
