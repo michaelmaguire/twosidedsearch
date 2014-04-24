@@ -190,8 +190,11 @@ public class ConnectionService extends BaseService {
 						for (String key : keys) {
 
 							if (!key.startsWith(RESERVED_INTERPROCESS_PREFIX)) {
+								final String value = parameters.getString(key);
+								Log.i(LOGTAG, "Adding to request: key[" + key
+										+ "] + value[" + value + "]");
 								nameValuePairs.add(new BasicNameValuePair(key,
-										parameters.getString(key)));
+										value));
 							}
 						}
 

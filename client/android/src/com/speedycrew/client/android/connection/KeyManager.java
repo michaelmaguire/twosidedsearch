@@ -403,26 +403,35 @@ public final class KeyManager {
 
 	public SSLSocketFactory getSSLSocketFactory() throws KeyStoreException,
 			NoSuchAlgorithmException, UnrecoverableKeyException,
-			CertificateException, IOException, KeyManagementException {
-		Context context = SpeedyCrewApplication.getAppContext();
+			CertificateException, IOException, KeyManagementException,
+			Exception {
 
-		// Initialize key manager factory with the client certificate.
-		KeyManagerFactory clientKeyManagerFactory = null;
-		clientKeyManagerFactory = KeyManagerFactory
-				.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-		clientKeyManagerFactory.init(mKeyStore, "MyPassword".toCharArray());
+		try {
 
-		// Read in the root CA certs for speedycrew.com which we'll trust from
-		// the server.
-		KeyStore localTrustStore = KeyStore.getInstance("BKS");
-		InputStream in = context.getResources().openRawResource(
-				R.raw.mytruststore);
-		localTrustStore.load(in, "secret".toCharArray());
+			Context context = SpeedyCrewApplication.getAppContext();
 
-		// initialize SSLSocketFactory to use the certificates
-		SSLSocketFactory socketFactory = null;
-		socketFactory = new SSLSocketFactory(SSLSocketFactory.TLS, mKeyStore,
-				null, localTrustStore, null, null);
-		return socketFactory;
+			// Initialize key manager factory with the client certificate.
+			KeyManagerFactory clientKeyManagerFactory = null;
+			clientKeyManagerFactory = KeyManagerFactory
+					.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+			clientKeyManagerFactory.init(mKeyStore, "MyPassword".toCharArray());
+
+			// Read in the root CA certs for speedycrew.com which we'll trust
+			// from
+			// the server.
+			KeyStore localTrustStore = KeyStore.getInstance("BKS");
+			InputStream in = context.getResources().openRawResource(
+					R.raw.mytruststore);
+			localTrustStore.load(in, "secret".toCharArray());
+
+			// initialize SSLSocketFactory to use the certificates
+			SSLSocketFactory socketFactory = null;
+			socketFactory = new SSLSocketFactory(SSLSocketFactory.TLS,
+					mKeyStore, null, localTrustStore, null, null);
+			return socketFactory;
+		} catch (Exception e) {
+			Log.e(LOGTAG, "getSSLSocketFactory exception: " + e.getMessage());
+			throw e;
+		}
 	}
 }
