@@ -1,5 +1,8 @@
 package com.speedycrew.client.android.connection;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
@@ -102,7 +105,7 @@ public final class KeyManager {
 
 		try {
 			if (null == getPrivateKeyEntry()) {
-				initKey();
+				initKeyStore();
 			}
 		} catch (Exception e) {
 			Log.i(LOGTAG, "getPrivateKey KeyManager(): " + e);
@@ -183,93 +186,137 @@ public final class KeyManager {
 	 * @throws OperatorCreationException
 	 * @throws UnrecoverableEntryException
 	 */
-	private void initKey() throws NoSuchAlgorithmException,
+	private void initKeyStore() throws NoSuchAlgorithmException,
 			NoSuchProviderException, InvalidAlgorithmParameterException,
 			KeyStoreException, CertificateException, IOException,
 			InvalidKeyException, IllegalStateException, SignatureException,
 			OperatorCreationException, UnrecoverableEntryException {
 		Context context = SpeedyCrewApplication.getAppContext();
 
-		// TODO: For non-Android-hardware types, need to load this KeyStore from
-		// flash.
 		mKeyStore = KeyStore.getInstance(mKeyStoreToUse.mKeyStoreType);
-		mKeyStore.load(null);
 
-		String commonName = generateCommonName(context);
-
-		// Note: We SHOULD NOT attempt to use certificate serial numbers to
-		// track users -- we have no control over certificate creation, so we
-		// have no way of guaranteeing uniqueness of serial numbers. We SHOULD
-		// instead use public key fingerprints as a unique handle on users.
-		BigInteger serialNumber = BigInteger
-				.valueOf(System.currentTimeMillis());
-
-		X500Principal subject = new X500Principal(String.format("CN=%s,OU=%s",
-				commonName, context.getPackageName()));
-
-		Calendar notBefore = Calendar.getInstance();
-		Calendar notAfter = Calendar.getInstance();
-		notAfter.add(1, Calendar.YEAR);
-
-		AlgorithmParameterSpec spec = null;
-		if (ANDROID_KEY_STORE.equals(mKeyStoreToUse.mKeyStoreType)) {
-			spec = new KeyPairGeneratorSpec.Builder(context)
-					.setAlias(IDENTITY_KEY_NAME).setSubject(subject)
-					.setSerialNumber(serialNumber)
-					.setStartDate(notBefore.getTime())
-					.setEndDate(notAfter.getTime()).build();
-		} else {
-			spec = new RSAKeyGenParameterSpec(KEY_SIZE_IN_BITS,
-					RSAKeyGenParameterSpec.F4);
+		try {
+			if (ANDROID_KEY_STORE.equals(mKeyStoreToUse.mKeyStoreType)) {
+				mKeyStore.load(null);
+			} else {
+				FileInputStream fis = null;
+				try {
+					fis = context.openFileInput("identity.keystore");
+					mKeyStore.load(fis,
+							"dummy1234trustinginmodeprivate".toCharArray());
+				} catch (FileNotFoundException fnfe) {
+					// We're starting from scratch, we'll create new key below.
+					// Ensure KeyStore is initialized.
+					mKeyStore.load(null);
+				} finally {
+					if (null != fis) {
+						fis.close();
+					}
+				}
+			}
+		} catch (Exception e) {
+			Log.i(LOGTAG, "initKeyStore load exception, will try to create: "
+					+ e.getMessage());
 		}
 
-		// If 2nd parameter provider here is "AndroidKeyStore" it indicates the
-		// new AndroidKeyStoreProvider JCE which uses hardware storage when
-		// possible.
-		KeyPairGenerator kpGenerator = KeyPairGenerator.getInstance(
-				ENCRYPTION_ALGORITHM_RSA, mKeyStoreToUse.mProvider);
-		kpGenerator.initialize(spec);
+		// See if we already have a key available, otherwise generate.
+		if (null == getPrivateKeyEntry()) {
 
-		KeyPair keyPair = kpGenerator.generateKeyPair();
-		if (ANDROID_KEY_STORE.equals(mKeyStoreToUse.mKeyStoreType)) {
-			// No need to store -- it will be stored for us in hardware.
-		} else {
-			ContentSigner sigGen = new JcaContentSignerBuilder(
-					"SHA256WithRSAEncryption").setProvider(
-					mKeyStoreToUse.mProvider).build(keyPair.getPrivate());
-			X509v3CertificateBuilder certGen = new JcaX509v3CertificateBuilder(
-					subject, serialNumber, notBefore.getTime(),
-					notAfter.getTime(), subject, keyPair.getPublic());
+			String commonName = generateCommonName(context);
 
-			X509Certificate cert = new JcaX509CertificateConverter()
-					.setProvider(mKeyStoreToUse.mProvider).getCertificate(
-							certGen.build(sigGen));
+			// Note: We SHOULD NOT attempt to use certificate serial numbers to
+			// track users -- we have no control over certificate creation, so
+			// we
+			// have no way of guaranteeing uniqueness of serial numbers. We
+			// SHOULD
+			// instead use public key fingerprints as a unique handle on users.
+			BigInteger serialNumber = BigInteger.valueOf(System
+					.currentTimeMillis());
 
-			Certificate[] certChain = { cert };
-			KeyStore.PrivateKeyEntry privateKeyEntry = new KeyStore.PrivateKeyEntry(
-					keyPair.getPrivate(), certChain);
-			mKeyStore.setEntry(IDENTITY_KEY_NAME, privateKeyEntry, null);
+			X500Principal subject = new X500Principal(String.format(
+					"CN=%s,OU=%s", commonName, context.getPackageName()));
 
-			// Test fetch.
-			KeyStore.PrivateKeyEntry keyEntry = (KeyStore.PrivateKeyEntry) mKeyStore
-					.getEntry(IDENTITY_KEY_NAME, null);
+			Calendar notBefore = Calendar.getInstance();
+			Calendar notAfter = Calendar.getInstance();
+			notAfter.add(1, Calendar.YEAR);
 
-			Certificate certTest = keyEntry.getCertificate();
+			AlgorithmParameterSpec spec = null;
+			if (ANDROID_KEY_STORE.equals(mKeyStoreToUse.mKeyStoreType)) {
+				spec = new KeyPairGeneratorSpec.Builder(context)
+						.setAlias(IDENTITY_KEY_NAME).setSubject(subject)
+						.setSerialNumber(serialNumber)
+						.setStartDate(notBefore.getTime())
+						.setEndDate(notAfter.getTime()).build();
+			} else {
+				spec = new RSAKeyGenParameterSpec(KEY_SIZE_IN_BITS,
+						RSAKeyGenParameterSpec.F4);
+			}
 
-			System.out.println(certTest.toString());
+			// If 2nd parameter provider here is "AndroidKeyStore" it indicates
+			// the
+			// new AndroidKeyStoreProvider JCE which uses hardware storage when
+			// possible.
+			KeyPairGenerator kpGenerator = KeyPairGenerator.getInstance(
+					ENCRYPTION_ALGORITHM_RSA, mKeyStoreToUse.mProvider);
+			kpGenerator.initialize(spec);
 
+			KeyPair keyPair = kpGenerator.generateKeyPair();
+			if (ANDROID_KEY_STORE.equals(mKeyStoreToUse.mKeyStoreType)) {
+				// No need to store -- it will be stored for us in hardware.
+			} else {
+				ContentSigner sigGen = new JcaContentSignerBuilder(
+						"SHA256WithRSAEncryption").setProvider(
+						mKeyStoreToUse.mProvider).build(keyPair.getPrivate());
+				X509v3CertificateBuilder certGen = new JcaX509v3CertificateBuilder(
+						subject, serialNumber, notBefore.getTime(),
+						notAfter.getTime(), subject, keyPair.getPublic());
+
+				X509Certificate cert = new JcaX509CertificateConverter()
+						.setProvider(mKeyStoreToUse.mProvider).getCertificate(
+								certGen.build(sigGen));
+
+				Certificate[] certChain = { cert };
+				KeyStore.PrivateKeyEntry privateKeyEntry = new KeyStore.PrivateKeyEntry(
+						keyPair.getPrivate(), certChain);
+				mKeyStore.setEntry(IDENTITY_KEY_NAME, privateKeyEntry, null);
+
+				// Test fetch.
+				KeyStore.PrivateKeyEntry keyEntry = (KeyStore.PrivateKeyEntry) mKeyStore
+						.getEntry(IDENTITY_KEY_NAME, null);
+
+				Certificate certTest = keyEntry.getCertificate();
+
+				System.out.println(certTest.toString());
+
+				FileOutputStream fos = null;
+				try {
+					fos = context.openFileOutput("identity.keystore",
+							Context.MODE_PRIVATE);
+					mKeyStore.store(fos,
+							"dummy1234trustinginmodeprivate".toCharArray());
+				} finally {
+					if (null != fos) {
+						fos.close();
+					}
+				}
+
+			}
+
+			// TODO: Fetch the public key from the generated pair, turn it into
+			// a
+			// CSR, and obtain a certificate over the public key signed signed
+			// by a
+			// trusted root, then call replaceSelfSignedCertificate().
+			PublicKey publicKey = keyPair.getPublic();
+
+			// Need spongycastle, or is there a way to do this in Android
+			// already?
+			// We examples use com.sun.security.pkcs.PKCS10, which isn't
+			// available
+			// on Android.
+			// PKCS10CertificationRequest request = new
+			// PKCS10CertificationRequest();
 		}
-
-		// TODO: Fetch the public key from the generated pair, turn it into a
-		// CSR, and obtain a certificate over the public key signed signed by a
-		// trusted root, then call replaceSelfSignedCertificate().
-		PublicKey publicKey = keyPair.getPublic();
-
-		// Need spongycastle, or is there a way to do this in Android already?
-		// We examples use com.sun.security.pkcs.PKCS10, which isn't available
-		// on Android.
-		// PKCS10CertificationRequest request = new
-		// PKCS10CertificationRequest();
 
 	}
 
