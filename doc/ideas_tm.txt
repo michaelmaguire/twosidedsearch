@@ -1,0 +1,127 @@
+Thoughts on data synchronisation
+================================
+
+Local state
+===========
+
+I assume that our Android and iOS apps both use SQLite.  They will
+hold all local state in this database so that the app works offline.
+Therefore it seems obvious that they should be using the same database
+schema, and it should be somewhat like the server database schema
+where appropriate (ie same sort of naming etc).
+
+It's a shame you have to write in two different languages, because
+there code that would pull state and changes from the server would
+ideally be shared (and also runnable in a command line tool, for unit
+testing, regression testing etc).  Is there any way to share a bit of
+library code?  http://stackoverflow.com/questions/18334547/using-the-same-c-code-on-android-and-ios
+
+Fetching initial state
+======================
+
+When a device is associated with an existing profile (or needs to be
+reinitialised), the initial state must be pulled from the server into
+the local database on the device.  That includes:
+
+* profile data
+* messages in inbox
+* chat rooms you are have joined or have been invited to join
+* messages in those chat rooms
+* searches you have created
+* results for those searches
+* ...
+
+In other words, the complete state of your account, to be downloaded
+when you tell us that your new iPhone should join your account.  (It's
+probably also the same for a new user profile, it's just an empty data
+set in that case.)
+
+Like data coming from any concurrently updated database system, the
+fetched data represents only a snapshot as of a certain moment in
+time.  The server explicitly provides a 'sequence number' which must
+be recorded by the device to allow it device to merge future change
+notification events into the data set.
+
+Implementation question: using REPEATABLE READ or SERIALIZABLE I can
+get a consistent sequence number and any amount of data as a snapshot,
+which is all very tidy and simple if there is a single URL that
+fetches the initial state for ALL of the things mentioned above.  But
+that is a lot of data for one URL; instead we could break it up so you
+fetch messages at one URL, profile data at another etc, but then those
+things will run in different transactions and the sequence number
+might move in between, so the device would have to be clever enough to
+use the lowest sequence number seen across the various results, and
+all event updates would have to be idempotent.  And if you have to
+call all of them anyway, why not just stick the whole lot in one URL?
+So I am currently leaning towards that one URL approach:
+fetch_full_profile_snapshot which pulls all of that stuff down, even
+if it's megabytes.
+
+Events
+======
+
+'Events' are change notifications tell you about changes to all types
+of object in the data model, for example:
+
+* your profile data has been changed
+* a new message has been received
+* a message has been deleted
+* a message has been marked as 'read'
+* a new search has been created
+* a new result has arrived for a search
+* a search has been deleted
+* a chat room has been created
+* a chat room has been renamed
+* you have been invited to a chat room
+* you have joined a chat room
+* you have received a message in a chat room
+* ...
+
+All events are numbered sequentially for a given profile.  Each device
+always knows which event sequence number it expects next and this
+should be recorded in its local database.  After initial download, it
+has been told which sequence number that snapshot was taken at.  It
+then asks the server for any events after that 'high water' sequence.
+There are several times when it would want to do that:
+
+* when you press some kind of 'refresh/fetch' button in the debug
+  version of the app!
+* after certain types of operation like creating searches, ...
+* when it receives some kind of push notification telling it there
+  may be stuff to pull down
+* when it successfully pulled some events and the results indicated
+  there may be more
+
+We let the server decide how many events to reply with.  The device
+says "give me events after sequence 1234" and the server could do one
+of the following:
+
+* reply with an empty list, nothing has happened since 1234
+* reply with (say) 4 items: 1235, 1236, 1237
+* reply with (say) 100 items 1235-1334 and a note that there are more,
+  so the device should keep fetching
+* reply that that sequence number is too old, and a full data
+  refresh is required
+
+The server doesn't know or care which events a given device has pulled
+down and applied to its local database (and GUI etc).  The device is
+responsible for tracking that.  If you have your iPad and your iPhone
+associated with the same profile, one could be off for a while and
+then be started up and sync up with all the things it missed, and the
+server doesn't really mind.  The server only keeps a finite amount of
+event history so if you get too far behind you simply need to do a
+clean refresh of all data, blowing away all local data and downloading
+and resetting your high water level.  This allows us to have finite
+disk space and avoid pathological scenarios where phones replay
+squillions of events collected over months when you fine them down the
+back of the sofa.
+
+This will probably look like an HTTP GET on /events_after/1234 with a
+response full of numbered events with all data needed to apply changes
+to local databases.
+
+Thoughts on search implementation
+=================================
+
+The current search implementation is not good enough.  I have
+something better in the works.  To be described here...
