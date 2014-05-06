@@ -164,6 +164,11 @@ public class SearchFragment extends Fragment implements View.OnClickListener {
 		}
 	}
 
+	// TODO: Change to be a subclass of
+	// http://developer.android.com/reference/android/widget/SimpleCursorTreeAdapter.html
+	// and then follow example in
+	// http://www.vogella.com/tutorials/AndroidSQLite/article.html to
+	// hook this in with a database.
 	public class SearchResultsListAdapter extends BaseExpandableListAdapter {
 
 		@Override
