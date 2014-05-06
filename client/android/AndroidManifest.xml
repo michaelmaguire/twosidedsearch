@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.speedycrew.client.android"
+    package="com.speedycrew.client"
     android:versionCode="2"
     android:versionName="1.0" >
 
@@ -11,13 +11,13 @@
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application
-        android:name="com.speedycrew.client.android.SpeedyCrewApplication"
+        android:name="com.speedycrew.client.SpeedyCrewApplication"
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
         <activity
-            android:name="com.speedycrew.client.android.MainActivity"
+            android:name="com.speedycrew.client.MainActivity"
             android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -27,18 +27,18 @@
         </activity>
 
         <service
-            android:name="com.speedycrew.client.android.connection.ConnectionService"
+            android:name="com.speedycrew.client.connection.ConnectionService"
             android:icon="@drawable/ic_launcher"
             android:label="@string/connection_service_name" >
         </service>
 
         <activity
-            android:name="com.speedycrew.client.android.ProfileActivity"
+            android:name="com.speedycrew.client.ProfileActivity"
             android:label="@string/title_activity_profile" >
         </activity>
         
         <activity
-            android:name="com.speedycrew.client.android.AboutActivity"
+            android:name="com.speedycrew.client.AboutActivity"
             android:label="@string/title_activity_about" >
         </activity>
         </application>

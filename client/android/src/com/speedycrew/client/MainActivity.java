@@ -1,4 +1,4 @@
-package com.speedycrew.client.android;
+package com.speedycrew.client;
 
 import android.app.ActionBar;
 import android.app.ActionBar.Tab;
@@ -22,7 +22,7 @@ public class MainActivity extends Activity {
 		setContentView(R.layout.activity_main);
 
 		// use this to start and trigger a service
-		Intent serviceStartingIntent = new Intent(this, com.speedycrew.client.android.connection.ConnectionService.class);
+		Intent serviceStartingIntent = new Intent(this, com.speedycrew.client.connection.ConnectionService.class);
 		// potentially add data to the intent
 		// serviceStartingIntent.putExtra("KEY1",
 		// "Value to be used by the service");

@@ -3,7 +3,7 @@ package com.speedycrew.client.android.model;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import com.speedycrew.client.android.connection.ConnectionService;
+import com.speedycrew.client.connection.ConnectionService;
 
 public class SearchResult {
 

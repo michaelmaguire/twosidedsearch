@@ -1,4 +1,4 @@
-package com.speedycrew.client.android;
+package com.speedycrew.client;
 
 import java.util.Vector;
 
@@ -21,10 +21,10 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.speedycrew.client.android.connection.ConnectionService;
-import com.speedycrew.client.android.connection.ConnectionService.Key;
 import com.speedycrew.client.android.model.Search;
 import com.speedycrew.client.android.model.SearchResult;
+import com.speedycrew.client.connection.ConnectionService;
+import com.speedycrew.client.connection.ConnectionService.Key;
 import com.speedycrew.client.util.RequestHelperServiceConnector;
 
 public class SearchFragment extends Fragment implements View.OnClickListener {

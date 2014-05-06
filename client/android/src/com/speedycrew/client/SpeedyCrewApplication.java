@@ -1,4 +1,4 @@
-package com.speedycrew.client.android;
+package com.speedycrew.client;
 
 import android.app.Application;
 import android.content.Context;
