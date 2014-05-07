@@ -316,7 +316,8 @@ def search_results(request):
     cursor = connection.cursor()
     cursor.execute("""SELECT s2.id, 
                              p.username, 
-                             p.real_name, 
+                             p.real_name,
+                             d.id,
                              p.email, 
                              s2.address, 
                              s2.postcode, 
@@ -329,13 +330,18 @@ def search_results(request):
                         JOIN speedycrew.search s1 ON m.a = s1.id
                         JOIN speedycrew.search s2 ON m.b = s2.id
                         JOIN speedycrew.profile p ON s2.owner = p.id
+                        JOIN speedycrew.device d ON p.id = d.profile -- TODO!
                        WHERE s1.id = %s
                          AND s1.owner = %s
                          AND s2.status = 'ACTIVE'""",
                    (search_id, profile_id))
+    # TODO -- this will return a row for each device the user has
+    # since each has its own fingerprint; I need to invent the concept
+    # of a primary/per profile fingerprint
     results = []
-    for id, username, real_name, email, address, postcode, city, country, distance, longitude, latitude in cursor:
+    for id, username, real_name, fingerprint, email, address, postcode, city, country, distance, longitude, latitude in cursor:
         results.append({ "id" : id,
+                         "fingerprint" : fingerprint,
                          "username" : username,
                          "real_name" : real_name,
                          "email" : email,
