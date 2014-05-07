@@ -33,7 +33,8 @@ static NSString* baseURL = @"http://captain:cook@dev.speedycrew.com/api/1";
                                                                CFStringConvertNSStringEncodingToEncoding(NSUTF8StringEncoding));;
 }
 
-- (SpCSearch*)init;
+
+- (SpCSearch*)init
 {
     self = [super init];
     self.uid = [NSString stringWithFormat: @"%d", ++nextId];
@@ -42,6 +43,18 @@ static NSString* baseURL = @"http://captain:cook@dev.speedycrew.com/api/1";
     self.queryString = @"";
     self.results = [[NSMutableArray alloc] init];
     self.side = @"PROVIDE";
+    return self;
+}
+
+- (SpCSearch*)initWithSide:(NSString*)side
+{
+    self = [super init];
+    self.uid = [NSString stringWithFormat: @"%d", ++nextId];
+    SpCAppDelegate* delegate = (((SpCAppDelegate*) [UIApplication sharedApplication].delegate));
+    self.uuid = delegate.data.identity;
+    self.queryString = @"";
+    self.results = [[NSMutableArray alloc] init];
+    self.side = side;
     return self;
 }
 
@@ -78,6 +91,7 @@ static NSString* baseURL = @"http://captain:cook@dev.speedycrew.com/api/1";
 
 - (void)updateQueryWith:(NSString*)query
 {
+    NSLog(@"updateQueryWith:%@", query);
     self.queryString = query;
     [self makeHttpRequestForQuery:self.queryString];
 }

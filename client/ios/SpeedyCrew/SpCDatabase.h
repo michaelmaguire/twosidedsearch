@@ -8,9 +8,21 @@
 
 #import <Foundation/Foundation.h>
 
+namespace SpeedyCrew { class Database; };
+
 @interface SpCDatabase : NSObject
 
 + (SpCDatabase*) database;
++ (SpeedyCrew::Database*) getDatabase;
+
+// - (int) queryInteger;
+
+- (int) queryVector:(NSString*)query;
+
 - (NSString*) querySetting: (NSString*)name;
 - (void) updateSetting:(NSString*)name with:(NSString*)value;
+
+- (int) numberSearchesFor:(NSString*)side;
+- (void) addSearch:(NSString*)text forSide:(NSString*)side withId:(NSString*) id;
+- (void) removeSearch:(NSString*)id;
 @end

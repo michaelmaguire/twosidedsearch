@@ -22,5 +22,6 @@
 - (void)updateSearches;
 - (void)addSearch:(SpCSearch*)search;
 - (void)deleteSearch:(SpCSearch*)search;
+- (int)numberOfSearchesFor:(NSString*)side;
 
 @end

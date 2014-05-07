@@ -1,28 +1,25 @@
 //
-//  SpCUserViewController.m
+//  SpCCrewSearchViewController.m
 //  SpeedyCrew
 //
-//  Created by Dietmar Kühl on 04/01/2014.
+//  Created by Dietmar Kühl on 03/05/2014.
 //  Copyright (c) 2014 Dietmar Kühl. All rights reserved.
 //
 
-#import "SpCUserViewController.h"
-#import "SpcDatabase.h"
-#import "SpCAppDelegate.h"
-#import "SpCData.h"
+#import "SpCCrewSearchViewController.h"
 
-@interface SpCUserViewController ()
-@property NSArray* elements;
+@interface SpCCrewSearchViewController ()
 
 @end
 
-@implementation SpCUserViewController
+@implementation SpCCrewSearchViewController
 
 - (id)initWithStyle:(UITableViewStyle)style
 {
+    NSLog(@"SpCCrewSearchViewController initWithStyle");
     self = [super initWithStyle:style];
     if (self) {
-        // Custom initialization
+        NSLog(@"SpCCrewSearchViewController::initWithStyle");
     }
     return self;
 }
@@ -30,57 +27,48 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-    self.elements = @[@"scid", @"real_name", @"username", @"email", @"message"];
+    self.side = @"SEEK";
+    NSLog(@"SpCCrewSearchViewControl::viewDidLoad");
+    //-dk:TODO remmove self.tableView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+ 
 
     // Uncomment the following line to preserve selection between presentations.
     // self.clearsSelectionOnViewWillAppear = NO;
- 
+    
     // Uncomment the following line to display an Edit button in the navigation bar for this view controller.
     // self.navigationItem.rightBarButtonItem = self.editButtonItem;
 }
 
+/*
 - (void)didReceiveMemoryWarning
 {
     [super didReceiveMemoryWarning];
-    // Dispose of any resources that can be recreated.
-}
+    NSLog(@"SpCCrewSearchViewControl::didReceiveMemoryWarning");
 
+}
+ */
+
+/*
 #pragma mark - Table view data source
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
 {
+    NSLog(@"SpCCrewSearchViewControl::numberOfSecitonsInTable");
     return 1;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-    return 5;
+    NSLog(@"SpCCrewSearchViewControl::numberOfRowsInSection: %d", section);
+    return 1;
 }
 
-- (UITableViewCell *)tableView:(UITableView *)tv cellForRowAtIndexPath:(NSIndexPath *)path
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    NSString* id = [self.elements objectAtIndex:path.row];
-    SpCDatabase* database = [ SpCDatabase database];
-    NSString* value = [database querySetting: id];
-    UITableViewCell *cell = [tv dequeueReusableCellWithIdentifier:id forIndexPath:path];
-    if (0 == path.row) {
-        UIView* view = [cell.contentView viewWithTag:0];
-        if (view && 2 == view.subviews.count) {
-            UILabel* label = [view.subviews objectAtIndex:1];
-            label.text = value;
-        }
-    }
-    else {
-        UIView* view = [cell.contentView viewWithTag:0];
-        if (view && 2 == view.subviews.count) {
-            UITextField* text = [view.subviews objectAtIndex:1];
-            text.text     = value;
-            text.tag      = path.row;
-            text.delegate = self;
-        }
-    }
+    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"SearchBar" forIndexPath:indexPath];
     return cell;
 }
+ */
 
 /*
 // Override to support conditional editing of the table view.
@@ -98,8 +86,7 @@
     if (editingStyle == UITableViewCellEditingStyleDelete) {
         // Delete the row from the data source
         [tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
-    }   
-    else if (editingStyle == UITableViewCellEditingStyleInsert) {
+    } else if (editingStyle == UITableViewCellEditingStyleInsert) {
         // Create a new instance of the appropriate class, insert it into the array, and add a new row to the table view
     }   
 }
@@ -124,29 +111,31 @@
 /*
 #pragma mark - Navigation
 
-// In a story board-based application, you will often want to do a little preparation before navigation
+// In a storyboard-based application, you will often want to do a little preparation before navigation
 - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
 {
     // Get the new view controller using [segue destinationViewController].
     // Pass the selected object to the new view controller.
 }
+*/
 
+/*
+- (void)searchBar:(UISearchBar *)searchBar textDidChange:(NSString *)searchText
+{
+    NSLog(@"search text changed: '%@'", searchText);
+}
+
+- (void)searchBarSearchButtonClicked:(UISearchBar *)searchBar
+{
+    NSLog(@"search was triggered: '%@'", searchBar.text);
+
+    //if (0 < searchBar.text.length) {
+    //    [self.search updateQueryWith: searchBar.text];
+    //}
+    [searchBar resignFirstResponder];
+    
+}
  */
--(void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation
-{
-    [self.tableView beginUpdates];
-    [self.tableView endUpdates];
-}
 
-- (void)textFieldDidEndEditing:(UITextField *)textField
-{
-    SpCAppDelegate* delegate = (((SpCAppDelegate*) [UIApplication sharedApplication].delegate));
-    [delegate.data updateSetting:self.elements[textField.tag] with:textField.text];
-}
-
-- (BOOL)textFieldShouldReturn:(UITextField *)textField {
-    [textField resignFirstResponder];
-    return YES;
-}
 
 @end

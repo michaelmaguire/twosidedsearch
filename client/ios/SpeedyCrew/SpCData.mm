@@ -7,7 +7,7 @@
 //
 
 #import "SpCData.h"
-#import "SpcDatabase.h"
+#import "SpCDatabase.h"
 #import "SpCSearch.h"
 #import <Foundation/Foundation.h>
 #import <Foundation/NSJSONSerialization.h>
@@ -128,6 +128,11 @@
              NSLog(@"received error...?");
          }
      }];
+}
+
+- (int)numberOfSearchesFor:(NSString*)side
+{
+    return 0;
 }
 
 @end

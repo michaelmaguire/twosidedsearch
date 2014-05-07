@@ -9,8 +9,8 @@
 /* Begin PBXBuildFile section */
 		AB6EDE581875EC0D0026A1AB /* SpCResult.m in Sources */ = {isa = PBXBuildFile; fileRef = AB6EDE571875EC0D0026A1AB /* SpCResult.m */; };
 		AB6EDE5E187701AE0026A1AB /* SpCSearchViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = AB6EDE5D187701AE0026A1AB /* SpCSearchViewController.m */; };
-		AB6EDE61187799BB0026A1AB /* SpCUserViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = AB6EDE60187799BB0026A1AB /* SpCUserViewController.m */; };
-		AB6EDE64187869E20026A1AB /* SpCDatabase.m in Sources */ = {isa = PBXBuildFile; fileRef = AB6EDE63187869E20026A1AB /* SpCDatabase.m */; };
+		AB6EDE61187799BB0026A1AB /* SpCUserViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = AB6EDE60187799BB0026A1AB /* SpCUserViewController.mm */; };
+		AB6EDE64187869E20026A1AB /* SpCDatabase.mm in Sources */ = {isa = PBXBuildFile; fileRef = AB6EDE63187869E20026A1AB /* SpCDatabase.mm */; };
 		AB6EDE6618786E830026A1AB /* libsqlite3.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = AB6EDE6518786E830026A1AB /* libsqlite3.dylib */; };
 		AB9C2E45184EA15400454DCD /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AB9C2E44184EA15400454DCD /* Foundation.framework */; };
 		AB9C2E47184EA15400454DCD /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AB9C2E46184EA15400454DCD /* CoreGraphics.framework */; };
@@ -27,10 +27,12 @@
 		AB9C2E6E184EA15400454DCD /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = AB9C2E6C184EA15400454DCD /* InfoPlist.strings */; };
 		AB9C2E70184EA15400454DCD /* SpeedyCrewTests.m in Sources */ = {isa = PBXBuildFile; fileRef = AB9C2E6F184EA15400454DCD /* SpeedyCrewTests.m */; };
 		AB9C2E81185001DB00454DCD /* SpCInvitesController.m in Sources */ = {isa = PBXBuildFile; fileRef = AB9C2E80185001DB00454DCD /* SpCInvitesController.m */; };
-		ABAC2F8718720A4A006D7F7E /* SpCData.m in Sources */ = {isa = PBXBuildFile; fileRef = ABAC2F8618720A4A006D7F7E /* SpCData.m */; };
+		ABAC2F8718720A4A006D7F7E /* SpCData.mm in Sources */ = {isa = PBXBuildFile; fileRef = ABAC2F8618720A4A006D7F7E /* SpCData.mm */; };
 		ABAC2F8A18748081006D7F7E /* SpCSearch.m in Sources */ = {isa = PBXBuildFile; fileRef = ABAC2F8918748081006D7F7E /* SpCSearch.m */; };
+		ABE6E2BF19155EEB003D61CC /* SpCCrewSearchViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = ABE6E2BE19155EEB003D61CC /* SpCCrewSearchViewController.m */; };
 		ABEC17E918C3B00E00D54C93 /* SpCChanging.m in Sources */ = {isa = PBXBuildFile; fileRef = ABEC17E818C3B00E00D54C93 /* SpCChanging.m */; };
 		ABEE315318CCCADF0054488B /* CoreLocation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ABEE315218CCCADF0054488B /* CoreLocation.framework */; };
+		ABF397031918185000B8FE39 /* Database.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ABF397011918185000B8FE39 /* Database.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -49,9 +51,9 @@
 		AB6EDE5C187701AE0026A1AB /* SpCSearchViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SpCSearchViewController.h; sourceTree = "<group>"; };
 		AB6EDE5D187701AE0026A1AB /* SpCSearchViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SpCSearchViewController.m; sourceTree = "<group>"; };
 		AB6EDE5F187799BB0026A1AB /* SpCUserViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SpCUserViewController.h; sourceTree = "<group>"; };
-		AB6EDE60187799BB0026A1AB /* SpCUserViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SpCUserViewController.m; sourceTree = "<group>"; };
+		AB6EDE60187799BB0026A1AB /* SpCUserViewController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = SpCUserViewController.mm; sourceTree = "<group>"; };
 		AB6EDE62187869E20026A1AB /* SpCDatabase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SpCDatabase.h; sourceTree = "<group>"; };
-		AB6EDE63187869E20026A1AB /* SpCDatabase.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SpCDatabase.m; sourceTree = "<group>"; };
+		AB6EDE63187869E20026A1AB /* SpCDatabase.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = SpCDatabase.mm; sourceTree = "<group>"; };
 		AB6EDE6518786E830026A1AB /* libsqlite3.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libsqlite3.dylib; path = usr/lib/libsqlite3.dylib; sourceTree = SDKROOT; };
 		AB9C2E41184EA15400454DCD /* SpeedyCrew.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SpeedyCrew.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AB9C2E44184EA15400454DCD /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
@@ -75,12 +77,16 @@
 		AB9C2E7F185001DB00454DCD /* SpCInvitesController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SpCInvitesController.h; sourceTree = "<group>"; };
 		AB9C2E80185001DB00454DCD /* SpCInvitesController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SpCInvitesController.m; sourceTree = "<group>"; };
 		ABAC2F8518720A4A006D7F7E /* SpCData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SpCData.h; sourceTree = "<group>"; };
-		ABAC2F8618720A4A006D7F7E /* SpCData.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SpCData.m; sourceTree = "<group>"; };
+		ABAC2F8618720A4A006D7F7E /* SpCData.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = SpCData.mm; sourceTree = "<group>"; };
 		ABAC2F8818748081006D7F7E /* SpCSearch.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SpCSearch.h; sourceTree = "<group>"; };
 		ABAC2F8918748081006D7F7E /* SpCSearch.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SpCSearch.m; sourceTree = "<group>"; };
+		ABE6E2BD19155EEB003D61CC /* SpCCrewSearchViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SpCCrewSearchViewController.h; sourceTree = "<group>"; };
+		ABE6E2BE19155EEB003D61CC /* SpCCrewSearchViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SpCCrewSearchViewController.m; sourceTree = "<group>"; };
 		ABEC17E718C3B00E00D54C93 /* SpCChanging.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SpCChanging.h; sourceTree = "<group>"; };
 		ABEC17E818C3B00E00D54C93 /* SpCChanging.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SpCChanging.m; sourceTree = "<group>"; };
 		ABEE315218CCCADF0054488B /* CoreLocation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreLocation.framework; path = System/Library/Frameworks/CoreLocation.framework; sourceTree = SDKROOT; };
+		ABF397011918185000B8FE39 /* Database.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Database.cpp; sourceTree = "<group>"; };
+		ABF397021918185000B8FE39 /* Database.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Database.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -147,6 +153,8 @@
 				AB9C2E53184EA15400454DCD /* SpCAppDelegate.h */,
 				AB9C2E54184EA15400454DCD /* SpCAppDelegate.m */,
 				AB9C2E56184EA15400454DCD /* Main.storyboard */,
+				ABE6E2BD19155EEB003D61CC /* SpCCrewSearchViewController.h */,
+				ABE6E2BE19155EEB003D61CC /* SpCCrewSearchViewController.m */,
 				AB9C2E59184EA15400454DCD /* SpCViewController.h */,
 				AB9C2E5A184EA15400454DCD /* SpCViewController.m */,
 				AB9C2E5C184EA15400454DCD /* Images.xcassets */,
@@ -154,9 +162,9 @@
 				AB9C2E7F185001DB00454DCD /* SpCInvitesController.h */,
 				AB9C2E80185001DB00454DCD /* SpCInvitesController.m */,
 				ABAC2F8518720A4A006D7F7E /* SpCData.h */,
-				ABAC2F8618720A4A006D7F7E /* SpCData.m */,
+				ABAC2F8618720A4A006D7F7E /* SpCData.mm */,
 				AB6EDE62187869E20026A1AB /* SpCDatabase.h */,
-				AB6EDE63187869E20026A1AB /* SpCDatabase.m */,
+				AB6EDE63187869E20026A1AB /* SpCDatabase.mm */,
 				ABAC2F8818748081006D7F7E /* SpCSearch.h */,
 				ABAC2F8918748081006D7F7E /* SpCSearch.m */,
 				AB6EDE561875EC0D0026A1AB /* SpCResult.h */,
@@ -164,9 +172,11 @@
 				AB6EDE5C187701AE0026A1AB /* SpCSearchViewController.h */,
 				AB6EDE5D187701AE0026A1AB /* SpCSearchViewController.m */,
 				AB6EDE5F187799BB0026A1AB /* SpCUserViewController.h */,
-				AB6EDE60187799BB0026A1AB /* SpCUserViewController.m */,
+				AB6EDE60187799BB0026A1AB /* SpCUserViewController.mm */,
 				ABEC17E718C3B00E00D54C93 /* SpCChanging.h */,
 				ABEC17E818C3B00E00D54C93 /* SpCChanging.m */,
+				ABF397011918185000B8FE39 /* Database.cpp */,
+				ABF397021918185000B8FE39 /* Database.h */,
 			);
 			path = SpeedyCrew;
 			sourceTree = "<group>";
@@ -245,7 +255,7 @@
 			isa = PBXProject;
 			attributes = {
 				CLASSPREFIX = SpC;
-				LastUpgradeCheck = 0500;
+				LastUpgradeCheck = 0510;
 				ORGANIZATIONNAME = "Dietmar Kühl";
 				TargetAttributes = {
 					AB9C2E61184EA15400454DCD = {
@@ -298,14 +308,16 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AB6EDE61187799BB0026A1AB /* SpCUserViewController.m in Sources */,
+				AB6EDE61187799BB0026A1AB /* SpCUserViewController.mm in Sources */,
 				AB9C2E51184EA15400454DCD /* main.m in Sources */,
 				AB6EDE5E187701AE0026A1AB /* SpCSearchViewController.m in Sources */,
-				AB6EDE64187869E20026A1AB /* SpCDatabase.m in Sources */,
-				ABAC2F8718720A4A006D7F7E /* SpCData.m in Sources */,
+				AB6EDE64187869E20026A1AB /* SpCDatabase.mm in Sources */,
+				ABF397031918185000B8FE39 /* Database.cpp in Sources */,
+				ABAC2F8718720A4A006D7F7E /* SpCData.mm in Sources */,
 				ABAC2F8A18748081006D7F7E /* SpCSearch.m in Sources */,
 				AB9C2E81185001DB00454DCD /* SpCInvitesController.m in Sources */,
 				AB9C2E55184EA15400454DCD /* SpCAppDelegate.m in Sources */,
+				ABE6E2BF19155EEB003D61CC /* SpCCrewSearchViewController.m in Sources */,
 				ABEC17E918C3B00E00D54C93 /* SpCChanging.m in Sources */,
 				AB9C2E5B184EA15400454DCD /* SpCViewController.m in Sources */,
 				AB6EDE581875EC0D0026A1AB /* SpCResult.m in Sources */,
@@ -362,7 +374,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = "$(ARCHS_STANDARD_INCLUDING_64_BIT)";
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_MODULES = YES;
@@ -401,7 +412,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = "$(ARCHS_STANDARD_INCLUDING_64_BIT)";
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_MODULES = YES;
@@ -459,7 +469,6 @@
 		AB9C2E77184EA15400454DCD /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_INCLUDING_64_BIT)";
 				BUNDLE_LOADER = "$(BUILT_PRODUCTS_DIR)/SpeedyCrew.app/SpeedyCrew";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(SDKROOT)/Developer/Library/Frameworks",
@@ -482,7 +491,6 @@
 		AB9C2E78184EA15400454DCD /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_INCLUDING_64_BIT)";
 				BUNDLE_LOADER = "$(BUILT_PRODUCTS_DIR)/SpeedyCrew.app/SpeedyCrew";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(SDKROOT)/Developer/Library/Frameworks",

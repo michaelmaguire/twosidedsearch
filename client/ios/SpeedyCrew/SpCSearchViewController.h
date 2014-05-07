@@ -12,6 +12,7 @@
 @interface SpCSearchViewController : UITableViewController<UISearchBarDelegate>
 
 @property SpCSearch* search;
+@property NSString*  side;
 @property (strong, nonatomic) IBOutlet UITableView *tableView;
 
 @end
