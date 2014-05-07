@@ -1,4 +1,4 @@
-package com.speedycrew.client.android;
+package com.speedycrew.client;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;

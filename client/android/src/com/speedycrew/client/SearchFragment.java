@@ -1,4 +1,4 @@
-package com.speedycrew.client.android;
+package com.speedycrew.client;
 
 import java.util.Vector;
 
@@ -21,10 +21,10 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.speedycrew.client.android.connection.ConnectionService;
-import com.speedycrew.client.android.connection.ConnectionService.Key;
 import com.speedycrew.client.android.model.Search;
 import com.speedycrew.client.android.model.SearchResult;
+import com.speedycrew.client.connection.ConnectionService;
+import com.speedycrew.client.connection.ConnectionService.Key;
 import com.speedycrew.client.util.RequestHelperServiceConnector;
 
 public class SearchFragment extends Fragment implements View.OnClickListener {
@@ -164,6 +164,11 @@ public class SearchFragment extends Fragment implements View.OnClickListener {
 		}
 	}
 
+	// TODO: Change to be a subclass of
+	// http://developer.android.com/reference/android/widget/SimpleCursorTreeAdapter.html
+	// and then follow example in
+	// http://www.vogella.com/tutorials/AndroidSQLite/article.html to
+	// hook this in with a database.
 	public class SearchResultsListAdapter extends BaseExpandableListAdapter {
 
 		@Override

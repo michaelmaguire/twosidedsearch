@@ -7,7 +7,7 @@ import android.os.Message;
 import android.os.Messenger;
 import android.util.Log;
 
-import com.speedycrew.client.android.connection.ConnectionService;
+import com.speedycrew.client.connection.ConnectionService;
 
 public class RequestHelperServiceConnector extends ServiceConnector {
 

@@ -1,4 +1,4 @@
-package com.speedycrew.client.android.connection;
+package com.speedycrew.client.connection;
 
 import java.util.ArrayList;
 import java.util.List;

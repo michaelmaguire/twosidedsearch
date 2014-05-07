@@ -1,4 +1,4 @@
-package com.speedycrew.client.android;
+package com.speedycrew.client;
 
 import java.util.List;
 
@@ -18,7 +18,7 @@ import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
-import com.speedycrew.client.android.connection.ConnectionService;
+import com.speedycrew.client.connection.ConnectionService;
 import com.speedycrew.client.util.RequestHelperServiceConnector;
 
 /**

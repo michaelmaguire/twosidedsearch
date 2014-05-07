@@ -1,4 +1,4 @@
-package com.speedycrew.client.android;
+package com.speedycrew.client;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -30,13 +30,10 @@ public class AboutActivity extends Activity {
 		case R.id.action_send_feedback: {
 			Intent sendFeedbackViaEmail = new Intent(Intent.ACTION_SEND);
 			sendFeedbackViaEmail.setType("text/email");
-			sendFeedbackViaEmail.putExtra(Intent.EXTRA_EMAIL,
-					new String[] { "android-feedback@speedycrew.com" });
+			sendFeedbackViaEmail.putExtra(Intent.EXTRA_EMAIL, new String[] { "android-feedback@speedycrew.com" });
 			sendFeedbackViaEmail.putExtra(Intent.EXTRA_SUBJECT, "Feedback");
-			sendFeedbackViaEmail.putExtra(Intent.EXTRA_TEXT, "Dear developer,"
-					+ "");
-			startActivity(Intent.createChooser(sendFeedbackViaEmail,
-					"Send Feedback:"));
+			sendFeedbackViaEmail.putExtra(Intent.EXTRA_TEXT, "Dear developer," + "");
+			startActivity(Intent.createChooser(sendFeedbackViaEmail, "Send Feedback:"));
 			return true;
 		}
 		default:
