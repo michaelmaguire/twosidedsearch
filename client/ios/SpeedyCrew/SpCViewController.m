@@ -182,7 +182,7 @@
 
 - (void)locationManager:(CLLocationManager *)manager didFailWithError:(NSError *)error
 {
-    NSLog(@"didFailWithError: %@", error);
+    NSLog(@"locationMManager: didFailWithError: %@", error);
     UIAlertView *errorAlert = [[UIAlertView alloc]
                                initWithTitle:@"Error" message:@"Failed to Get Your Location" delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil];
     [errorAlert show];
@@ -197,6 +197,7 @@
         SpCAppDelegate* delegate = (((SpCAppDelegate*) [UIApplication sharedApplication].delegate));
         delegate.data.longitude = newLocation.coordinate.longitude;
         delegate.data.latitude  = newLocation.coordinate.latitude;
+        NSLog(@"updated location: (%f, %f)", delegate.data.longitude, delegate.data.latitude);
 #if 0
         delegate.data.longitude = -0.15001;
         delegate.data.latitude  = 51.5;

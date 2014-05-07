@@ -8,7 +8,7 @@
 
 #import "SpCDatabase.h"
 #include "Database.h"
-// #import <UIKit/UIKit.h>
+#import <UIKit/UIKit.h>
 #import <Foundation/Foundation.h>
 #include <string>
 #include <sqlite3.h>
@@ -49,14 +49,14 @@ namespace
             s_database.createTable("searches",
                                    "id TEXT PRIMARY KEY, side TEXT, search TEXT");
             
-#if 0
-            std::string uuidstr("1234"); //-dk:TODO ([[[UIDevice currentDevice].identifierForVendor UUIDString] UTF8String]);
-            NSLog(@"uuid='%s'", uuidstr.c_str());
-            std::string idsql("insert into settings (name, value) values('scid', '" + uuidstr + "');");
-            message msg;;
-            int rc(sqlite3_exec(database_, idsql.c_str(), ignore_callback, 0, &msg));
-            // NSLog(@"insert into settings database: %s", idsql.c_str());
-#endif
+            try {
+                std::string uuidstr([[[UIDevice currentDevice].identifierForVendor UUIDString] UTF8String]);
+                NSLog(@"uuid='%s'", uuidstr.c_str());
+                s_database.execute("insert into settings (name, value) values('scid', '" + uuidstr + "');");
+            }
+            catch (std::exception const& ex) {
+                NSLog(@"ERROR inserting UUID: %s", ex.what());
+            }
         }
         catch (std::exception const& ex) {
             NSLog(@"ERROR: %s", ex.what());
@@ -85,32 +85,24 @@ namespace
 
 - (NSString*) querySetting: (NSString*)name
 {
-    NSString* query = [NSString stringWithFormat:@"select value from settings where name = '%@';", name];
-    sqlite3_stmt *statement;
-    NSString* result = @"";
-    if (sqlite3_prepare_v2(database_, [query UTF8String], -1, &statement, nil) == SQLITE_OK) {
-        while (sqlite3_step(statement) == SQLITE_ROW) {
-            result = [NSString stringWithUTF8String:((char *) sqlite3_column_text(statement, 0))];
-            break;
-        }
-        sqlite3_finalize(statement);
-    }
-    return result;
+    std::string query("select value from settings where name = '"
+                      + s_database.escape([name UTF8String]) + "';");
+    std::string result(s_database.query<std::string>(query));
+    return [NSString stringWithFormat:@"%s", result.c_str()];
 }
 
 - (void) updateSetting:(NSString*)name with:(NSString*)value
 {
     NSLog(@"updateSetting:%@ with:%@", name, value);
-    NSString* insert = [NSString stringWithFormat:@"insert into settings (name, value) values('%@', '%%q');", name];
-    char* message = 0;
-    char buffer[512];
-    char* sql = sqlite3_snprintf(sizeof(buffer), buffer, [insert UTF8String], [value UTF8String]);
-    if (sqlite3_exec(database_, sql, ignore_callback, 0, &message)) {
-        NSString* update = [NSString stringWithFormat:@"update settings set value='%%q' where name='%@';", name];
-        sql = sqlite3_snprintf(sizeof(buffer), buffer, [update UTF8String], [value UTF8String]);
-        if (sqlite3_exec(database_, sql, ignore_callback, 0, &message)) {
-            NSLog(@"both update and insert failed for setting name='%@' value='%@' message='%s'", name, value, message);
-        }
+    std::string error;
+    if (!s_database.execute("insert into settings(name, value) values("
+                            "'" + s_database.escape([name UTF8String]) + "', "
+                            "'" + s_database.escape([value UTF8String]) + "'"
+                            ");", error)
+        && !s_database.execute("update settings set "
+                               "value='" + s_database.escape([value UTF8String]) + "' "
+                               "where name='" + s_database.escape([name UTF8String]) + "';", error)) {
+        NSLog(@"both update and insert failed for setting name='%@' value='%@' message='%s'", name, value, error.c_str());
     }
 }
 

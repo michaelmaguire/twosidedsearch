@@ -114,8 +114,8 @@
 
 - (void)sendHttpRequest:(NSString*)query
 {
-    NSLog(@"sending Http Request: '%@'", query);
     NSString* str = [NSString stringWithFormat:@"%@%@", self.baseURL, query];
+    NSLog(@"sending Http Request: '%@'", str);
     NSURL* url = [NSURL URLWithString:str];
     NSURLRequest* request = [NSURLRequest requestWithURL:url];
     NSOperationQueue* q = [NSOperationQueue mainQueue];

@@ -86,7 +86,7 @@ void SpeedyCrew::Database::createTable(std::string const& table,
     std::string sql(std::string("CREATE TABLE ") + table + "(" + columns + ")");
     message     msg;
     int         rc(sqlite3_exec(this->d_database, sql.c_str(), ignoreCallback, 0, &msg));
-    if (msg && msg.str() != "table " + table + " already exists") {
+    if (rc && msg && msg.str() != "table " + table + " already exists") {
         throw std::runtime_error("query='" + sql +"' message='" + msg.str() + "'");
     }
 }
@@ -97,9 +97,19 @@ void SpeedyCrew::Database::execute(std::string const& sql)
 {
     message msg;
     int     rc(sqlite3_exec(this->d_database, sql.c_str(), ignoreCallback, 0, &msg));
-    if (msg) {
+    if (rc && msg) {
         throw std::runtime_error("query='" + sql +"' message='" + msg.str() + "'");
     }
+}
+
+bool SpeedyCrew::Database::execute(std::string const& sql, std::string& error)
+{
+    message msg;
+    int     rc(sqlite3_exec(this->d_database, sql.c_str(), ignoreCallback, 0, &msg));
+    if (rc && msg) {
+        error = msg.str();
+    }
+    return !rc;
 }
 
 // ----------------------------------------------------------------------------
@@ -129,6 +139,38 @@ namespace SpeedyCrew
                                      "query='" + sql + "' "
                                      "message='" + msg.str() + "'");
         }
+        return value;
+    }
+}
+
+// ----------------------------------------------------------------------------
+
+namespace
+{
+    extern "C" int string_callback(void* data, int count, char** rows,char**)
+    {
+        if (count == 1 && rows) {
+            *static_cast<std::string*>(data) = rows[0];
+            return 0;
+        }
+        return 1;
+    }
+}
+    
+namespace SpeedyCrew
+{
+    template <>
+    std::string Database::query<std::string>(std::string const& sql)
+    {
+        message msg;
+        std::string value;
+        int rc(sqlite3_exec(this->d_database, sql.c_str(), string_callback, &value, &msg));
+        if (rc != SQLITE_OK) {
+            throw std::runtime_error("query failed: "
+                                     "query='" + sql + "' "
+                                     "message='" + msg.str() + "'");
+        }
+        std::cout << "returning '" << value << "'\n" << std::flush;
         return value;
     }
 }

@@ -31,6 +31,7 @@ namespace SpeedyCrew
 
         void createTable(std::string const& table, std::string const& columns);
         void execute(std::string const& sql);
+        bool execute(std::string const& sql, std::string& error);
 
         template <typename T> T  query(std::string const& sql);
         std::vector<std::string> queryVector(std::string const& sql);
