@@ -34,6 +34,7 @@ import android.os.Messenger;
 import android.util.Base64;
 import android.util.Log;
 
+import com.google.android.gms.maps.model.LatLng;
 import com.speedycrew.client.util.BaseService;
 
 /**
@@ -41,6 +42,19 @@ import com.speedycrew.client.util.BaseService;
  * requests which will then be made as HTTP requests to the SpeedyCrew servers.
  */
 public class ConnectionService extends BaseService {
+
+	private static LatLng sLatLng;
+
+	public synchronized static void setLatLng(LatLng latLng) {
+		sLatLng = latLng;
+	}
+
+	public synchronized static LatLng getLatLng() {
+		if (sLatLng == null) {
+			return new LatLng(51.5, -0.15);
+		}
+		return sLatLng;
+	}
 
 	public interface Key {
 		public static final String SEARCH_ID = "search_id";
@@ -308,8 +322,11 @@ public class ConnectionService extends BaseService {
 				Bundle bundle = message.getData();
 				// Enrich the bundle with geo location -- probably best not
 				// to try this on the UI thread.
-				bundle.putString(ConnectionService.Key.LONGITUDE, "-0.15");
-				bundle.putString(ConnectionService.Key.LATITUDE, "51.5");
+				LatLng latLng = getLatLng();
+				bundle.putString(ConnectionService.Key.LATITUDE,
+						Double.toString(latLng.latitude));
+				bundle.putString(ConnectionService.Key.LONGITUDE,
+						Double.toString(latLng.longitude));
 
 				if (ConnectionService.Key.VALUE_SIDE_SEEK.equals(bundle
 						.getString(ConnectionService.Key.SIDE))) {
