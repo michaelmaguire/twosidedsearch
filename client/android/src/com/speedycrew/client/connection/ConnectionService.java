@@ -108,8 +108,6 @@ public class ConnectionService extends BaseService {
 	public static final String BUNDLE_KEY_RESPONSE_JSON = RESERVED_INTERPROCESS_PREFIX
 			+ "response-json";
 
-	private KeyManager mKeyManager;
-
 	private void makeRequestWithParameters(final String relativeUrl,
 			final Bundle parameters, final Messenger replyTo) {
 		new Thread(new Runnable() {
@@ -123,7 +121,7 @@ public class ConnectionService extends BaseService {
 					// a user.
 					String uniqueUserId = null;
 					try {
-						uniqueUserId = mKeyManager.getUserId();
+						uniqueUserId = KeyManager.getInstance().getUserId();
 						Log.i(LOGTAG, "uniqueUserId[" + uniqueUserId + "]");
 					} catch (Exception e) {
 						Log.e(LOGTAG, "makeRequestWithParameters getUserId: "
@@ -133,8 +131,8 @@ public class ConnectionService extends BaseService {
 
 					DefaultHttpClient httpsClient = null;
 					try {
-						SSLSocketFactory socketFactory = mKeyManager
-								.getSSLSocketFactory();
+						SSLSocketFactory socketFactory = KeyManager
+								.getInstance().getSSLSocketFactory();
 
 						// Set parameter data.
 						HttpParams params = new BasicHttpParams();
@@ -296,7 +294,7 @@ public class ConnectionService extends BaseService {
 	@Override
 	public void onStartingService() {
 		try {
-			mKeyManager = KeyManager.getInstance();
+			KeyManager.getInstance();
 
 			Log.i(LOGTAG, "onStartService - ConnectionService is running");
 		} catch (Exception e) {

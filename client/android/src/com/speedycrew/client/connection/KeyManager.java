@@ -1,7 +1,6 @@
 package com.speedycrew.client.connection;
 
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -59,7 +58,8 @@ public final class KeyManager {
 		final String mKeyStoreType;
 		final String mProvider;
 
-		KeyStoreAndProviderPreference(final String keyStoreType, final String provider) {
+		KeyStoreAndProviderPreference(final String keyStoreType,
+				final String provider) {
 			mKeyStoreType = keyStoreType;
 			mProvider = provider;
 		}
@@ -77,7 +77,9 @@ public final class KeyManager {
 	// If however, you want to use getDetaultType KeyStore type which is usually
 	// 'BKS' then
 	// strangely the appropriate provider type to use is 'BC'.
-	private static final KeyStoreAndProviderPreference sKeyStoreAndProviderPreferences[] = { new KeyStoreAndProviderPreference(ANDROID_KEY_STORE, ANDROID_KEY_STORE),
+	private static final KeyStoreAndProviderPreference sKeyStoreAndProviderPreferences[] = {
+			new KeyStoreAndProviderPreference(ANDROID_KEY_STORE,
+					ANDROID_KEY_STORE),
 			new KeyStoreAndProviderPreference("BKS", "BC") };
 
 	private KeyStoreAndProviderPreference mKeyStoreToUse = sKeyStoreAndProviderPreferences[1];
@@ -126,7 +128,8 @@ public final class KeyManager {
 	private static String generateCommonName(Context context) {
 		StringWriter commonName = new StringWriter();
 
-		String androidId = Secure.getString(context.getContentResolver(), Secure.ANDROID_ID);
+		String androidId = Secure.getString(context.getContentResolver(),
+				Secure.ANDROID_ID);
 		if (androidId == null) {
 			androidId = "null_ANDROID_ID";
 		}
@@ -150,9 +153,12 @@ public final class KeyManager {
 	 * @throws CertificateException
 	 * @throws NoSuchAlgorithmException
 	 */
-	private void replaceSelfSignedCertificate(java.security.cert.X509Certificate trustedRootCertSignedCertificate) throws KeyStoreException, NoSuchAlgorithmException,
+	private void replaceSelfSignedCertificate(
+			java.security.cert.X509Certificate trustedRootCertSignedCertificate)
+			throws KeyStoreException, NoSuchAlgorithmException,
 			CertificateException, IOException {
-		mKeyStore.setCertificateEntry(IDENTITY_KEY_NAME, trustedRootCertSignedCertificate);
+		mKeyStore.setCertificateEntry(IDENTITY_KEY_NAME,
+				trustedRootCertSignedCertificate);
 	}
 
 	/**
@@ -179,8 +185,11 @@ public final class KeyManager {
 	 * @throws OperatorCreationException
 	 * @throws UnrecoverableEntryException
 	 */
-	private void initKeyStore() throws NoSuchAlgorithmException, NoSuchProviderException, InvalidAlgorithmParameterException, KeyStoreException, CertificateException, IOException,
-			InvalidKeyException, IllegalStateException, SignatureException, OperatorCreationException, UnrecoverableEntryException {
+	private void initKeyStore() throws NoSuchAlgorithmException,
+			NoSuchProviderException, InvalidAlgorithmParameterException,
+			KeyStoreException, CertificateException, IOException,
+			InvalidKeyException, IllegalStateException, SignatureException,
+			OperatorCreationException, UnrecoverableEntryException {
 		Context context = SpeedyCrewApplication.getAppContext();
 
 		mKeyStore = KeyStore.getInstance(mKeyStoreToUse.mKeyStoreType);
@@ -192,11 +201,8 @@ public final class KeyManager {
 				FileInputStream fis = null;
 				try {
 					fis = context.openFileInput("identity.keystore");
-					mKeyStore.load(fis, "dummy1234trustinginmodeprivate".toCharArray());
-				} catch (FileNotFoundException fnfe) {
-					// We're starting from scratch, we'll create new key below.
-					// Ensure KeyStore is initialized.
-					mKeyStore.load(null);
+					mKeyStore.load(fis,
+							"dummy1234trustinginmodeprivate".toCharArray());
 				} finally {
 					if (null != fis) {
 						fis.close();
@@ -204,7 +210,11 @@ public final class KeyManager {
 				}
 			}
 		} catch (Exception e) {
-			Log.i(LOGTAG, "initKeyStore load exception, will try to create: " + e.getMessage());
+			Log.i(LOGTAG, "initKeyStore load exception, will try to create: "
+					+ e.getMessage());
+			// We're starting from scratch, we'll create new key below.
+			// Ensure KeyStore is initialized.
+			mKeyStore.load(null);
 		}
 
 		// See if we already have a key available, otherwise generate.
@@ -218,9 +228,11 @@ public final class KeyManager {
 			// have no way of guaranteeing uniqueness of serial numbers. We
 			// SHOULD
 			// instead use public key fingerprints as a unique handle on users.
-			BigInteger serialNumber = BigInteger.valueOf(System.currentTimeMillis());
+			BigInteger serialNumber = BigInteger.valueOf(System
+					.currentTimeMillis());
 
-			X500Principal subject = new X500Principal(String.format("CN=%s,OU=%s", commonName, context.getPackageName()));
+			X500Principal subject = new X500Principal(String.format(
+					"CN=%s,OU=%s", commonName, context.getPackageName()));
 
 			Calendar notBefore = Calendar.getInstance();
 			Calendar notAfter = Calendar.getInstance();
@@ -228,34 +240,47 @@ public final class KeyManager {
 
 			AlgorithmParameterSpec spec = null;
 			if (ANDROID_KEY_STORE.equals(mKeyStoreToUse.mKeyStoreType)) {
-				spec = new KeyPairGeneratorSpec.Builder(context).setAlias(IDENTITY_KEY_NAME).setSubject(subject).setSerialNumber(serialNumber).setStartDate(notBefore.getTime())
+				spec = new KeyPairGeneratorSpec.Builder(context)
+						.setAlias(IDENTITY_KEY_NAME).setSubject(subject)
+						.setSerialNumber(serialNumber)
+						.setStartDate(notBefore.getTime())
 						.setEndDate(notAfter.getTime()).build();
 			} else {
-				spec = new RSAKeyGenParameterSpec(KEY_SIZE_IN_BITS, RSAKeyGenParameterSpec.F4);
+				spec = new RSAKeyGenParameterSpec(KEY_SIZE_IN_BITS,
+						RSAKeyGenParameterSpec.F4);
 			}
 
 			// If 2nd parameter provider here is "AndroidKeyStore" it indicates
 			// the
 			// new AndroidKeyStoreProvider JCE which uses hardware storage when
 			// possible.
-			KeyPairGenerator kpGenerator = KeyPairGenerator.getInstance(ENCRYPTION_ALGORITHM_RSA, mKeyStoreToUse.mProvider);
+			KeyPairGenerator kpGenerator = KeyPairGenerator.getInstance(
+					ENCRYPTION_ALGORITHM_RSA, mKeyStoreToUse.mProvider);
 			kpGenerator.initialize(spec);
 
 			KeyPair keyPair = kpGenerator.generateKeyPair();
 			if (ANDROID_KEY_STORE.equals(mKeyStoreToUse.mKeyStoreType)) {
 				// No need to store -- it will be stored for us in hardware.
 			} else {
-				ContentSigner sigGen = new JcaContentSignerBuilder("SHA256WithRSAEncryption").setProvider(mKeyStoreToUse.mProvider).build(keyPair.getPrivate());
-				X509v3CertificateBuilder certGen = new JcaX509v3CertificateBuilder(subject, serialNumber, notBefore.getTime(), notAfter.getTime(), subject, keyPair.getPublic());
+				ContentSigner sigGen = new JcaContentSignerBuilder(
+						"SHA256WithRSAEncryption").setProvider(
+						mKeyStoreToUse.mProvider).build(keyPair.getPrivate());
+				X509v3CertificateBuilder certGen = new JcaX509v3CertificateBuilder(
+						subject, serialNumber, notBefore.getTime(),
+						notAfter.getTime(), subject, keyPair.getPublic());
 
-				X509Certificate cert = new JcaX509CertificateConverter().setProvider(mKeyStoreToUse.mProvider).getCertificate(certGen.build(sigGen));
+				X509Certificate cert = new JcaX509CertificateConverter()
+						.setProvider(mKeyStoreToUse.mProvider).getCertificate(
+								certGen.build(sigGen));
 
 				Certificate[] certChain = { cert };
-				KeyStore.PrivateKeyEntry privateKeyEntry = new KeyStore.PrivateKeyEntry(keyPair.getPrivate(), certChain);
+				KeyStore.PrivateKeyEntry privateKeyEntry = new KeyStore.PrivateKeyEntry(
+						keyPair.getPrivate(), certChain);
 				mKeyStore.setEntry(IDENTITY_KEY_NAME, privateKeyEntry, null);
 
 				// Test fetch.
-				KeyStore.PrivateKeyEntry keyEntry = (KeyStore.PrivateKeyEntry) mKeyStore.getEntry(IDENTITY_KEY_NAME, null);
+				KeyStore.PrivateKeyEntry keyEntry = (KeyStore.PrivateKeyEntry) mKeyStore
+						.getEntry(IDENTITY_KEY_NAME, null);
 
 				Certificate certTest = keyEntry.getCertificate();
 
@@ -263,8 +288,10 @@ public final class KeyManager {
 
 				FileOutputStream fos = null;
 				try {
-					fos = context.openFileOutput("identity.keystore", Context.MODE_PRIVATE);
-					mKeyStore.store(fos, "dummy1234trustinginmodeprivate".toCharArray());
+					fos = context.openFileOutput("identity.keystore",
+							Context.MODE_PRIVATE);
+					mKeyStore.store(fos,
+							"dummy1234trustinginmodeprivate".toCharArray());
 				} finally {
 					if (null != fos) {
 						fos.close();
@@ -303,10 +330,13 @@ public final class KeyManager {
 	 * @throws CertificateException
 	 * @throws IOException
 	 */
-	PrivateKeyEntry getPrivateKeyEntry() throws NoSuchAlgorithmException, UnrecoverableEntryException, KeyStoreException, CertificateException, IOException {
+	PrivateKeyEntry getPrivateKeyEntry() throws NoSuchAlgorithmException,
+			UnrecoverableEntryException, KeyStoreException,
+			CertificateException, IOException {
 
 		try {
-			KeyStore.PrivateKeyEntry keyEntry = (KeyStore.PrivateKeyEntry) mKeyStore.getEntry(IDENTITY_KEY_NAME, null);
+			KeyStore.PrivateKeyEntry keyEntry = (KeyStore.PrivateKeyEntry) mKeyStore
+					.getEntry(IDENTITY_KEY_NAME, null);
 			return keyEntry;
 		} catch (Exception e) {
 			Log.i(LOGTAG, "getPrivateKey exception: " + e.getMessage());
@@ -324,10 +354,13 @@ public final class KeyManager {
 	 * @throws UnrecoverableEntryException
 	 * @throws NoSuchAlgorithmException
 	 */
-	public String getUserId() throws NoSuchAlgorithmException, UnrecoverableEntryException, KeyStoreException, CertificateException, IOException {
+	public String getUserId() throws NoSuchAlgorithmException,
+			UnrecoverableEntryException, KeyStoreException,
+			CertificateException, IOException {
 		PrivateKeyEntry privateKeyEntry = getPrivateKeyEntry();
 
-		X509Certificate certificate = (X509Certificate) privateKeyEntry.getCertificate();
+		X509Certificate certificate = (X509Certificate) privateKeyEntry
+				.getCertificate();
 
 		return getPublicKeySHA1Fingerprint(certificate);
 	}
@@ -343,15 +376,20 @@ public final class KeyManager {
 	 * @return
 	 * @throws NoSuchAlgorithmException
 	 */
-	public static String getPublicKeySHA1Fingerprint(java.security.cert.X509Certificate certificate) throws NoSuchAlgorithmException {
+	public static String getPublicKeySHA1Fingerprint(
+			java.security.cert.X509Certificate certificate)
+			throws NoSuchAlgorithmException {
 
-		MessageDigest md = MessageDigest.getInstance(FINGERPRINT_ALGORITHM_SHA1);
-		byte[] asn1EncodedPublicKey = md.digest(certificate.getPublicKey().getEncoded());
+		MessageDigest md = MessageDigest
+				.getInstance(FINGERPRINT_ALGORITHM_SHA1);
+		byte[] asn1EncodedPublicKey = md.digest(certificate.getPublicKey()
+				.getEncoded());
 
 		// Hex encode.
 		StringBuffer hexString = new StringBuffer();
 		for (int i = 0; i < asn1EncodedPublicKey.length; i++) {
-			String appendString = Integer.toHexString(0xFF & asn1EncodedPublicKey[i]);
+			String appendString = Integer
+					.toHexString(0xFF & asn1EncodedPublicKey[i]);
 			// Left pad with zero if necessary.
 			if (appendString.length() == 1) {
 				hexString.append("0");
@@ -361,8 +399,10 @@ public final class KeyManager {
 		return hexString.toString();
 	}
 
-	public SSLSocketFactory getSSLSocketFactory() throws KeyStoreException, NoSuchAlgorithmException, UnrecoverableKeyException, CertificateException, IOException,
-			KeyManagementException, Exception {
+	public SSLSocketFactory getSSLSocketFactory() throws KeyStoreException,
+			NoSuchAlgorithmException, UnrecoverableKeyException,
+			CertificateException, IOException, KeyManagementException,
+			Exception {
 
 		try {
 
@@ -370,19 +410,22 @@ public final class KeyManager {
 
 			// Initialize key manager factory with the client certificate.
 			KeyManagerFactory clientKeyManagerFactory = null;
-			clientKeyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+			clientKeyManagerFactory = KeyManagerFactory
+					.getInstance(KeyManagerFactory.getDefaultAlgorithm());
 			clientKeyManagerFactory.init(mKeyStore, "MyPassword".toCharArray());
 
 			// Read in the root CA certs for speedycrew.com which we'll trust
 			// from
 			// the server.
 			KeyStore localTrustStore = KeyStore.getInstance("BKS");
-			InputStream in = context.getResources().openRawResource(R.raw.mytruststore);
+			InputStream in = context.getResources().openRawResource(
+					R.raw.mytruststore);
 			localTrustStore.load(in, "secret".toCharArray());
 
 			// initialize SSLSocketFactory to use the certificates
 			SSLSocketFactory socketFactory = null;
-			socketFactory = new SSLSocketFactory(SSLSocketFactory.TLS, mKeyStore, null, localTrustStore, null, null);
+			socketFactory = new SSLSocketFactory(SSLSocketFactory.TLS,
+					mKeyStore, null, localTrustStore, null, null);
 			return socketFactory;
 		} catch (Exception e) {
 			Log.e(LOGTAG, "getSSLSocketFactory exception: " + e.getMessage());
