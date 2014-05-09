@@ -53,6 +53,12 @@ def begin(request):
                        RETURNING id""",
                        (device_id, ))
         profile_id = cursor.fetchone()[0]
+        # TODO the following statement can produce an error if an
+        # unknown device makes two simultaneous queries, since only
+        # once of them can succeed (and there is a race above);
+        # various ways to fix this (serialize all profile creation, or
+        # handle constraint violation in a stored procedure (but we
+        # already created the profile above!), or ...?)
         cursor.execute("""INSERT INTO speedycrew.device (id, profile, last_seen, created) 
                           VALUES (%s, %s, now(), now())""",
                        (device_id, profile_id))
