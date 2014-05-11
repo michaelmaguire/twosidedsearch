@@ -3,10 +3,10 @@
     <!-- These settings headers are only used on tablets. -->
 
     <header
-        android:fragment="com.speedycrew.client.android.ProfileActivity$GeneralPreferenceFragment"
+        android:fragment="com.speedycrew.client.ProfileActivity$GeneralPreferenceFragment"
         android:title="@string/pref_header_general" />
     <header
-        android:fragment="com.speedycrew.client.android.ProfileActivity$NotificationPreferenceFragment"
+        android:fragment="com.speedycrew.client.ProfileActivity$NotificationPreferenceFragment"
         android:title="@string/pref_header_notifications" />
 
 </preference-headers>
