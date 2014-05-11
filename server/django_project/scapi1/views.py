@@ -53,6 +53,9 @@ def begin(request):
                        RETURNING id""",
                        (device_id, ))
         profile_id = cursor.fetchone()[0]
+        cursor.execute("""INSERT INTO speedycrew.profile_sequence (profile, low_sequence, high_sequence)
+                          VALUES (%s, 0, 0)""",
+                       (profile_id,))
         # TODO the following statement can produce an error if an
         # unknown device makes two simultaneous queries, since only
         # once of them can succeed (and there is a race above);
@@ -68,6 +71,112 @@ def begin(request):
                            (device_id, certificate))
     cursor.close()
     return profile_id
+
+def escape(s):
+    """A dodgy incomplete string escape for SQLite strings."""
+    # TODO this is probably insecure/broken/whatever
+    if s == None:
+        return "NULL"
+    elif s is str:    
+        return "'" + s.replace("'", "''") + "'"
+    else:
+        return "'" + str(s) + "'"
+
+def param(fmt, values):
+    """Something for building SQL strings with literals, similar to DB
+    module execute."""
+    return fmt % tuple(map(escape, values)) # TODO this is not the modern way, use .format
+
+def synchronise(request, device_sequence):
+    """A view handler for synchronising device data with the server."""
+    profile_id = begin(request)
+
+    cursor = connection.cursor()
+    header = "" # messages for the device app to parse
+    sql = ""    # messages for the device app to feed to sqlite
+
+    need_full_resync = False
+    device_sequence = int(device_sequence) # TODO investigate size of int
+    if device_sequence == 0:
+        need_full_resync = True
+    cursor.execute("""SELECT low_sequence, high_sequence
+                        FROM speedycrew.profile_sequence
+                       WHERE profile = %s""",
+                   (profile_id, ))
+    low_sequence, high_sequence = cursor.fetchone()
+    if low_sequence > device_sequence:
+        # TODO think about whether we want low_sequence to be the
+        # lowest event we have, or the highest event that we have
+        # deleted (probably need to try implementing the trimming code
+        # to decide which is more convenient)
+        need_full_resync = True
+    
+    if need_full_resync:
+        header += "-- @REFRESH\n"
+        sql += "BEGIN;\n"
+        sql += "DELETE FROM profile;\n"
+        sql += "DELETE FROM message;\n"
+        sql += "DELETE FROM match;\n"
+        sql += "DELETE FROM search;\n"
+        sql += "DELETE FROM control;\n"
+
+        # TODO messages etc
+
+        cursor.execute("""SELECT s.id, 
+                                 s.query, 
+                                 s.side, 
+                                 s.address, 
+                                 s.postcode, 
+                                 s.city, 
+                                 s.country, 
+                                 st_x(s.geography::geometry) AS longitude,
+                                 st_y(s.geography::geometry) AS latitude,
+                                 s.radius
+                            FROM speedycrew.search s
+                           WHERE s.owner = %s
+                             AND s.status = 'ACTIVE'""",
+                       (profile_id, ))
+        for row in cursor:
+            sql += param("INSERT INTO search (id, query, side, address, postcode city, country, longitude, latitude, radius) VALUES (%s, %s, %s, %s, %s ,%s, %s, %s, %s, %s);\n",
+                         row)                                 
+
+        cursor.execute("""SELECT s1.id,
+                                 s2.query,
+                                 p2.username,
+                                 d2.id AS fingerprint,
+                                 st_distance(s1.geography, s2.geography) AS distance,
+                                 st_x(s2.geography::geometry) AS longitude,
+                                 st_y(s2.geography::geometry) AS latitude
+                            FROM speedycrew.match m
+                            JOIN speedycrew.search s2 ON m.b = s2.id
+                            JOIN speedycrew.profile p2 ON s2.owner = p2.id
+                            JOIN speedycrew.device d2 ON p2.id = d2.profile
+                            JOIN speedycrew.search s1 ON m.a = s1.id
+                           WHERE s1.owner = %s
+                             AND s1.status = 'ACTIVE'
+                             AND s2.status = 'ACTIVE'""",
+                       (profile_id, ))
+        for row in cursor:
+            sql += param("INSERT INTO match (search, query, username, fingerprint, distance, longitude, latitude) VALUES (%s, %s, %s, %s, %s, %s, %s);\n",
+                         row)                           
+
+        cursor.execute("""SELECT username, real_name, email, message
+                            FROM speedycrew.profile
+                           WHERE id = %s""",
+                       (profile_id, ))
+        username, real_name, email, message = cursor.fetchone()
+        sql += param("INSERT INTO profile (username, real_name, email, message) VALUES (%s, %s, %s, %s);\n",
+                        (username, real_name, email, message))
+
+        sql += param("INSERT INTO control (high_sequence) VALUES (%s);\n",
+                         (high_sequence,))
+
+        sql += "COMMIT;\n"
+    else:
+        # TODO build incremental results
+        header += "-- @SQL"
+
+    return HttpResponse(header + "-- @SQL\n" + sql, content_type="text/plain")
 
 def docs(request):
     """A view handler for showing the documentation/test interface."""

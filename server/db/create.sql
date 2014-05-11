@@ -103,6 +103,9 @@ comment on table profile_availability is 'A person''s availability status for ea
 
 create type match_status as enum ('ACTIVE', 'DELETED');
 
+-- TODO -- drop match.batch_sequence, add a unique single integer ID
+-- that can be referenced by event, to make things more uniform
+
 create table match (
   a integer not null references search(id),
   b integer not null references search(id),
@@ -207,5 +210,74 @@ create table speedycrew.file (
 );
 
 comment on table speedycrew.file is 'Filesystem-like data storage for holding arbitrary profile data';
+
+
+-- this information is functionally dependent on profile.id, but is
+-- kept in a separate table because it will be frequently updated and
+-- I'm guessing up front without testing that keeping it small will be
+-- a good idea
+create table speedycrew.profile_sequence (
+  profile integer primary key references speedycrew.profile(id) not null,
+  low_sequence integer not null,
+  high_sequence integer not null
+);
+
+comment on table speedycrew.profile_sequence is 'Counters to keep track of the window of event sequence numbers we have for each profile.';
+
+create table speedycrew.message (
+  id serial primary key,
+  recipient integer not null references speedycrew.profile(id),
+  sender integer null references speedycrew.profile(id),
+  body text not null,
+  is_read boolean not null,
+  is_starred boolean not null,
+  created timestamptz not null
+);
+
+comment on table speedycrew.message is 'A message for delivery to a user.';
+
+-- the event stream delivered to end users
+
+create type event_type as enum ('INSERT', 'UPDATE', 'DELETE');
+
+create table speedycrew.event (
+  profile integer not null references speedycrew.profile(id),
+  seq integer not null, 
+  type event_type not null,
+  message integer references message(id),
+  search integer references search(id),
+  primary key (profile, seq)
+);
+
+
+
+
+-- some bits and pieces for tracking schema evolution once we have
+-- something solid enough to try for stable rollouts of schema changes
+-- (ie beta, prod etc)
+
+CREATE TABLE speedycrew.schema_change (
+    name character varying NOT NULL,
+    created timestamp with time zone DEFAULT now() NOT NULL
+);
+
+comment on table speedycrew.schema_change is 'Track which changes have been applied.';
+
+CREATE FUNCTION speedycrew.provide_change(provided_name text) RETURNS void
+    LANGUAGE sql
+    AS $_$
+  insert into speedycrew.schema_change values ($1, now());
+$_$;
+
+CREATE FUNCTION speedycrew.require_change(required_name text) RETURNS void
+    LANGUAGE plpgsql
+    AS $$
+  begin
+    if not exists(select * from speedycrew.schema_change where name = required_name) then
+      raise exception 'Required change % has''t been applied yet', required_name;
+    end if;
+  end;
+$$;
+
 
 commit;
