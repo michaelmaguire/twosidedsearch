@@ -21,7 +21,7 @@
 - (SpCSearch*)init;
 - (SpCSearch*)initWithSide:(NSString*)side;
 - (SpCSearch*)initWithDictionary:(NSDictionary*)dict;
-- (void)updateQueryWith:(NSString*)query;
+- (void)updateQueryWith:(NSString*)query forSide: (NSString*)side;
 - (NSString*) encodeURL: (NSString*) str; // this should life in some better place...
 
 @end

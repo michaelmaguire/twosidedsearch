@@ -140,14 +140,17 @@
 
 - (void)searchBarSearchButtonClicked:(UISearchBar *)searchBar
 {
+#if 0
     if (0 < searchBar.text) {
         [self.currentSearch updateQueryWith: searchBar.text];
     }
     [searchBar resignFirstResponder];
+#endif
 }
 
 - (IBAction)addSearch:(id)sender
 {
+#if 0
     if (0 < self.search.text.length) {
         [self.currentSearch updateQueryWith:self.search.text];
         NSLog(@"adding query %s", self.currentSearch.name.UTF8String);
@@ -169,6 +172,7 @@
         NSIndexSet* indices = [[NSIndexSet alloc] initWithIndex:index];
         [self.tableView reloadSections:indices withRowAnimation: UITableViewRowAnimationNone];
     }
+#endif
 }
 
 - (void)resultsChanged:(id)sender

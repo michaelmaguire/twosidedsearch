@@ -39,6 +39,7 @@
     // self.navigationItem.rightBarButtonItem = self.editButtonItem;
     SpCAppDelegate* delegate = (((SpCAppDelegate*) [UIApplication sharedApplication].delegate));
     [delegate startLocationManager];
+    [delegate.data addListener:^(NSString* name, NSObject* object){ [weakSelf searchesChanged: (SpCData*)object]; } withId: @"Searches"];
 }
 
 - (void)didReceiveMemoryWarning
@@ -51,15 +52,15 @@
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tv
 {
-    return 3;
+    return 1;
+    //SpCAppDelegate* delegate = (((SpCAppDelegate*) [UIApplication sharedApplication].delegate));
+    //NSLog(@"number of searches for %@: %d", [self side], [delegate.data numberOfSearchesFor:[self side]]);
+    //return 1 + [delegate.data numberOfSearchesFor:[self side]];
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-    return 0 == section? 1
-         : 1 == section? [self.search.results count]
-         // : 2 == section? 1
-         : 0;
+    return 0 == section? 1 : 1 + [self.search.results count];
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tv cellForRowAtIndexPath:(NSIndexPath *)path
@@ -75,6 +76,8 @@
         return cell;
     }
     else if (1 == path.section) {
+        UITableViewCell *cell = [tv dequeueReusableCellWithIdentifier:@"Search" forIndexPath:path];
+#if 0
         UITableViewCell *cell = [tv dequeueReusableCellWithIdentifier:@"Result" forIndexPath:path];
         SpCResult* result = [self.search.results objectAtIndex:path.row];
         UIView* view = [cell.contentView viewWithTag:0];
@@ -85,6 +88,7 @@
         else {
             cell.textLabel.text = result.value;
         }
+#endif
         return cell;
     }
     else {
@@ -164,16 +168,27 @@
     NSLog(@"search bar button clicked: '%@' '%@'", searchBar.text, [self side]);
     if (0 < searchBar.text.length) {
         NSLog(@"calling function on search: %@", self.search? @"non-NIL": @"NIL");
-        [self.search updateQueryWith: searchBar.text];
+        if (self.search == Nil) {
+            self.search = [[SpCSearch alloc] init];
+        }
+        [self.search updateQueryWith: searchBar.text forSide: [self side]];
     }
     [searchBar resignFirstResponder];
 
 }
 
+- (void)searchesChanged:(SpCData*)data
+{
+    NSLog(@"searches changed");
+    //NSIndexSet* indices = [[NSIndexSet alloc] initWithIndex:1];
+    //[self.tableView reloadSections:indices withRowAnimation: UITableViewRowAnimationNone];
+}
+
 - (void)resultsChanged:(SpCSearch*)search
 {
-    NSIndexSet* indices = [[NSIndexSet alloc] initWithIndex:1];
-    [self.tableView reloadSections:indices withRowAnimation: UITableViewRowAnimationNone];
+    NSLog(@"results changed");
+    //NSIndexSet* indices = [[NSIndexSet alloc] initWithIndex:1];
+    //[self.tableView reloadSections:indices withRowAnimation: UITableViewRowAnimationNone];
 
 }
 

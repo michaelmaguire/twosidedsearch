@@ -89,11 +89,13 @@ static NSString* baseURL = @"http://captain:cook@dev.speedycrew.com/api/1";
     return self.query;
 }
 
-- (void)updateQueryWith:(NSString*)query
+- (void)updateQueryWith:(NSString*)query forSide:(NSString*)side
 {
-    NSLog(@"updateQueryWith:%@", query);
+    NSLog(@"updateQueryWith:%@ forSide:%@", query, side);
+    self.side = side;
     self.queryString = query;
-    [self makeHttpRequestForQuery:self.queryString];
+    [self makeHttpRequestForQuery:self.queryString
+                          forSide:[@"SEEK" isEqualToString: side]? @"SEEK&radius=5000": @"PROVIDE"];
 }
 
 - (void)receivedResponse:(NSData*)response
@@ -166,10 +168,9 @@ static NSString* baseURL = @"http://captain:cook@dev.speedycrew.com/api/1";
         }];
 }
 
-- (void)makeHttpRequestForQuery:(NSString*)query
+- (void)makeHttpRequestForQuery:(NSString*)query forSide:(NSString*)side
 {
     NSLog(@"making request for query: %s", query.UTF8String);
-    NSString* side = [query hasSuffix: @"seek"]? @"SEEK&radius=5000": @"PROVIDE";
     SpCData* data = [SpCAppDelegate instance].data;
     NSString* str =[NSString stringWithFormat: @"%@/create_search?x-id=%@&side=%@&longitude=%f&latitude=%f&request_id=%@&query=%@",
                     baseURL, self.uuid, side,

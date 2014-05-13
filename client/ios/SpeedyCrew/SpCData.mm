@@ -132,7 +132,15 @@
 
 - (int)numberOfSearchesFor:(NSString*)side
 {
-    return 0;
+    unsigned long i = 0, end = [self.searches count];
+    int count = 0;
+    for (; i != end; ++i) {
+        SpCSearch* search = [self.searches objectAtIndex: i];
+        if ([side isEqualToString: search.side]) {
+            ++count;
+        }
+    }
+    return count;
 }
 
 @end

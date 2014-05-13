@@ -20,8 +20,8 @@
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
     NSLog(@"application launched");
-    self.data = [[SpCData alloc] init];
-    [self.data updateSearches];
+    //-dk:TODO reenable self.data = [[SpCData alloc] init];
+    //-dk:TODO reenable [self.data updateSearches];
     return YES;
 }
 
@@ -31,7 +31,7 @@
         locationManager = [[CLLocationManager alloc] init];
         locationManager.delegate = self;
         locationManager.desiredAccuracy = kCLLocationAccuracyBest;
-        [locationManager startUpdatingLocation];
+        //-dk:TODO enable location updates [locationManager startUpdatingLocation];
     }
 }
 							
