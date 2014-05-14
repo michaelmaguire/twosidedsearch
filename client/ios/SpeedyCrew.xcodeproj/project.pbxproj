@@ -30,6 +30,7 @@
 		ABAC2F8718720A4A006D7F7E /* SpCData.mm in Sources */ = {isa = PBXBuildFile; fileRef = ABAC2F8618720A4A006D7F7E /* SpCData.mm */; };
 		ABAC2F8A18748081006D7F7E /* SpCSearch.m in Sources */ = {isa = PBXBuildFile; fileRef = ABAC2F8918748081006D7F7E /* SpCSearch.m */; };
 		ABD4EA78191FE91F00A37FA1 /* SpCCaptainSearchViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = ABD4EA77191FE91F00A37FA1 /* SpCCaptainSearchViewController.m */; };
+		ABD4EA7B1922DF9F00A37FA1 /* SpCSearchView.m in Sources */ = {isa = PBXBuildFile; fileRef = ABD4EA7A1922DF9F00A37FA1 /* SpCSearchView.m */; };
 		ABE6E2BF19155EEB003D61CC /* SpCCrewSearchViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = ABE6E2BE19155EEB003D61CC /* SpCCrewSearchViewController.m */; };
 		ABEC17E918C3B00E00D54C93 /* SpCChanging.m in Sources */ = {isa = PBXBuildFile; fileRef = ABEC17E818C3B00E00D54C93 /* SpCChanging.m */; };
 		ABEE315318CCCADF0054488B /* CoreLocation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ABEE315218CCCADF0054488B /* CoreLocation.framework */; };
@@ -83,6 +84,8 @@
 		ABAC2F8918748081006D7F7E /* SpCSearch.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SpCSearch.m; sourceTree = "<group>"; };
 		ABD4EA76191FE91F00A37FA1 /* SpCCaptainSearchViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SpCCaptainSearchViewController.h; sourceTree = "<group>"; };
 		ABD4EA77191FE91F00A37FA1 /* SpCCaptainSearchViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SpCCaptainSearchViewController.m; sourceTree = "<group>"; };
+		ABD4EA791922DF9F00A37FA1 /* SpCSearchView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SpCSearchView.h; sourceTree = "<group>"; };
+		ABD4EA7A1922DF9F00A37FA1 /* SpCSearchView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SpCSearchView.m; sourceTree = "<group>"; };
 		ABE6E2BD19155EEB003D61CC /* SpCCrewSearchViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SpCCrewSearchViewController.h; sourceTree = "<group>"; };
 		ABE6E2BE19155EEB003D61CC /* SpCCrewSearchViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SpCCrewSearchViewController.m; sourceTree = "<group>"; };
 		ABEC17E718C3B00E00D54C93 /* SpCChanging.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SpCChanging.h; sourceTree = "<group>"; };
@@ -170,6 +173,8 @@
 				ABAC2F8618720A4A006D7F7E /* SpCData.mm */,
 				AB6EDE62187869E20026A1AB /* SpCDatabase.h */,
 				AB6EDE63187869E20026A1AB /* SpCDatabase.mm */,
+				ABD4EA791922DF9F00A37FA1 /* SpCSearchView.h */,
+				ABD4EA7A1922DF9F00A37FA1 /* SpCSearchView.m */,
 				ABAC2F8818748081006D7F7E /* SpCSearch.h */,
 				ABAC2F8918748081006D7F7E /* SpCSearch.m */,
 				AB6EDE561875EC0D0026A1AB /* SpCResult.h */,
@@ -319,6 +324,7 @@
 				AB6EDE5E187701AE0026A1AB /* SpCSearchViewController.m in Sources */,
 				AB6EDE64187869E20026A1AB /* SpCDatabase.mm in Sources */,
 				ABF397031918185000B8FE39 /* Database.cpp in Sources */,
+				ABD4EA7B1922DF9F00A37FA1 /* SpCSearchView.m in Sources */,
 				ABAC2F8718720A4A006D7F7E /* SpCData.mm in Sources */,
 				ABAC2F8A18748081006D7F7E /* SpCSearch.m in Sources */,
 				AB9C2E81185001DB00454DCD /* SpCInvitesController.m in Sources */,

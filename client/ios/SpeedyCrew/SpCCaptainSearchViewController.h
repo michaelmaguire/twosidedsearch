@@ -11,6 +11,5 @@
 @interface SpCCaptainSearchViewController : UIViewController
 
 @property (strong, nonatomic) IBOutlet UITableView *tableView;
-@property bool expanded;
 
 @end

@@ -7,19 +7,19 @@
 //
 
 #import "SpCCaptainSearchViewController.h"
+#import "SpCSearchView.h"
 
 @interface SpCCaptainSearchViewController ()
-
+@property NSArray* searches;
 @end
 
 @implementation SpCCaptainSearchViewController
 
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
 {
+    NSLog(@"SpcCaptainSearchViewController being initialized");
     self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
     if (self) {
-        self.expanded = false;
-        // Custom initialization
     }
     return self;
 }
@@ -29,6 +29,13 @@
     [super viewDidLoad];
     NSLog(@"tableView is %s", self.tableView == Nil? "Nil": "not Nil");
     self.tableView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+
+    NSLog(@"SpcCaptainSearchViewController creating searches");
+    self.searches = [[NSArray alloc] initWithObjects:
+                           [SpCSearchView makeWithId:@"id1" andSide:@"Provide"],
+                           [SpCSearchView makeWithId:@"id2" andSide:@"Provide"],
+                           [SpCSearchView makeWithId:@"id3" andSide:@"Provide"],
+                           Nil];
 }
 
 - (void)didReceiveMemoryWarning
@@ -96,7 +103,8 @@
     bool expand = [button.titleLabel.text isEqualToString: @"+"];
     NSLog(@"header toggle clicked: %d %s", section, expand? "expanding": "collapsing");
     [button setTitle: (expand? @"-": @"+") forState:UIControlStateNormal];
-    self.expanded = expand;
+    SpCSearchView* search = [self.searches objectAtIndex: section];
+    search.expanded = expand;
     [self.tableView reloadData];
 }
 
@@ -115,7 +123,9 @@
     UITableViewCell* header = [tv dequeueReusableCellWithIdentifier:@"Header"];
     header.tag = section + 1;
     UIButton* expand = (UIButton*)[header viewWithTag: -1001];
-    [expand setTitle: (self.expanded? @"-": @"+") forState:UIControlStateNormal];
+    SpCSearchView* search = [self.searches objectAtIndex: section];
+    NSLog(@"search in section %d is %s", section, search.expanded? "expanded": "collapsed");
+    [expand setTitle: (search.expanded? @"-": @"+") forState:UIControlStateNormal];
     return header;
 }
 
@@ -126,7 +136,8 @@
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-    int result = section == 0 && !self.expanded? 0: 3;
+    SpCSearchView* search = [self.searches objectAtIndex: section];
+    int result = search.expanded? 3: 0;
     NSLog(@"rows in section %d: %d", section, result);
     return result;
 }
