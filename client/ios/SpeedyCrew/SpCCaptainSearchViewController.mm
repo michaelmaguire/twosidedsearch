@@ -8,34 +8,33 @@
 
 #import "SpCCaptainSearchViewController.h"
 #import "SpCSearchView.h"
+#import "SpCAppDelegate.h"
+#import "SpCDatabase.h"
+#import "SpCData.h"
+#include "Database.h"
 
 @interface SpCCaptainSearchViewController ()
-@property NSArray* searches;
+@property NSMutableArray* searches;
 @end
 
 @implementation SpCCaptainSearchViewController
 
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
 {
-    NSLog(@"SpcCaptainSearchViewController being initialized");
+    //-dk:TODO verify if this can ever be called for a non-initial view
     self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
-    if (self) {
-    }
     return self;
 }
 
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-    NSLog(@"tableView is %s", self.tableView == Nil? "Nil": "not Nil");
     self.tableView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    self.searches = [[NSMutableArray alloc] init];
 
-    NSLog(@"SpcCaptainSearchViewController creating searches");
-    self.searches = [[NSArray alloc] initWithObjects:
-                           [SpCSearchView makeWithId:@"id1" andSide:@"Provide"],
-                           [SpCSearchView makeWithId:@"id2" andSide:@"Provide"],
-                           [SpCSearchView makeWithId:@"id3" andSide:@"Provide"],
-                           Nil];
+    SpCAppDelegate* delegate = [SpCAppDelegate instance];
+    __weak typeof(self) weakSelf = self;
+    [delegate.data addListener:^(NSString* name, NSObject* object){ [weakSelf reloadSearches]; } withId: @"SpCCaptainSearchViewController"];
 }
 
 - (void)didReceiveMemoryWarning
@@ -60,22 +59,14 @@
 
 - (void)searchBar:(UISearchBar *)searchBar textDidChange:(NSString *)searchText
 {
-    NSLog(@"search text changed: '%@'", searchText);
+    //-dk:TODO do something useful?
 }
 
 - (void)searchBarSearchButtonClicked:(UISearchBar *)searchBar
 {
     NSLog(@"search bar button clicked: '%@'", searchBar.text);
-#if 0
-    NSLog(@"search bar button clicked: '%@' '%@'", searchBar.text, [self side]);
-    if (0 < searchBar.text.length) {
-        NSLog(@"calling function on search: %@", self.search? @"non-NIL": @"NIL");
-        if (self.search == Nil) {
-            self.search = [[SpCSearch alloc] init];
-        }
-        [self.search updateQueryWith: searchBar.text forSide: [self side]];
-    }
-#endif
+    SpCData* data = [SpCAppDelegate instance].data;
+    [data addSearchWithText:searchBar.text forSide:@"PROVIDE"];
     [searchBar resignFirstResponder];
 
 }
@@ -85,8 +76,75 @@
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tv
 {
-    return 3;
+    if ([self.searches count] == 0) {
+        [self basicReloadSearches];
+    }
+    return [self.searches count];
 }
+
+- (void)basicReloadSearches
+{
+    SpeedyCrew::Database* db = [SpCDatabase getDatabase];
+    std::vector<std::string> searches(db->queryColumn("select id from searches where side='PROVIDE'"));
+    [self.searches removeAllObjects];
+    for (std::vector<std::string>::const_iterator it(searches.begin()), end(searches.end()); it != end; ++it) {
+        [self.searches addObject: [SpCSearchView makeWithId:[NSString stringWithFormat:@"%s", it->c_str()] andSide:@"PROVIDE"]];
+    }
+}
+
+- (void)reloadSearches
+{
+    [self basicReloadSearches];
+    [self.tableView reloadData];
+}
+
+- (UIView*)tableView:(UITableView*)tv viewForHeaderInSection:(NSInteger)section
+{
+    UITableViewCell* header = [tv dequeueReusableCellWithIdentifier:@"Header"];
+    header.tag = section + 1;
+    UIButton* expand = (UIButton*)[header viewWithTag: -1001];
+    SpCSearchView* search = [self.searches objectAtIndex: section];
+    NSLog(@"search in section %d is %s", section, search.expanded? "expanded": "collapsed");
+    [expand setTitle: (search.expanded? @"-": @"+") forState:UIControlStateNormal];
+
+    SpeedyCrew::Database* db = [SpCDatabase getDatabase];
+    std::string text = db->query<std::string>("select search from searches where id='" + db->escape([search.id UTF8String]) + "';");
+    UIButton* title = (UIButton*)[header viewWithTag: -1002];
+    [title setTitle: [NSString stringWithFormat:@"%s", text.c_str()] forState:UIControlStateNormal];
+    return header;
+}
+
+- (CGFloat)tableView:(UITableView *)tv heightForHeaderInSection:(NSInteger)section
+{
+    return 30.0f; //-dk:TODO should probably determine the height of the label
+}
+
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+    SpCSearchView* search = [self.searches objectAtIndex: section];
+    int result = [search updateResults];
+    NSLog(@"rows in section %d: %d", section, result);
+    return search.expanded? result: 0;
+}
+
+- (UITableViewCell *)tableView:(UITableView *)tv cellForRowAtIndexPath:(NSIndexPath *)path
+{
+    //if (0 == path.row) {
+    //    UITableViewCell* cell = [tv dequeueReusableCellWithIdentifier:@"Search Header"];
+    //    return cell;
+    //}
+    //else {
+    UITableViewCell* cell = [tv dequeueReusableCellWithIdentifier:@"Search Result"];
+    UILabel* label = (UILabel*)[cell viewWithTag: -1004];
+    SpCSearchView* search = [self.searches objectAtIndex: path.section];
+    [label setText:[search.results objectAtIndex: path.row]];
+    NSLog(@"tableView:cellForRowAtIndexPath:(%d, %d)=%@", path.section, path.row, [search.results objectAtIndex: path.row]);
+    return cell;
+    //}
+}
+
+// ----------------------------------------------------------------------------
+#pragma mark - handling of header button events
 
 - (int)getFirstTagOf:(UIView*)view
 {
@@ -116,45 +174,6 @@
 - (IBAction)onHeaderNavigationClicked:(id)sender
 {
     NSLog(@"header navigation clicked: %d", [self getFirstTagOf: sender]);
-}
-
-- (UIView*)tableView:(UITableView*)tv viewForHeaderInSection:(NSInteger)section
-{
-    UITableViewCell* header = [tv dequeueReusableCellWithIdentifier:@"Header"];
-    header.tag = section + 1;
-    UIButton* expand = (UIButton*)[header viewWithTag: -1001];
-    SpCSearchView* search = [self.searches objectAtIndex: section];
-    NSLog(@"search in section %d is %s", section, search.expanded? "expanded": "collapsed");
-    [expand setTitle: (search.expanded? @"-": @"+") forState:UIControlStateNormal];
-    return header;
-}
-
-- (CGFloat)tableView:(UITableView *)tv heightForHeaderInSection:(NSInteger)section
-{
-    return 30.0f; //-dk:TODO should probably determine the height of the label
-}
-
-- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
-{
-    SpCSearchView* search = [self.searches objectAtIndex: section];
-    int result = search.expanded? 3: 0;
-    NSLog(@"rows in section %d: %d", section, result);
-    return result;
-}
-
-- (UITableViewCell *)tableView:(UITableView *)tv cellForRowAtIndexPath:(NSIndexPath *)path
-{
-    NSLog(@"tableView:cellForRowAtIndexPath:(%d, %d)", path.section, path.row);
-    if (0 == path.row) {
-        UITableViewCell* cell = [tv dequeueReusableCellWithIdentifier:@"Search Header"];
-        return cell;
-    }
-    else {
-        UITableViewCell* cell = [tv dequeueReusableCellWithIdentifier:@"Search Result"];
-        return cell;
-    }
-    
-    return nil;
 }
 
 // ----------------------------------------------------------------------------

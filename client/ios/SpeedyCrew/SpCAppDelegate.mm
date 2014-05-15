@@ -20,8 +20,8 @@
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
     NSLog(@"application launched");
-    //-dk:TODO reenable self.data = [[SpCData alloc] init];
-    //-dk:TODO reenable [self.data updateSearches];
+    self.data = [[SpCData alloc] init];
+    [self.data updateSearches];
     return YES;
 }
 

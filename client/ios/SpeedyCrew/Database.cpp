@@ -179,7 +179,7 @@ namespace SpeedyCrew
 
 namespace
 {
-    extern "C" int vector_callback(void* data, int count, char** rows,char**)
+    extern "C" int row_callback(void* data, int count, char** rows,char**)
     {
         std::cout << "count=" << count << '\n' << std::flush;
         if (rows) {
@@ -195,12 +195,47 @@ namespace
     
 namespace SpeedyCrew
 {
-    std::vector<std::string> Database::queryVector(std::string const& sql)
+    std::vector<std::string> Database::queryRow(std::string const& sql)
     {
         message msg;
         std::vector<std::string> value;
         std::cout << "running query '" << sql << "'\n";
-        int rc(sqlite3_exec(this->d_database, sql.c_str(), vector_callback, &value, &msg));
+        int rc(sqlite3_exec(this->d_database, sql.c_str(), row_callback, &value, &msg));
+        if (rc != SQLITE_OK) {
+            throw std::runtime_error("query failed: "
+                                     "query='" + sql + "' "
+                                     "message='" + msg.str() + "'");
+        }
+        return value;
+    }
+}
+
+// ----------------------------------------------------------------------------
+
+namespace
+{
+    extern "C" int column_callback(void* data, int count, char** rows,char**)
+    {
+        if (count != 1) {
+            std::cout << "row with " << count << "columns in query for 1 column\n" << std::flush;
+        }
+        if (rows) {
+            std::vector<std::string>* vec = static_cast<std::vector<std::string>*>(data);
+            vec->push_back(rows[0]);
+            return 0;
+        }
+        return 1;
+    }
+}
+    
+namespace SpeedyCrew
+{
+    std::vector<std::string> Database::queryColumn(std::string const& sql)
+    {
+        message msg;
+        std::vector<std::string> value;
+        std::cout << "running query '" << sql << "'\n";
+        int rc(sqlite3_exec(this->d_database, sql.c_str(), column_callback, &value, &msg));
         if (rc != SQLITE_OK) {
             throw std::runtime_error("query failed: "
                                      "query='" + sql + "' "

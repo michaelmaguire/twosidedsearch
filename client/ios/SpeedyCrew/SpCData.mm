@@ -11,8 +11,8 @@
 #import "SpCSearch.h"
 #import <Foundation/Foundation.h>
 #import <Foundation/NSJSONSerialization.h>
-
-
+#include "Database.h"
+ 
 @interface SpCData()
 @property NSString* baseURL;
 @property NSMutableDictionary* listeners;
@@ -36,6 +36,15 @@
     return self;
 }
 
++ (NSString*)encodeURL:(NSString*)str
+{
+    return (__bridge NSString *)CFURLCreateStringByAddingPercentEscapes(NULL,
+                                                               (__bridge CFStringRef)str,
+                                                               NULL,
+                                                               (CFStringRef)@"!*'\"();:@&=+$,/?%#[]% ",
+                                                               CFStringConvertNSStringEncodingToEncoding(NSUTF8StringEncoding));;
+}
+
 - (void)updateSetting:(NSString*)name with:(NSString*)value
 {
     SpCDatabase* database = [SpCDatabase database];
@@ -48,6 +57,13 @@
 - (void)updateSearches
 {
     NSString* query = [NSString stringWithFormat:@"searches?x-id=%@", self.identity];
+    [self sendHttpRequest: query];
+}
+
+- (void)addSearchWithText:(NSString*)text forSide:(NSString*)side
+{
+    // NSString* radius = @"&radius=5000";
+    NSString* query = [NSString stringWithFormat:@"create_search?x-id=%@&side=%@&query=%@&longitude=-0.15&latitude=51.5", self.identity, side, [SpCData encodeURL:text]];
     [self sendHttpRequest: query];
 }
 
@@ -87,20 +103,66 @@
     if ([json isKindOfClass: [NSDictionary class]]) {
         NSDictionary* dict = (NSDictionary*)json;
         NSString* type = [dict objectForKey: @"message_type"];
+        SpeedyCrew::Database* db = [SpCDatabase getDatabase];
         if (type) {
             NSArray* array = NULL;
             if ([type isEqual:@"searches_response"]
                 && (array = [dict objectForKey: @"searches"])) {
                 NSLog(@"processing searches response: %ld", (long)[array count]);
-                [self.searches removeAllObjects];
+                db->execute("delete from searches");
                 for (long i = 0, count = [array count]; i != count; ++i) {
-                    SpCSearch* search = [[SpCSearch alloc] initWithDictionary: [array objectAtIndex: i]];
-                    [self.searches addObject: search];
+                    NSDictionary* dict = [array objectAtIndex: i];
+                    NSNumber* id = [dict objectForKey: @"id"];
+                    NSString* side = [dict objectForKey: @"side"];
+                    NSString* query = [dict objectForKey: @"query"];
+                    NSLog(@"search data: id='%@' side='%@' query='%@'", id, side, query);
+                    if (id && side && query) {
+                        NSString* sid = [NSString stringWithFormat:@"%@", id];
+                        [self sendHttpRequest: [NSString stringWithFormat:@"search_results?x-id=%@&search=%@&request_id=%@", self.identity, id, id]];
+                        std::string insert("insert into searches(id, side, search) values("
+                                           "'" + db->escape([sid UTF8String]) + "', "
+                                           "'" + db->escape([side UTF8String]) + "', "
+                                           "'" + db->escape([query UTF8String]) + "');");
+                        NSLog(@"insert query: '%s'", insert.c_str());
+                        db->execute(insert);
+                    }
                 }
                 [self notify];
             }
+            else if ([type isEqual:@"search_results_response"]) {
+                NSObject* sid = [dict objectForKey: @"request_id"];
+                if (sid && (array = [dict objectForKey: @"results"])) {
+                    std::string search(db->escape([[NSString stringWithFormat:@"%@", sid] UTF8String]));
+                    db->execute("delete from results where search='" + search + "';");
+                    for (long i = 0, count = [array count]; i != count; ++i) {
+                        NSDictionary* dict = [array objectAtIndex: i];
+                        NSObject* id = [dict objectForKey: @"id"];
+                        NSObject* name = [dict objectForKey: @"real_name"];
+                        NSObject* longitude = [dict objectForKey: @"longitude"];
+                        NSObject* latitude = [dict objectForKey: @"latitude"];
+                        NSObject* email = [dict objectForKey: @"email"];
+                        std::string insert("insert into results(id, search, name, email, longitude, latitude) values("
+                                           "'" + db->escape(id? [[NSString stringWithFormat:@"%@", id] UTF8String]: "") + "', "
+                                           "'" + search + "', "
+                                           "'" + db->escape(name? [[NSString stringWithFormat:@"%@", name] UTF8String]: "") + "', "
+                                           "'" + db->escape(email? [[NSString stringWithFormat:@"%@", email] UTF8String]: "") + "', "
+                                           "'" + db->escape(longitude? [[NSString stringWithFormat:@"%@", longitude] UTF8String]: "") + "', "
+                                           "'" + db->escape(latitude? [[NSString stringWithFormat:@"%@", latitude] UTF8String]: "") + "'"
+                                           ");");
+                        NSLog(@"insert query: '%s'", insert.c_str());
+                        db->execute(insert);
+                    }
+                    [self notify];
+                }
+                else {
+                    NSLog(@"no request ID in results response!\n");
+                }
+            }
+            else if ([type isEqual:@"create_search_response"]) {
+                [self sendHttpRequest: [NSString stringWithFormat:@"searches?x-id=%@", self.identity]];
+            } 
             else {
-                NSLog(@"unprocessed message type=: %@", type);
+                NSLog(@"unprocessed message type='%@'", type);
             }
         }
         else {
@@ -125,7 +187,7 @@
              [self receivedResponse:d];
          }
          else {
-             NSLog(@"received error...?");
+             NSLog(@"received error: %@", [err localizedDescription]);
          }
      }];
 }

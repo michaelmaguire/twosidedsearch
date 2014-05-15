@@ -48,6 +48,9 @@ namespace
             s_database.createTable("settings", "name TEXT PRIMARY KEY, value TEXT");
             s_database.createTable("searches",
                                    "id TEXT PRIMARY KEY, side TEXT, search TEXT");
+            s_database.execute("drop table results;");
+            s_database.createTable("results",
+                                   "id TEXT PRIMARY KEY, search TEXT, name TEXT, email TEXT, longitude TEXT, latitude TEXT");
             
             try {
                 std::string uuidstr([[[UIDevice currentDevice].identifierForVendor UUIDString] UTF8String]);
@@ -144,7 +147,7 @@ namespace
 
 - (int) queryVector:(NSString*)query
 {
-    std::vector<std::string> value(s_database.queryVector([query UTF8String]));
+    std::vector<std::string> value(s_database.queryRow([query UTF8String]));
     std::string result("[");
     if (!value.empty()) {
         result += value.front();
@@ -153,7 +156,7 @@ namespace
         }
     }
     result += "]";
-    NSLog(@"queryVector(%@)->%s", query, result.c_str());
+    NSLog(@"queryRow(%@)->%s", query, result.c_str());
     return 0;
 }
 @end

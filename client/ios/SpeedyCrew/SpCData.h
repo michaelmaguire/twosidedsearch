@@ -19,6 +19,9 @@
 
 - (SpCData*)init;
 - (void)updateSetting:(NSString*)name with:(NSString*)value;
+
+- (void)addSearchWithText:(NSString*)text forSide:(NSString*)side;
+
 - (void)updateSearches;
 - (void)addSearch:(SpCSearch*)search;
 - (void)deleteSearch:(SpCSearch*)search;

@@ -9,33 +9,43 @@
 #ifndef SpeedyCrew_Database
 #define SpeedyCrew_Database
 
+
 #include <string>
 #include <vector>
 #include <sqlite3.h>
 
+// ----------------------------------------------------------------------------
+
 namespace SpeedyCrew
 {
-    class Database
-    {
-        sqlite3* d_database;
-
-        Database(Database&);
-        void operator= (Database&);
-    public:
-        static std::string escape(std::string const& argument);
-        static std::string escape(char const* argument);
-
-        Database();
-        ~Database();
-        void initialize(std::string const& path);
-
-        void createTable(std::string const& table, std::string const& columns);
-        void execute(std::string const& sql);
-        bool execute(std::string const& sql, std::string& error);
-
-        template <typename T> T  query(std::string const& sql);
-        std::vector<std::string> queryVector(std::string const& sql);
-    };
+    class Database;
 }
+
+// ----------------------------------------------------------------------------
+
+class SpeedyCrew::Database
+{
+    sqlite3* d_database;
+
+    Database(Database&);
+    void operator= (Database&);
+ public:
+    static std::string escape(std::string const& argument);
+    static std::string escape(char const* argument);
+
+    Database();
+    ~Database();
+    void initialize(std::string const& path);
+
+    void createTable(std::string const& table, std::string const& columns);
+    void execute(std::string const& sql);
+    bool execute(std::string const& sql, std::string& error);
+
+    template <typename T> T  query(std::string const& sql);
+    std::vector<std::string> queryRow(std::string const& sql);
+    std::vector<std::string> queryColumn(std::string const& sql);
+};
+
+// ----------------------------------------------------------------------------
 
 #endif /* defined(SpeedyCrew_Database) */
