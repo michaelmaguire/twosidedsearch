@@ -51,6 +51,12 @@
             android:label="@string/connection_service_name" >
         </service>
 
+        <provider
+            android:name=".sql.SyncedContentProvider"
+            android:authorities="com.speedycrew.client.sql.synced.contentprovider"
+            android:exported="false" >
+        </provider>
+
         <activity
             android:name="com.speedycrew.client.ProfileActivity"
             android:label="@string/title_activity_profile" >
@@ -65,8 +71,10 @@
             android:name="com.google.android.maps.v2.API_KEY"
             android:value="AIzaSyDsFq74URYTxaYUTOk8xh3tmTVmHSJfLdI" />
 
-        <!-- DEBUG Google Maps API Key
-            android:value="AIzaSyABjY9YFRZ3w7fDgLYI_LGILtwQjcDnHnQ"  -->
+        <!--
+             DEBUG Google Maps API Key
+            android:value="AIzaSyABjY9YFRZ3w7fDgLYI_LGILtwQjcDnHnQ"
+        -->
 
         <activity
             android:name="com.speedycrew.client.MapActivity"
