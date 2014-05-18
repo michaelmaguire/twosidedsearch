@@ -6,10 +6,9 @@
 //  Copyright (c) 2014 Dietmar Kühl. All rights reserved.
 //
 
+#include "SpCSearchViewController.h"
 #import <UIKit/UIKit.h>
 
-@interface SpCCaptainSearchViewController : UIViewController
-
-@property (strong, nonatomic) IBOutlet UITableView *tableView;
+@interface SpCCaptainSearchViewController : SpCSearchViewController
 
 @end

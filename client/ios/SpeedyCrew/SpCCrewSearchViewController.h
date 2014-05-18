@@ -9,8 +9,6 @@
 #import "SpCSearchViewController.h"
 #import <UIKit/UIKit.h>
 
-@interface SpCCrewSearchViewController : SpCSearchViewController // UITableViewController
-
-// @property (strong, nonatomic) IBOutlet UITableView *tableView;
+@interface SpCCrewSearchViewController : SpCSearchViewController
 
 @end

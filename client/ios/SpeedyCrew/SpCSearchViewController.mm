@@ -7,21 +7,24 @@
 //
 
 #import "SpCSearchViewController.h"
-#import "SpCResult.h"
+#import "SpCSearchView.h"
 #import "SpCAppDelegate.h"
+#import "SpCDatabase.h"
+#import "SpCData.h"
+#include "Database.h"
 
 @interface SpCSearchViewController ()
-@property UISearchBar* searchBar;
+@property NSMutableArray* searches;
 @end
 
 @implementation SpCSearchViewController
 
-- (id)initWithStyle:(UITableViewStyle)style
+// ----------------------------------------------------------------------------
+
+- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
 {
-    self = [super initWithStyle:style];
-    if (self) {
-        // Custom initialization
-    }
+    //-dk:TODO verify if this can ever be called for a non-initial view
+    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
     return self;
 }
 
@@ -29,167 +32,172 @@
 {
     [super viewDidLoad];
     self.tableView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-    __weak typeof(self) weakSelf = self;
-    [self.search addListener:^(NSString* name, NSObject* object){ [weakSelf resultsChanged: (SpCSearch*)object]; } withId: @"Search"];
+    self.searches = [[NSMutableArray alloc] init];
 
-    // Uncomment the following line to preserve selection between presentations.
-    // self.clearsSelectionOnViewWillAppear = NO;
- 
-    // Uncomment the following line to display an Edit button in the navigation bar for this view controller.
-    // self.navigationItem.rightBarButtonItem = self.editButtonItem;
-    SpCAppDelegate* delegate = (((SpCAppDelegate*) [UIApplication sharedApplication].delegate));
-    [delegate startLocationManager];
-    [delegate.data addListener:^(NSString* name, NSObject* object){ [weakSelf searchesChanged: (SpCData*)object]; } withId: @"Searches"];
+    SpCAppDelegate* delegate = [SpCAppDelegate instance];
+    __weak typeof(self) weakSelf = self;
+    NSString* id = [NSString stringWithFormat:@"%@-SearchViewController", self.side];
+    NSLog(@"registering listener with ID '%@'", id);
+    [delegate.data addListener:^(NSString* name, NSObject* object){ [weakSelf reloadSearches]; } withId: id];
 }
 
 - (void)didReceiveMemoryWarning
 {
     [super didReceiveMemoryWarning];
-    // Dispose of any resources that can be recreated.
+    NSLog(@"%@-SearchView received memory warning", self.side);
 }
 
-#pragma mark - Table view data source
-
-- (NSInteger)numberOfSectionsInTableView:(UITableView *)tv
-{
-    return 1;
-    //SpCAppDelegate* delegate = (((SpCAppDelegate*) [UIApplication sharedApplication].delegate));
-    //NSLog(@"number of searches for %@: %d", [self side], [delegate.data numberOfSearchesFor:[self side]]);
-    //return 1 + [delegate.data numberOfSearchesFor:[self side]];
-}
-
-- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
-{
-    return 0 == section? 1 : 1 + [self.search.results count];
-}
-
-- (UITableViewCell *)tableView:(UITableView *)tv cellForRowAtIndexPath:(NSIndexPath *)path
-{
-    NSLog(@"tableView:cellForRowAtIndexPath:(%d, %d)", int(path.section), int(path.row));
-    if (0 == path.section) {
-        UITableViewCell* cell = [tv dequeueReusableCellWithIdentifier:@"SearchField"];
-        UIView* view = [cell.contentView viewWithTag:0];
-        if (view && 1 == view.subviews.count) {
-            self.searchBar = [view.subviews objectAtIndex:0];
-            self.searchBar.text = self.search.query;
-        }
-        return cell;
-    }
-    else if (1 == path.section) {
-        UITableViewCell *cell = [tv dequeueReusableCellWithIdentifier:@"Search" forIndexPath:path];
-#if 0
-        UITableViewCell *cell = [tv dequeueReusableCellWithIdentifier:@"Result" forIndexPath:path];
-        SpCResult* result = [self.search.results objectAtIndex:path.row];
-        UIView* view = [cell.contentView viewWithTag:0];
-        if (view && 1 == view.subviews.count) {
-            UILabel* label = [view.subviews objectAtIndex:0];
-            label.text = result.value;
-        }
-        else {
-            cell.textLabel.text = result.value;
-        }
-#endif
-        return cell;
-    }
-    else {
-        UITableViewCell *cell = [tv dequeueReusableCellWithIdentifier:@"DeleteSearch"];
-        return cell;
-    }
-    
-    return nil;
-}
-
-- (IBAction)deleteSearch:(id)sender {
-    NSLog(@"Delete Search was clicked: search=%@", self.search.id);
-    UINavigationController *navController = [self navigationController];
-    [navController popViewControllerAnimated: YES];
-    SpCAppDelegate* delegate = (((SpCAppDelegate*) [UIApplication sharedApplication].delegate));
-    [delegate.data deleteSearch:self.search];
-}
-
-/*
-// Override to support conditional editing of the table view.
-- (BOOL)tableView:(UITableView *)tableView canEditRowAtIndexPath:(NSIndexPath *)indexPath
-{
-    // Return NO if you do not want the specified item to be editable.
-    return YES;
-}
-*/
-
-/*
-// Override to support editing the table view.
-- (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath
-{
-    if (editingStyle == UITableViewCellEditingStyleDelete) {
-        // Delete the row from the data source
-        [tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
-    }   
-    else if (editingStyle == UITableViewCellEditingStyleInsert) {
-        // Create a new instance of the appropriate class, insert it into the array, and add a new row to the table view
-    }   
-}
-*/
-
-/*
-// Override to support rearranging the table view.
-- (void)tableView:(UITableView *)tableView moveRowAtIndexPath:(NSIndexPath *)fromIndexPath toIndexPath:(NSIndexPath *)toIndexPath
-{
-}
-*/
-
-/*
-// Override to support conditional rearranging of the table view.
-- (BOOL)tableView:(UITableView *)tableView canMoveRowAtIndexPath:(NSIndexPath *)indexPath
-{
-    // Return NO if you do not want the item to be re-orderable.
-    return YES;
-}
-*/
+// ----------------------------------------------------------------------------
 
 /*
 #pragma mark - Navigation
 
+// In a storyboard-based application, you will often want to do a little preparation before navigation
+- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
+{
+    // Get the new view controller using [segue destinationViewController].
+    // Pass the selected object to the new view controller.
+}
+*/
+
+// ----------------------------------------------------------------------------
+// search bar handling
+//-dk:TODO update a search with an existing ID and unlink the search upon clear
+
+- (void)searchBar:(UISearchBar *)searchBar textDidChange:(NSString *)searchText
+{
+    //-dk:TODO do something useful?
+}
+
+- (void)searchBarSearchButtonClicked:(UISearchBar *)searchBar
+{
+    NSLog(@"search bar button clicked: '%@'", searchBar.text);
+    SpCData* data = [SpCAppDelegate instance].data;
+    [data addSearchWithText:searchBar.text forSide:self.side];
+    [searchBar resignFirstResponder];
+
+}
+
+// ----------------------------------------------------------------------------
+#pragma mark - Table view data source
+
+- (void)basicReloadSearches
+{
+    SpeedyCrew::Database* db = [SpCDatabase getDatabase];
+    std::string side([self.side UTF8String]);
+    std::vector<std::string> searches(db->queryColumn("select id from searches where side='" + side + "'"));
+    [self.searches removeAllObjects];
+    for (std::vector<std::string>::const_iterator it(searches.begin()), end(searches.end()); it != end; ++it) {
+        [self.searches addObject: [SpCSearchView makeWithId:[NSString stringWithFormat:@"%s", it->c_str()] andSide:self.side]];
+    }
+}
+
+- (void)reloadSearches
+{
+    [self basicReloadSearches];
+    NSLog(@"reload search: side=%@ tv=%s", self.side, self.tableView? "not null": "NULL");
+    [self.tableView reloadData];
+}
+
+- (NSInteger)numberOfSectionsInTableView:(UITableView *)tv
+{
+    if ([self.searches count] == 0) {
+        [self basicReloadSearches];
+    }
+    return [self.searches count];
+}
+
+- (UIView*)tableView:(UITableView*)tv viewForHeaderInSection:(NSInteger)section
+{
+    UITableViewCell* header = [tv dequeueReusableCellWithIdentifier:@"Header"];
+    header.tag = section + 1;
+    UIButton* expand = (UIButton*)[header viewWithTag: -1001];
+    SpCSearchView* search = [self.searches objectAtIndex: section];
+    NSLog(@"search in section %ld is %s", long(section), search.expanded? "expanded": "collapsed");
+    [expand setTitle: (search.expanded? @"-": @"+") forState:UIControlStateNormal];
+
+    SpeedyCrew::Database* db = [SpCDatabase getDatabase];
+    std::string text = db->query<std::string>("select search from searches where id='" + db->escape([search.id UTF8String]) + "';");
+    UIButton* title = (UIButton*)[header viewWithTag: -1002];
+    [title setTitle: [NSString stringWithFormat:@"%s", text.c_str()] forState:UIControlStateNormal];
+    return header;
+}
+
+- (CGFloat)tableView:(UITableView *)tv heightForHeaderInSection:(NSInteger)section
+{
+    return 30.0f; //-dk:TODO should probably determine the height of the label
+}
+
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+    SpCSearchView* search = [self.searches objectAtIndex: section];
+    int result = [search updateResults];
+    NSLog(@"rows in section %ld: %d", long(section), result);
+    return search.expanded? result: 0;
+}
+
+- (UITableViewCell *)tableView:(UITableView *)tv cellForRowAtIndexPath:(NSIndexPath *)path
+{
+    //if (0 == path.row) {
+    //    UITableViewCell* cell = [tv dequeueReusableCellWithIdentifier:@"Search Header"];
+    //    return cell;
+    //}
+    //else {
+    UITableViewCell* cell = [tv dequeueReusableCellWithIdentifier:@"Search Result"];
+    UILabel* label = (UILabel*)[cell viewWithTag: -1004];
+    SpCSearchView* search = [self.searches objectAtIndex: path.section];
+    [label setText:[search.results objectAtIndex: path.row]];
+    NSLog(@"tableView:cellForRowAtIndexPath:(%ld, %ld)=%@", long(path.section), long(path.row), [search.results objectAtIndex: path.row]);
+    return cell;
+    //}
+}
+
+// ----------------------------------------------------------------------------
+#pragma mark - handling of header button events
+
+- (int)getFirstTagOf:(UIView*)view
+{
+    while (view != Nil && view.tag <= 0) {
+        view = [view superview];
+    }
+    return view == Nil? 0: int(view.tag);
+}
+
+- (IBAction)onHeaderToggleClicked:(id)sender
+{
+    UIButton* button = sender;
+    int section = [self getFirstTagOf: sender] - 1;
+    bool expand = [button.titleLabel.text isEqualToString: @"+"];
+    NSLog(@"header toggle clicked: %d %s", section, expand? "expanding": "collapsing");
+    [button setTitle: (expand? @"-": @"+") forState:UIControlStateNormal];
+    SpCSearchView* search = [self.searches objectAtIndex: section];
+    search.expanded = expand;
+    NSLog(@"toggling: side=%@ tv=%s", self.side, self.tableView? "not null": "NULL");
+    [self.tableView reloadData];
+}
+
+- (IBAction)onHeaderClicked:(id)sender
+{
+    NSLog(@"header clicked: %ld", long([self getFirstTagOf: sender]));
+}
+
+- (IBAction)onHeaderNavigationClicked:(id)sender
+{
+    NSLog(@"header navigation clicked: %ld", long([self getFirstTagOf: sender]));
+}
+
+// ----------------------------------------------------------------------------
+#pragma mark - Navigation
+
 // In a story board-based application, you will often want to do a little preparation before navigation
+/*
 - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
 {
     // Get the new view controller using [segue destinationViewController].
     // Pass the selected object to the new view controller.
 }
 
- */
+*/
 
-- (void)searchBar:(UISearchBar *)searchBar textDidChange:(NSString *)searchText
-{
-    //-dk:TODO act upon these events! NSLog(@"search text changed: '%@'", searchText);
-}
-
-- (void)searchBarSearchButtonClicked:(UISearchBar *)searchBar
-{
-    NSLog(@"search bar button clicked: '%@' '%@'", searchBar.text, [self side]);
-    if (0 < searchBar.text.length) {
-        NSLog(@"calling function on search: %@", self.search? @"non-NIL": @"NIL");
-        if (self.search == Nil) {
-            self.search = [[SpCSearch alloc] init];
-        }
-        [self.search updateQueryWith: searchBar.text forSide: [self side]];
-    }
-    [searchBar resignFirstResponder];
-
-}
-
-- (void)searchesChanged:(SpCData*)data
-{
-    NSLog(@"searches changed");
-    //NSIndexSet* indices = [[NSIndexSet alloc] initWithIndex:1];
-    //[self.tableView reloadSections:indices withRowAnimation: UITableViewRowAnimationNone];
-}
-
-- (void)resultsChanged:(SpCSearch*)search
-{
-    NSLog(@"results changed");
-    //NSIndexSet* indices = [[NSIndexSet alloc] initWithIndex:1];
-    //[self.tableView reloadSections:indices withRowAnimation: UITableViewRowAnimationNone];
-
-}
-
+// ----------------------------------------------------------------------------
 @end

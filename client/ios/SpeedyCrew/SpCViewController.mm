@@ -115,9 +115,9 @@
     UINavigationController *navController = (UINavigationController*)delegate.window.rootViewController;
 
     if (2 == indexPath.section) {
-        SpCSearchViewController* controller = [storyboard instantiateViewControllerWithIdentifier:@"Search"];
-        controller.search = [self.searches objectAtIndex:indexPath.row];
-        [navController pushViewController:controller animated:YES];
+        //-dk:TODO SpCSearchViewController* controller = [storyboard instantiateViewControllerWithIdentifier:@"Search"];
+        //-dk:TODO controller.search = [self.searches objectAtIndex:indexPath.row];
+        //-dk:TODO [navController pushViewController:controller animated:YES];
     }
     else if (3 == indexPath.section) {
         if (0 == indexPath.row) {
