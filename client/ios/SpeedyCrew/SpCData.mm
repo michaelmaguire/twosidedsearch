@@ -8,7 +8,7 @@
 
 #import "SpCData.h"
 #import "SpCDatabase.h"
-#import "SpCSearch.h"
+// #import "SpCSearch.h"
 #import <Foundation/Foundation.h>
 #import <Foundation/NSJSONSerialization.h>
 #include "Database.h"
@@ -72,35 +72,6 @@
     [self sendHttpRequest: query];
 }
 
-- (void)addSearch:(SpCSearch*)search
-{
-    unsigned long i = 0, end = [self.searches count];
-    for (; i != end; ++i) {
-        if (search == [self.searches objectAtIndex: i]) {
-            break;
-        }
-    }
-    if (i == end) {
-        [self.searches insertObject: search atIndex:0];
-    }
-    [self notify];
-}
-
-
-- (void)deleteSearch:(SpCSearch*)search
-{
-    for (unsigned long i = 0, end = [self.searches count]; i != end; ++i) {
-        if (search == [self.searches objectAtIndex:i]) {
-            [self.searches removeObjectAtIndex:i];
-            break;
-        }
-    }
-    NSString* query = [NSString stringWithFormat:@"delete_search?x-id=%@&search=%@",
-                       self.identity, search.id];
-    [self sendHttpRequest: query];
-    [self notify];
-}
-
 - (void)receivedResponse:(NSData*)data
 {
     NSLog(@"received reponse: '%@'", [[NSString alloc] initWithData: data encoding: NSUTF8StringEncoding]);
@@ -113,14 +84,12 @@
             NSArray* array = NULL;
             if ([type isEqual:@"searches_response"]
                 && (array = [dict objectForKey: @"searches"])) {
-                NSLog(@"processing searches response: %ld", (long)[array count]);
                 db->execute("delete from searches");
                 for (long i = 0, count = [array count]; i != count; ++i) {
                     NSDictionary* dict = [array objectAtIndex: i];
                     NSNumber* id = [dict objectForKey: @"id"];
                     NSString* side = [dict objectForKey: @"side"];
                     NSString* query = [dict objectForKey: @"query"];
-                    NSLog(@"search data: id='%@' side='%@' query='%@'", id, side, query);
                     if (id && side && query) {
                         NSString* sid = [NSString stringWithFormat:@"%@", id];
                         [self sendHttpRequest: [NSString stringWithFormat:@"search_results?x-id=%@&search=%@&request_id=%@", self.identity, id, id]];
@@ -128,7 +97,6 @@
                                            "'" + db->escape([sid UTF8String]) + "', "
                                            "'" + db->escape([side UTF8String]) + "', "
                                            "'" + db->escape([query UTF8String]) + "');");
-                        NSLog(@"insert query: '%s'", insert.c_str());
                         db->execute(insert);
                     }
                 }
@@ -154,7 +122,6 @@
                                            "'" + db->escape(longitude? [[NSString stringWithFormat:@"%@", longitude] UTF8String]: "") + "', "
                                            "'" + db->escape(latitude? [[NSString stringWithFormat:@"%@", latitude] UTF8String]: "") + "'"
                                            ");");
-                        NSLog(@"insert query: '%s'", insert.c_str());
                         try {
                             db->execute(insert);
                         }
@@ -200,19 +167,6 @@
              NSLog(@"received error: %@", [err localizedDescription]);
          }
      }];
-}
-
-- (int)numberOfSearchesFor:(NSString*)side
-{
-    unsigned long i = 0, end = [self.searches count];
-    int count = 0;
-    for (; i != end; ++i) {
-        SpCSearch* search = [self.searches objectAtIndex: i];
-        if ([side isEqualToString: search.side]) {
-            ++count;
-        }
-    }
-    return count;
 }
 
 @end

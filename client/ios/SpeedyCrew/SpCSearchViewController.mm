@@ -37,7 +37,6 @@
     SpCAppDelegate* delegate = [SpCAppDelegate instance];
     __weak typeof(self) weakSelf = self;
     NSString* id = [NSString stringWithFormat:@"%@-SearchViewController", self.side];
-    NSLog(@"registering listener with ID '%@'", id);
     [delegate.data addListener:^(NSString* name, NSObject* object){ [weakSelf reloadSearches]; } withId: id];
 }
 
@@ -71,7 +70,6 @@
 
 - (void)searchBarSearchButtonClicked:(UISearchBar *)searchBar
 {
-    NSLog(@"search bar button clicked: '%@'", searchBar.text);
     SpCData* data = [SpCAppDelegate instance].data;
     [data addSearchWithText:searchBar.text forSide:self.side];
     [searchBar resignFirstResponder];
@@ -95,7 +93,6 @@
 - (void)reloadSearches
 {
     [self basicReloadSearches];
-    NSLog(@"reload search: side=%@ tv=%s", self.side, self.tableView? "not null": "NULL");
     [self.tableView reloadData];
 }
 
@@ -113,7 +110,6 @@
     header.tag = section + 1;
     UIButton* expand = (UIButton*)[header viewWithTag: -1001];
     SpCSearchView* search = [self.searches objectAtIndex: section];
-    NSLog(@"search in section %ld is %s", long(section), search.expanded? "expanded": "collapsed");
     [expand setTitle: (search.expanded? @"-": @"+") forState:UIControlStateNormal];
 
     SpeedyCrew::Database* db = [SpCDatabase getDatabase];
@@ -132,24 +128,16 @@
 {
     SpCSearchView* search = [self.searches objectAtIndex: section];
     int result = [search updateResults];
-    NSLog(@"rows in section %ld: %d", long(section), result);
     return search.expanded? result: 0;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tv cellForRowAtIndexPath:(NSIndexPath *)path
 {
-    //if (0 == path.row) {
-    //    UITableViewCell* cell = [tv dequeueReusableCellWithIdentifier:@"Search Header"];
-    //    return cell;
-    //}
-    //else {
     UITableViewCell* cell = [tv dequeueReusableCellWithIdentifier:@"Search Result"];
     UILabel* label = (UILabel*)[cell viewWithTag: -1004];
     SpCSearchView* search = [self.searches objectAtIndex: path.section];
     [label setText:[search.results objectAtIndex: path.row]];
-    NSLog(@"tableView:cellForRowAtIndexPath:(%ld, %ld)=%@", long(path.section), long(path.row), [search.results objectAtIndex: path.row]);
     return cell;
-    //}
 }
 
 // ----------------------------------------------------------------------------
@@ -168,11 +156,9 @@
     UIButton* button = sender;
     int section = [self getFirstTagOf: sender] - 1;
     bool expand = [button.titleLabel.text isEqualToString: @"+"];
-    NSLog(@"header toggle clicked: %d %s", section, expand? "expanding": "collapsing");
     [button setTitle: (expand? @"-": @"+") forState:UIControlStateNormal];
     SpCSearchView* search = [self.searches objectAtIndex: section];
     search.expanded = expand;
-    NSLog(@"toggling: side=%@ tv=%s", self.side, self.tableView? "not null": "NULL");
     [self.tableView reloadData];
 }
 

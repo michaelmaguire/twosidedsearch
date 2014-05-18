@@ -41,7 +41,6 @@ namespace
                                                create:YES error:&error];
             std::string name([[support absoluteString] UTF8String]);
             name += "crew.sqlite3";
-            NSLog(@"using database '%s'", name.c_str());
             s_database.initialize(name);
             
             NSLog(@"setting up database tables");
@@ -53,7 +52,7 @@ namespace
             
             try {
                 std::string uuidstr([[[UIDevice currentDevice].identifierForVendor UUIDString] UTF8String]);
-                NSLog(@"uuid='%s'", uuidstr.c_str());
+                NSLog(@"using database='%s' uuid='%s'", name.c_str(), uuidstr.c_str());
                 s_database.execute("insert into settings (name, value) values('scid', '" + uuidstr + "');");
             }
             catch (std::exception const& ex) {
@@ -95,7 +94,6 @@ namespace
 
 - (void) updateSetting:(NSString*)name with:(NSString*)value
 {
-    NSLog(@"updateSetting:%@ with:%@", name, value);
     std::string error;
     if (!s_database.execute("insert into settings(name, value) values("
                             "'" + s_database.escape([name UTF8String]) + "', "
@@ -155,7 +153,6 @@ namespace
         }
     }
     result += "]";
-    NSLog(@"queryRow(%@)->%s", query, result.c_str());
     return 0;
 }
 @end

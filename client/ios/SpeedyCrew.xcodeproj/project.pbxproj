@@ -19,16 +19,13 @@
 		AB9C2E51184EA15400454DCD /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = AB9C2E50184EA15400454DCD /* main.mm */; };
 		AB9C2E55184EA15400454DCD /* SpCAppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = AB9C2E54184EA15400454DCD /* SpCAppDelegate.mm */; };
 		AB9C2E58184EA15400454DCD /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AB9C2E56184EA15400454DCD /* Main.storyboard */; };
-		AB9C2E5B184EA15400454DCD /* SpCViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = AB9C2E5A184EA15400454DCD /* SpCViewController.mm */; };
 		AB9C2E5D184EA15400454DCD /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AB9C2E5C184EA15400454DCD /* Images.xcassets */; };
 		AB9C2E64184EA15400454DCD /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AB9C2E63184EA15400454DCD /* XCTest.framework */; };
 		AB9C2E65184EA15400454DCD /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AB9C2E44184EA15400454DCD /* Foundation.framework */; };
 		AB9C2E66184EA15400454DCD /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AB9C2E48184EA15400454DCD /* UIKit.framework */; };
 		AB9C2E6E184EA15400454DCD /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = AB9C2E6C184EA15400454DCD /* InfoPlist.strings */; };
 		AB9C2E70184EA15400454DCD /* SpeedyCrewTests.m in Sources */ = {isa = PBXBuildFile; fileRef = AB9C2E6F184EA15400454DCD /* SpeedyCrewTests.m */; };
-		AB9C2E81185001DB00454DCD /* SpCInvitesController.mm in Sources */ = {isa = PBXBuildFile; fileRef = AB9C2E80185001DB00454DCD /* SpCInvitesController.mm */; };
 		ABAC2F8718720A4A006D7F7E /* SpCData.mm in Sources */ = {isa = PBXBuildFile; fileRef = ABAC2F8618720A4A006D7F7E /* SpCData.mm */; };
-		ABAC2F8A18748081006D7F7E /* SpCSearch.mm in Sources */ = {isa = PBXBuildFile; fileRef = ABAC2F8918748081006D7F7E /* SpCSearch.mm */; };
 		ABD4EA78191FE91F00A37FA1 /* SpCCaptainSearchViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = ABD4EA77191FE91F00A37FA1 /* SpCCaptainSearchViewController.mm */; };
 		ABD4EA7B1922DF9F00A37FA1 /* SpCSearchView.mm in Sources */ = {isa = PBXBuildFile; fileRef = ABD4EA7A1922DF9F00A37FA1 /* SpCSearchView.mm */; };
 		ABE6E2BF19155EEB003D61CC /* SpCCrewSearchViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = ABE6E2BE19155EEB003D61CC /* SpCCrewSearchViewController.mm */; };
@@ -68,20 +65,14 @@
 		AB9C2E53184EA15400454DCD /* SpCAppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SpCAppDelegate.h; sourceTree = "<group>"; };
 		AB9C2E54184EA15400454DCD /* SpCAppDelegate.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = SpCAppDelegate.mm; sourceTree = "<group>"; };
 		AB9C2E57184EA15400454DCD /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
-		AB9C2E59184EA15400454DCD /* SpCViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SpCViewController.h; sourceTree = "<group>"; };
-		AB9C2E5A184EA15400454DCD /* SpCViewController.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = SpCViewController.mm; sourceTree = "<group>"; };
 		AB9C2E5C184EA15400454DCD /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		AB9C2E62184EA15400454DCD /* SpeedyCrewTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SpeedyCrewTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		AB9C2E63184EA15400454DCD /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
 		AB9C2E6B184EA15400454DCD /* SpeedyCrewTests-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "SpeedyCrewTests-Info.plist"; sourceTree = "<group>"; };
 		AB9C2E6D184EA15400454DCD /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		AB9C2E6F184EA15400454DCD /* SpeedyCrewTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SpeedyCrewTests.m; sourceTree = "<group>"; };
-		AB9C2E7F185001DB00454DCD /* SpCInvitesController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SpCInvitesController.h; sourceTree = "<group>"; };
-		AB9C2E80185001DB00454DCD /* SpCInvitesController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = SpCInvitesController.mm; sourceTree = "<group>"; };
 		ABAC2F8518720A4A006D7F7E /* SpCData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SpCData.h; sourceTree = "<group>"; };
 		ABAC2F8618720A4A006D7F7E /* SpCData.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = SpCData.mm; sourceTree = "<group>"; };
-		ABAC2F8818748081006D7F7E /* SpCSearch.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SpCSearch.h; sourceTree = "<group>"; };
-		ABAC2F8918748081006D7F7E /* SpCSearch.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = SpCSearch.mm; sourceTree = "<group>"; };
 		ABD4EA76191FE91F00A37FA1 /* SpCCaptainSearchViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SpCCaptainSearchViewController.h; sourceTree = "<group>"; };
 		ABD4EA77191FE91F00A37FA1 /* SpCCaptainSearchViewController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = SpCCaptainSearchViewController.mm; sourceTree = "<group>"; };
 		ABD4EA791922DF9F00A37FA1 /* SpCSearchView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SpCSearchView.h; sourceTree = "<group>"; };
@@ -163,20 +154,14 @@
 				ABD4EA77191FE91F00A37FA1 /* SpCCaptainSearchViewController.mm */,
 				ABE6E2BD19155EEB003D61CC /* SpCCrewSearchViewController.h */,
 				ABE6E2BE19155EEB003D61CC /* SpCCrewSearchViewController.mm */,
-				AB9C2E59184EA15400454DCD /* SpCViewController.h */,
-				AB9C2E5A184EA15400454DCD /* SpCViewController.mm */,
 				AB9C2E5C184EA15400454DCD /* Images.xcassets */,
 				AB9C2E4B184EA15400454DCD /* Supporting Files */,
-				AB9C2E7F185001DB00454DCD /* SpCInvitesController.h */,
-				AB9C2E80185001DB00454DCD /* SpCInvitesController.mm */,
 				ABAC2F8518720A4A006D7F7E /* SpCData.h */,
 				ABAC2F8618720A4A006D7F7E /* SpCData.mm */,
 				AB6EDE62187869E20026A1AB /* SpCDatabase.h */,
 				AB6EDE63187869E20026A1AB /* SpCDatabase.mm */,
 				ABD4EA791922DF9F00A37FA1 /* SpCSearchView.h */,
 				ABD4EA7A1922DF9F00A37FA1 /* SpCSearchView.mm */,
-				ABAC2F8818748081006D7F7E /* SpCSearch.h */,
-				ABAC2F8918748081006D7F7E /* SpCSearch.mm */,
 				AB6EDE561875EC0D0026A1AB /* SpCResult.h */,
 				AB6EDE571875EC0D0026A1AB /* SpCResult.mm */,
 				AB6EDE5C187701AE0026A1AB /* SpCSearchViewController.h */,
@@ -326,12 +311,9 @@
 				ABF397031918185000B8FE39 /* Database.cpp in Sources */,
 				ABD4EA7B1922DF9F00A37FA1 /* SpCSearchView.mm in Sources */,
 				ABAC2F8718720A4A006D7F7E /* SpCData.mm in Sources */,
-				ABAC2F8A18748081006D7F7E /* SpCSearch.mm in Sources */,
-				AB9C2E81185001DB00454DCD /* SpCInvitesController.mm in Sources */,
 				AB9C2E55184EA15400454DCD /* SpCAppDelegate.mm in Sources */,
 				ABE6E2BF19155EEB003D61CC /* SpCCrewSearchViewController.mm in Sources */,
 				ABEC17E918C3B00E00D54C93 /* SpCChanging.mm in Sources */,
-				AB9C2E5B184EA15400454DCD /* SpCViewController.mm in Sources */,
 				AB6EDE581875EC0D0026A1AB /* SpCResult.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

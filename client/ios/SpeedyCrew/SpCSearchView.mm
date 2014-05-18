@@ -19,7 +19,6 @@
 
 + (SpCSearchView*)makeWithId:(NSString*)id andSide:(NSString*)side
 {
-    NSLog(@"makeWithId: %@ %@", id, side);
     return [[SpCSearchView alloc] initWithId:id andSide:side];
 }
 
@@ -30,19 +29,19 @@
     self.side     = side;
     self.expanded = true;
     self.results  = [[NSMutableArray alloc] init];
-    NSLog(@"created search with id %@ (%s)", self.id, self.expanded? "expanded": "collapsed");
     return self;
 }
 
 - (int)updateResults
 {
     SpeedyCrew::Database* db = [SpCDatabase getDatabase];
+    //-dk:TODO splice the current and the new objects together to retain
+    //   state and possibly position
     [self.results removeAllObjects];
     std::vector<std::string> names = db->queryColumn("select name from results where search='" + db->escape([self.id UTF8String]) + "';");
     for (std::vector<std::string>::const_iterator it(names.begin()), end(names.end()); it != end; ++it) {
         [self.results addObject: [NSString stringWithFormat:@"%s", it->c_str()]];
     }
-    NSLog(@"vector size=%ld results size=%lu", long(names.size()), static_cast<unsigned long>([self.results count]));
     return int([self.results count]);
 }
 

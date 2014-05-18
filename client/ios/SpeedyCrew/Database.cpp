@@ -170,7 +170,6 @@ namespace SpeedyCrew
                                      "query='" + sql + "' "
                                      "message='" + msg.str() + "'");
         }
-        std::cout << "returning '" << value << "'\n" << std::flush;
         return value;
     }
 }
@@ -181,7 +180,6 @@ namespace
 {
     extern "C" int row_callback(void* data, int count, char** rows,char**)
     {
-        std::cout << "count=" << count << '\n' << std::flush;
         if (rows) {
             std::vector<std::string>* vec = static_cast<std::vector<std::string>*>(data);
             for (int i(0); i != count; ++i) {
@@ -199,7 +197,6 @@ namespace SpeedyCrew
     {
         message msg;
         std::vector<std::string> value;
-        std::cout << "running query '" << sql << "'\n";
         int rc(sqlite3_exec(this->d_database, sql.c_str(), row_callback, &value, &msg));
         if (rc != SQLITE_OK) {
             throw std::runtime_error("query failed: "
@@ -217,7 +214,7 @@ namespace
     extern "C" int column_callback(void* data, int count, char** rows,char**)
     {
         if (count != 1) {
-            std::cout << "row with " << count << "columns in query for 1 column\n" << std::flush;
+            std::cout << "WARNING: row with " << count << "columns in query for 1 column\n" << std::flush;
         }
         if (rows) {
             std::vector<std::string>* vec = static_cast<std::vector<std::string>*>(data);
@@ -234,7 +231,6 @@ namespace SpeedyCrew
     {
         message msg;
         std::vector<std::string> value;
-        std::cout << "running query '" << sql << "'\n";
         int rc(sqlite3_exec(this->d_database, sql.c_str(), column_callback, &value, &msg));
         if (rc != SQLITE_OK) {
             throw std::runtime_error("query failed: "

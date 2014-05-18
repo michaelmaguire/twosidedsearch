@@ -91,7 +91,6 @@ static NSString* baseURL = @"http://captain:cook@dev.speedycrew.com/api/1";
 
 - (void)updateQueryWith:(NSString*)query forSide:(NSString*)side
 {
-    NSLog(@"updateQueryWith:%@ forSide:%@", query, side);
     self.side = side;
     self.queryString = query;
     [self makeHttpRequestForQuery:self.queryString
@@ -103,7 +102,6 @@ static NSString* baseURL = @"http://captain:cook@dev.speedycrew.com/api/1";
     NSData* json = [NSJSONSerialization JSONObjectWithData:response options:0 error:nil];
     if ([json isKindOfClass: [NSArray class]]) {
         NSArray* jsonArray = (NSArray*)json;
-        NSLog(@"JSON array count=%ld", (long)[jsonArray count]);
         NSMutableArray* results = [[NSMutableArray alloc] init];
         for (long i = 0, size = [jsonArray count]; i != size; ++i) {
             NSDictionary* result = [jsonArray objectAtIndex:i];
@@ -141,7 +139,6 @@ static NSString* baseURL = @"http://captain:cook@dev.speedycrew.com/api/1";
 {
     NSLog(@"making request for results: %@", self.uid);
     NSString* str =[NSString stringWithFormat: @"%@/search_results?x-id=%@&search=%@", baseURL, self.uuid, self.uid];
-    NSLog(@"actual query='%@'", str);
     NSURL* url = [NSURL URLWithString:str];
     NSURLRequest* request = [NSURLRequest requestWithURL:url];
     NSOperationQueue* q = [NSOperationQueue mainQueue];
@@ -149,7 +146,6 @@ static NSString* baseURL = @"http://captain:cook@dev.speedycrew.com/api/1";
         ^(NSURLResponse* resp, NSData* d, NSError* err) {
             if (d) {
                 NSString* s = [[NSString alloc] initWithData:d encoding:NSUTF8StringEncoding];
-                NSLog(@"received data: '%@'", s);
                 NSData* json = [NSJSONSerialization JSONObjectWithData:d options:0 error:nil];
                 if ([json isKindOfClass: [NSDictionary class]]) {
                     NSDictionary* dict = (NSDictionary*)json;
@@ -176,7 +172,6 @@ static NSString* baseURL = @"http://captain:cook@dev.speedycrew.com/api/1";
                     baseURL, self.uuid, side,
                     data.longitude, data.latitude,
                     self.uid, [self encodeURL:query]];
-    NSLog(@"actual query='%@'", str);
     NSURL* url = [NSURL URLWithString:str];
     NSURLRequest* request = [NSURLRequest requestWithURL:url];
     NSOperationQueue* q = [NSOperationQueue mainQueue];
