@@ -48,7 +48,6 @@ namespace
             s_database.createTable("settings", "name TEXT PRIMARY KEY, value TEXT");
             s_database.createTable("searches",
                                    "id TEXT PRIMARY KEY, side TEXT, search TEXT");
-            s_database.execute("drop table results;");
             s_database.createTable("results",
                                    "id TEXT PRIMARY KEY, search TEXT, name TEXT, email TEXT, longitude TEXT, latitude TEXT");
             

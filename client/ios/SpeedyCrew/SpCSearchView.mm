@@ -42,8 +42,8 @@
     for (std::vector<std::string>::const_iterator it(names.begin()), end(names.end()); it != end; ++it) {
         [self.results addObject: [NSString stringWithFormat:@"%s", it->c_str()]];
     }
-    NSLog(@"vector size=%d results size=%d", int(names.size()), [self.results count]);
-    return [self.results count];
+    NSLog(@"vector size=%ld results size=%lu", long(names.size()), static_cast<unsigned long>([self.results count]));
+    return int([self.results count]);
 }
 
 @end

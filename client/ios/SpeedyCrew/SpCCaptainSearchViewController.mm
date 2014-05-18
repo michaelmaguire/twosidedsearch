@@ -104,7 +104,7 @@
     header.tag = section + 1;
     UIButton* expand = (UIButton*)[header viewWithTag: -1001];
     SpCSearchView* search = [self.searches objectAtIndex: section];
-    NSLog(@"search in section %d is %s", section, search.expanded? "expanded": "collapsed");
+    NSLog(@"search in section %ld is %s", long(section), search.expanded? "expanded": "collapsed");
     [expand setTitle: (search.expanded? @"-": @"+") forState:UIControlStateNormal];
 
     SpeedyCrew::Database* db = [SpCDatabase getDatabase];
@@ -123,7 +123,7 @@
 {
     SpCSearchView* search = [self.searches objectAtIndex: section];
     int result = [search updateResults];
-    NSLog(@"rows in section %d: %d", section, result);
+    NSLog(@"rows in section %ld: %d", long(section), result);
     return search.expanded? result: 0;
 }
 
@@ -138,7 +138,7 @@
     UILabel* label = (UILabel*)[cell viewWithTag: -1004];
     SpCSearchView* search = [self.searches objectAtIndex: path.section];
     [label setText:[search.results objectAtIndex: path.row]];
-    NSLog(@"tableView:cellForRowAtIndexPath:(%d, %d)=%@", path.section, path.row, [search.results objectAtIndex: path.row]);
+    NSLog(@"tableView:cellForRowAtIndexPath:(%ld, %ld)=%@", long(path.section), long(path.row), [search.results objectAtIndex: path.row]);
     return cell;
     //}
 }
@@ -151,7 +151,7 @@
     while (view != Nil && view.tag <= 0) {
         view = [view superview];
     }
-    return view == Nil? 0: view.tag;
+    return view == Nil? 0: int(view.tag);
 }
 
 - (IBAction)onHeaderToggleClicked:(id)sender
@@ -168,12 +168,12 @@
 
 - (IBAction)onHeaderClicked:(id)sender
 {
-    NSLog(@"header clicked: %d", [self getFirstTagOf: sender]);
+    NSLog(@"header clicked: %ld", long([self getFirstTagOf: sender]));
 }
 
 - (IBAction)onHeaderNavigationClicked:(id)sender
 {
-    NSLog(@"header navigation clicked: %d", [self getFirstTagOf: sender]);
+    NSLog(@"header navigation clicked: %ld", long([self getFirstTagOf: sender]));
 }
 
 // ----------------------------------------------------------------------------

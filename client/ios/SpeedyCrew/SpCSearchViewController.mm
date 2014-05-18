@@ -65,7 +65,7 @@
 
 - (UITableViewCell *)tableView:(UITableView *)tv cellForRowAtIndexPath:(NSIndexPath *)path
 {
-    NSLog(@"tableView:cellForRowAtIndexPath:(%d, %d)", path.section, path.row);
+    NSLog(@"tableView:cellForRowAtIndexPath:(%d, %d)", int(path.section), int(path.row));
     if (0 == path.section) {
         UITableViewCell* cell = [tv dequeueReusableCellWithIdentifier:@"SearchField"];
         UIView* view = [cell.contentView viewWithTag:0];

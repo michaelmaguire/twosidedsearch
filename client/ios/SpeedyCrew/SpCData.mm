@@ -142,7 +142,7 @@
                         NSObject* latitude = [dict objectForKey: @"latitude"];
                         NSObject* email = [dict objectForKey: @"email"];
                         std::string insert("insert into results(id, search, name, email, longitude, latitude) values("
-                                           "'" + db->escape(id? [[NSString stringWithFormat:@"%@", id] UTF8String]: "") + "', "
+                                           "'" + search + "-" + db->escape(id? [[NSString stringWithFormat:@"%@", id] UTF8String]: "") + "', "
                                            "'" + search + "', "
                                            "'" + db->escape(name? [[NSString stringWithFormat:@"%@", name] UTF8String]: "") + "', "
                                            "'" + db->escape(email? [[NSString stringWithFormat:@"%@", email] UTF8String]: "") + "', "
@@ -150,7 +150,12 @@
                                            "'" + db->escape(latitude? [[NSString stringWithFormat:@"%@", latitude] UTF8String]: "") + "'"
                                            ");");
                         NSLog(@"insert query: '%s'", insert.c_str());
-                        db->execute(insert);
+                        try {
+                            db->execute(insert);
+                        }
+                        catch (std::exception const& ex) {
+                            NSLog(@"ERROR inserting result: %s", ex.what());
+                        }
                     }
                     [self notify];
                 }

@@ -196,7 +196,7 @@
                         </connections>
                     </tableView>
                     <extendedEdge key="edgesForExtendedLayout" bottom="YES"/>
-                    <tabBarItem key="tabBarItem" title="I'm Crew" id="dK5-qv-i4s"/>
+                    <tabBarItem key="tabBarItem" title="I'm Crew" image="Crew" id="dK5-qv-i4s"/>
                 </tableViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="DDf-um-KZE" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
@@ -612,6 +612,7 @@
     </scenes>
     <resources>
         <image name="Captain" width="20" height="15"/>
+        <image name="Crew" width="20" height="15"/>
         <image name="Settings" width="20" height="15"/>
     </resources>
     <simulatedMetricsContainer key="defaultSimulatedMetrics">
