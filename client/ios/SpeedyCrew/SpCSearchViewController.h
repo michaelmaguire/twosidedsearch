@@ -7,7 +7,6 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "SpCSearch.h"
 
 @interface SpCSearchViewController : UIViewController<UISearchBarDelegate>
 

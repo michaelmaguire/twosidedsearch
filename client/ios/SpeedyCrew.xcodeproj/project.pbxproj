@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		AB6EDE581875EC0D0026A1AB /* SpCResult.mm in Sources */ = {isa = PBXBuildFile; fileRef = AB6EDE571875EC0D0026A1AB /* SpCResult.mm */; };
 		AB6EDE5E187701AE0026A1AB /* SpCSearchViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = AB6EDE5D187701AE0026A1AB /* SpCSearchViewController.mm */; };
 		AB6EDE61187799BB0026A1AB /* SpCUserViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = AB6EDE60187799BB0026A1AB /* SpCUserViewController.mm */; };
 		AB6EDE64187869E20026A1AB /* SpCDatabase.mm in Sources */ = {isa = PBXBuildFile; fileRef = AB6EDE63187869E20026A1AB /* SpCDatabase.mm */; };
@@ -45,8 +44,6 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		AB6EDE561875EC0D0026A1AB /* SpCResult.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SpCResult.h; sourceTree = "<group>"; };
-		AB6EDE571875EC0D0026A1AB /* SpCResult.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = SpCResult.mm; sourceTree = "<group>"; };
 		AB6EDE5C187701AE0026A1AB /* SpCSearchViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SpCSearchViewController.h; sourceTree = "<group>"; };
 		AB6EDE5D187701AE0026A1AB /* SpCSearchViewController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = SpCSearchViewController.mm; sourceTree = "<group>"; };
 		AB6EDE5F187799BB0026A1AB /* SpCUserViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SpCUserViewController.h; sourceTree = "<group>"; };
@@ -162,8 +159,6 @@
 				AB6EDE63187869E20026A1AB /* SpCDatabase.mm */,
 				ABD4EA791922DF9F00A37FA1 /* SpCSearchView.h */,
 				ABD4EA7A1922DF9F00A37FA1 /* SpCSearchView.mm */,
-				AB6EDE561875EC0D0026A1AB /* SpCResult.h */,
-				AB6EDE571875EC0D0026A1AB /* SpCResult.mm */,
 				AB6EDE5C187701AE0026A1AB /* SpCSearchViewController.h */,
 				AB6EDE5D187701AE0026A1AB /* SpCSearchViewController.mm */,
 				AB6EDE5F187799BB0026A1AB /* SpCUserViewController.h */,
@@ -314,7 +309,6 @@
 				AB9C2E55184EA15400454DCD /* SpCAppDelegate.mm in Sources */,
 				ABE6E2BF19155EEB003D61CC /* SpCCrewSearchViewController.mm in Sources */,
 				ABEC17E918C3B00E00D54C93 /* SpCChanging.mm in Sources */,
-				AB6EDE581875EC0D0026A1AB /* SpCResult.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
