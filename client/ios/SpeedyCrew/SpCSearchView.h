@@ -7,16 +7,18 @@
 //
 
 #import <Foundation/Foundation.h>
+#import <CoreLocation/CoreLocation.h>
 
 @interface SpCSearchView : NSObject
 
-@property (readonly) NSString*        id;
-@property (readonly) NSString*        side;
-@property            bool             expanded;
-@property            NSMutableArray*  results;
+@property (readonly) NSString*               id;
+@property (readonly) NSString*               side;
+@property            bool                    expanded;
+@property            NSMutableArray*         results;
 
 + (SpCSearchView*)makeWithId:(NSString*)id andSide:(NSString*)side;
 - (SpCSearchView*)initWithId:(NSString*)id andSide:(NSString*)side;
 - (int)updateResults;
+- (CLLocationCoordinate2D)getPosition;
 
 @end

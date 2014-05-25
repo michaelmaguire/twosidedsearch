@@ -7,6 +7,7 @@
 //
 
 #import "SpCMapViewController.h"
+#import <CoreLocation/CoreLocation.h>
 
 @interface SpCMapViewController ()
 
@@ -26,8 +27,11 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-    NSLog(@"search is %s", self.search == Nil? "nil": "NOT nil");
-    // Do any additional setup after loading the view.
+    CLLocationCoordinate2D position = [self.search getPosition];
+
+    self.mapView.showsUserLocation = YES;
+    MKCoordinateRegion region = MKCoordinateRegionMakeWithDistance(position, 5000, 500);
+    [ self.mapView setRegion: region animated: NO];
 }
 
 - (void)didReceiveMemoryWarning

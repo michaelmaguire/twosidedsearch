@@ -165,7 +165,7 @@
                         <rect key="frame" x="0.0" y="0.0" width="320" height="480"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <subviews>
-                            <mapView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" mapType="standard" translatesAutoresizingMaskIntoConstraints="NO" id="9Zr-tn-1Mw">
+                            <mapView clipsSubviews="YES" multipleTouchEnabled="YES" tag="-1005" contentMode="scaleToFill" mapType="standard" translatesAutoresizingMaskIntoConstraints="NO" id="9Zr-tn-1Mw">
                                 <rect key="frame" x="0.0" y="65" width="320" height="367"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             </mapView>
@@ -179,6 +179,9 @@
                         </constraints>
                     </view>
                     <navigationItem key="navigationItem" id="kew-7c-tBi"/>
+                    <connections>
+                        <outlet property="mapView" destination="9Zr-tn-1Mw" id="6JI-DF-CKv"/>
+                    </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="Cxe-8L-Euf" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>

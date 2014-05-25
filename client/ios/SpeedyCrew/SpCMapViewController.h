@@ -8,9 +8,11 @@
 
 #import "SpCSearchView.h"
 #import <UIKit/UIKit.h>
+#import <MapKit/MapKit.h>
 
 @interface SpCMapViewController : UIViewController
 @property (weak, nonatomic) IBOutlet UINavigationItem *backButton;
+@property (weak, nonatomic) IBOutlet MKMapView *mapView;
 @property SpCSearchView* search;
 
 @end

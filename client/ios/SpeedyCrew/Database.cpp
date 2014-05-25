@@ -147,6 +147,37 @@ namespace SpeedyCrew
 
 namespace
 {
+    extern "C" int double_callback(void* data, int count, char** rows,char**)
+    {
+        if (count == 1 && rows) {
+            *static_cast<double*>(data) = atof(rows[0]);
+            return 0;
+        }
+        return 1;
+    }
+}
+    
+namespace SpeedyCrew
+{
+    template <>
+    double Database::query<double>(std::string const& sql)
+    {
+        message msg;
+        double value = 0;
+        int rc(sqlite3_exec(this->d_database, sql.c_str(), double_callback, &value, &msg));
+        if (rc != SQLITE_OK) {
+            throw std::runtime_error("query failed: "
+                                     "query='" + sql + "' "
+                                     "message='" + msg.str() + "'");
+        }
+        return value;
+    }
+}
+
+// ----------------------------------------------------------------------------
+
+namespace
+{
     extern "C" int string_callback(void* data, int count, char** rows,char**)
     {
         if (count == 1 && rows) {

@@ -7,6 +7,7 @@
 //
 
 #import "SpCSearchView.h"
+#import "SpCAppDelegate.h" //-dk:TODO remove!
 #import "SpCDatabase.h"
 #include "Database.h"
 
@@ -43,6 +44,25 @@
         [self.results addObject: [NSString stringWithFormat:@"%s", it->c_str()]];
     }
     return int([self.results count]);
+}
+
+// ----------------------------------------------------------------------------
+
+- (CLLocationCoordinate2D)getPosition
+{
+    CLLocationCoordinate2D rc = {};
+#if 0
+    //-dk:TODO the data should really come from the search.
+    SpeedyCrew::Database* db = [SpCDatabase getDatabase];
+    std::string id = [self.id UTF8String];
+    rc.latitude  = db->query<double>("select latitude from searches where id='" + id + "'");
+    rc.longitude = db->query<double>("select longitude from searches where id='" + id + "'");
+#else
+    SpCData* data = [SpCAppDelegate instance].data;
+    rc.latitude  = data.latitude;
+    rc.longitude = data.longitude;
+#endif
+    return rc;
 }
 
 @end

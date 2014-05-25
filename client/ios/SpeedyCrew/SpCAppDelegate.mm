@@ -22,6 +22,7 @@
     NSLog(@"application launched");
     self.data = [[SpCData alloc] init];
     [self.data updateSearches];
+    [self startLocationManager];
     return YES;
 }
 
@@ -31,7 +32,14 @@
         locationManager = [[CLLocationManager alloc] init];
         locationManager.delegate = self;
         locationManager.desiredAccuracy = kCLLocationAccuracyBest;
-        //-dk:TODO enable location updates [locationManager startUpdatingLocation];
+#if 0
+        //-dk:TODO enable location updates
+        [locationManager startUpdatingLocation];
+#else
+        //-dk:TODO use automatic updates
+        self.data.longitude = -0.15001;
+        self.data.latitude  = 51.5;
+#endif
     }
 }
 							
@@ -79,10 +87,6 @@
         self.data.longitude = newLocation.coordinate.longitude;
         self.data.latitude  = newLocation.coordinate.latitude;
         NSLog(@"updated location: (%f, %f)", self.data.longitude, self.data.latitude);
-#if 0
-        self.data.longitude = -0.15001;
-        self.data.latitude  = 51.5;
-#endif
-        }
+    }
 }
 @end
