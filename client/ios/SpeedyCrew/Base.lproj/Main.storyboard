@@ -41,7 +41,7 @@
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
                                 <textInputTraits key="textInputTraits"/>
                             </searchBar>
-                            <tableView clipsSubviews="YES" contentMode="scaleToFill" ambiguous="YES" misplaced="YES" alwaysBounceVertical="YES" dataMode="prototypes" style="grouped" separatorStyle="default" rowHeight="44" sectionHeaderHeight="10" sectionFooterHeight="10" translatesAutoresizingMaskIntoConstraints="NO" id="AGd-yb-SDG">
+                            <tableView clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="grouped" separatorStyle="default" rowHeight="44" sectionHeaderHeight="10" sectionFooterHeight="10" translatesAutoresizingMaskIntoConstraints="NO" id="AGd-yb-SDG">
                                 <rect key="frame" x="0.0" y="109" width="320" height="322"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <color key="backgroundColor" cocoaTouchSystemColor="groupTableViewBackgroundColor"/>
@@ -74,8 +74,8 @@
                                             <rect key="frame" x="0.0" y="0.0" width="320" height="29"/>
                                             <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
-                                                <button opaque="NO" tag="-1002" contentMode="scaleToFill" misplaced="YES" restorationIdentifier="Search Name" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="IeW-iW-KQy" userLabel="Search Name">
-                                                    <rect key="frame" x="58" y="0.0" width="204" height="30"/>
+                                                <button opaque="NO" tag="-1002" contentMode="scaleToFill" restorationIdentifier="Search Name" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="IeW-iW-KQy" userLabel="Search Name">
+                                                    <rect key="frame" x="38" y="0.0" width="239" height="30"/>
                                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                                     <state key="normal" title="Search Name">
                                                         <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
@@ -86,10 +86,10 @@
                                                     </connections>
                                                 </button>
                                                 <button opaque="NO" tag="-1001" contentMode="scaleToFill" restorationIdentifier="Expand" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="eWg-xb-GdO" userLabel="Expand">
-                                                    <rect key="frame" x="20" y="-1" width="30" height="30"/>
+                                                    <rect key="frame" x="0.0" y="-1" width="30" height="30"/>
                                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                                     <constraints>
-                                                        <constraint firstAttribute="width" constant="30" id="zJh-zt-ded"/>
+                                                        <constraint firstAttribute="width" constant="30" id="9kP-mg-fXH"/>
                                                     </constraints>
                                                     <state key="normal" title="+">
                                                         <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
@@ -99,27 +99,30 @@
                                                         <action selector="onHeaderToggleClicked:" destination="6lY-qQ-pQY" eventType="touchUpInside" id="xee-ig-2wU"/>
                                                     </connections>
                                                 </button>
-                                                <button opaque="NO" tag="-1003" contentMode="scaleToFill" misplaced="YES" restorationIdentifier="Navigate" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="8yo-rz-DRI" userLabel="Navigate">
-                                                    <rect key="frame" x="270" y="0.0" width="30" height="30"/>
+                                                <button opaque="NO" tag="-1003" contentMode="scaleToFill" restorationIdentifier="Navigate" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="8yo-rz-DRI" userLabel="Navigate">
+                                                    <rect key="frame" x="285" y="-1" width="30" height="30"/>
                                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                                    <constraints>
+                                                        <constraint firstAttribute="width" constant="30" id="Tmp-1f-YnS"/>
+                                                    </constraints>
                                                     <state key="normal" title=">">
                                                         <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
                                                     </state>
                                                     <connections>
                                                         <action selector="onHeaderNavigationClicked:" destination="6lY-qQ-pQY" eventType="touchUpInside" id="Aho-RN-YVx"/>
                                                         <action selector="onHeaderNavigationClicked:" destination="s4P-oZ-1DX" eventType="touchUpInside" id="rVC-sE-6At"/>
-                                                        <segue destination="x9z-Rd-cis" kind="push" id="Aib-Vm-cU6"/>
+                                                        <segue destination="x9z-Rd-cis" kind="push" identifier="ToMapView" id="Aib-Vm-cU6"/>
                                                     </connections>
                                                 </button>
                                             </subviews>
                                             <constraints>
-                                                <constraint firstItem="IeW-iW-KQy" firstAttribute="centerX" secondItem="ZF6-f9-IUN" secondAttribute="centerX" id="Ao8-7w-zd4"/>
-                                                <constraint firstItem="8yo-rz-DRI" firstAttribute="baseline" secondItem="IeW-iW-KQy" secondAttribute="baseline" id="EtF-Mi-zqT"/>
-                                                <constraint firstAttribute="bottom" secondItem="eWg-xb-GdO" secondAttribute="bottom" id="KFi-tg-J5y"/>
-                                                <constraint firstItem="IeW-iW-KQy" firstAttribute="leading" secondItem="eWg-xb-GdO" secondAttribute="trailing" constant="8" symbolic="YES" id="ZFx-Rg-hqX"/>
-                                                <constraint firstItem="8yo-rz-DRI" firstAttribute="leading" secondItem="IeW-iW-KQy" secondAttribute="trailing" constant="8" symbolic="YES" id="abH-1b-4cl"/>
-                                                <constraint firstItem="eWg-xb-GdO" firstAttribute="leading" secondItem="ZF6-f9-IUN" secondAttribute="leading" constant="20" symbolic="YES" id="tlc-YS-FqP"/>
-                                                <constraint firstItem="IeW-iW-KQy" firstAttribute="top" secondItem="ZF6-f9-IUN" secondAttribute="top" id="wxf-6x-cfv"/>
+                                                <constraint firstItem="IeW-iW-KQy" firstAttribute="leading" secondItem="eWg-xb-GdO" secondAttribute="trailing" constant="8" symbolic="YES" id="1j7-2D-DMQ"/>
+                                                <constraint firstItem="eWg-xb-GdO" firstAttribute="leading" secondItem="ZF6-f9-IUN" secondAttribute="leading" id="M7g-nN-5Bf"/>
+                                                <constraint firstAttribute="trailing" secondItem="8yo-rz-DRI" secondAttribute="trailing" constant="5" id="OpW-Es-crA"/>
+                                                <constraint firstItem="IeW-iW-KQy" firstAttribute="top" secondItem="ZF6-f9-IUN" secondAttribute="top" id="QtL-fY-4aa"/>
+                                                <constraint firstItem="8yo-rz-DRI" firstAttribute="leading" secondItem="IeW-iW-KQy" secondAttribute="trailing" constant="8" symbolic="YES" id="Rdf-nS-XcJ"/>
+                                                <constraint firstItem="eWg-xb-GdO" firstAttribute="baseline" secondItem="8yo-rz-DRI" secondAttribute="baseline" id="knX-Cr-Dll"/>
+                                                <constraint firstAttribute="bottom" secondItem="8yo-rz-DRI" secondAttribute="bottom" id="yxc-hW-Xk6"/>
                                             </constraints>
                                         </tableViewCellContentView>
                                     </tableViewCell>
@@ -132,11 +135,12 @@
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
                         <constraints>
-                            <constraint firstItem="O4D-RI-3tp" firstAttribute="leading" secondItem="AGd-yb-SDG" secondAttribute="leading" id="4bI-N8-ckG"/>
-                            <constraint firstItem="O4D-RI-3tp" firstAttribute="bottom" secondItem="AGd-yb-SDG" secondAttribute="top" id="FM2-5Q-1qt"/>
+                            <constraint firstItem="AGd-yb-SDG" firstAttribute="trailing" secondItem="O4D-RI-3tp" secondAttribute="trailing" id="0gd-Im-e7k"/>
+                            <constraint firstItem="AGd-yb-SDG" firstAttribute="leading" secondItem="O4D-RI-3tp" secondAttribute="leading" id="UGa-WE-UNp"/>
                             <constraint firstItem="O4D-RI-3tp" firstAttribute="leading" secondItem="N0c-hm-vpZ" secondAttribute="leading" id="iPc-lA-i6k"/>
+                            <constraint firstItem="9Dg-5Z-N0f" firstAttribute="top" secondItem="AGd-yb-SDG" secondAttribute="bottom" id="kYj-yk-Jfk"/>
                             <constraint firstAttribute="trailing" secondItem="O4D-RI-3tp" secondAttribute="trailing" id="ltX-xv-lMS"/>
-                            <constraint firstItem="O4D-RI-3tp" firstAttribute="trailing" secondItem="AGd-yb-SDG" secondAttribute="trailing" id="o97-NP-Db2"/>
+                            <constraint firstItem="AGd-yb-SDG" firstAttribute="top" secondItem="O4D-RI-3tp" secondAttribute="bottom" id="nyB-lq-B69"/>
                             <constraint firstItem="O4D-RI-3tp" firstAttribute="top" secondItem="f04-L4-2MB" secondAttribute="bottom" constant="1" id="zh1-AN-QNs"/>
                         </constraints>
                     </view>
@@ -161,27 +165,17 @@
                         <rect key="frame" x="0.0" y="0.0" width="320" height="480"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <subviews>
-                            <mapView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" ambiguous="YES" misplaced="YES" mapType="standard" translatesAutoresizingMaskIntoConstraints="NO" id="9Zr-tn-1Mw">
+                            <mapView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" mapType="standard" translatesAutoresizingMaskIntoConstraints="NO" id="9Zr-tn-1Mw">
                                 <rect key="frame" x="0.0" y="65" width="320" height="367"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             </mapView>
-                            <navigationBar contentMode="scaleToFill" ambiguous="YES" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="XrO-Aj-1w2">
-                                <rect key="frame" x="0.0" y="21" width="320" height="44"/>
-                                <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
-                                <items>
-                                    <navigationItem title="Title" id="9ay-aL-qcC"/>
-                                </items>
-                            </navigationBar>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
                         <constraints>
-                            <constraint firstItem="XrO-Aj-1w2" firstAttribute="leading" secondItem="jmi-Wr-bHg" secondAttribute="leading" id="5JC-az-Rb4"/>
-                            <constraint firstAttribute="bottom" secondItem="9Zr-tn-1Mw" secondAttribute="bottom" constant="48" id="C4c-fv-cfg"/>
-                            <constraint firstItem="9Zr-tn-1Mw" firstAttribute="top" secondItem="XrO-Aj-1w2" secondAttribute="bottom" id="CgB-Sl-crR"/>
-                            <constraint firstItem="XrO-Aj-1w2" firstAttribute="trailing" secondItem="9Zr-tn-1Mw" secondAttribute="trailing" id="Khk-xj-hSO"/>
-                            <constraint firstItem="XrO-Aj-1w2" firstAttribute="bottom" secondItem="9Zr-tn-1Mw" secondAttribute="top" id="Rey-Wq-IBn"/>
-                            <constraint firstItem="XrO-Aj-1w2" firstAttribute="leading" secondItem="9Zr-tn-1Mw" secondAttribute="leading" id="T8U-Y0-3fe"/>
-                            <constraint firstAttribute="trailing" secondItem="XrO-Aj-1w2" secondAttribute="trailing" id="dYj-8W-mWC"/>
+                            <constraint firstItem="9Zr-tn-1Mw" firstAttribute="top" secondItem="1UJ-rc-M3z" secondAttribute="bottom" constant="1" id="SxZ-Sb-drj"/>
+                            <constraint firstAttribute="trailing" secondItem="9Zr-tn-1Mw" secondAttribute="trailing" id="Wyg-6X-JXg"/>
+                            <constraint firstItem="9Zr-tn-1Mw" firstAttribute="leading" secondItem="jmi-Wr-bHg" secondAttribute="leading" id="aCj-bd-OBa"/>
+                            <constraint firstAttribute="bottom" secondItem="9Zr-tn-1Mw" secondAttribute="bottom" constant="48" id="cIz-vo-Ybb"/>
                         </constraints>
                     </view>
                     <navigationItem key="navigationItem" id="kew-7c-tBi"/>
@@ -271,7 +265,7 @@
                                                     </state>
                                                     <connections>
                                                         <action selector="onHeaderNavigationClicked:" destination="s4P-oZ-1DX" eventType="touchUpInside" id="hzx-G1-B57"/>
-                                                        <segue destination="x9z-Rd-cis" kind="push" id="W0O-eg-536"/>
+                                                        <segue destination="x9z-Rd-cis" kind="push" identifier="ToMapView" id="W0O-eg-536"/>
                                                     </connections>
                                                 </button>
                                             </subviews>
@@ -512,6 +506,6 @@
         <simulatedScreenMetrics key="destination"/>
     </simulatedMetricsContainer>
     <inferredMetricsTieBreakers>
-        <segue reference="Aib-Vm-cU6"/>
+        <segue reference="W0O-eg-536"/>
     </inferredMetricsTieBreakers>
 </document>

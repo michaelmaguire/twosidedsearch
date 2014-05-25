@@ -26,6 +26,7 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
+    NSLog(@"search is %s", self.search == Nil? "nil": "NOT nil");
     // Do any additional setup after loading the view.
 }
 

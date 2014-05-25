@@ -8,6 +8,7 @@
 
 #import "SpCSearchViewController.h"
 #import "SpCSearchView.h"
+#import "SpCMapViewController.h"
 #import "SpCAppDelegate.h"
 #import "SpCDatabase.h"
 #import "SpCData.h"
@@ -47,17 +48,24 @@
 }
 
 // ----------------------------------------------------------------------------
-
-/*
 #pragma mark - Navigation
 
-// In a storyboard-based application, you will often want to do a little preparation before navigation
 - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
 {
-    // Get the new view controller using [segue destinationViewController].
-    // Pass the selected object to the new view controller.
+    UIButton* button = (UIButton*)sender;
+    int tag = 0;
+    for (UIView* parent = button.superview; parent != Nil; parent = parent.superview) {
+        if (parent.tag != 0) {
+            tag = parent.tag;
+            break;
+        }
+    }
+    NSLog(@"preparing for segue! identifier='%@' tag=%d", [segue identifier], tag);
+    if (tag != 0) {
+        SpCMapViewController* map = [segue destinationViewController];
+        map.search = [self.searches objectAtIndex: tag - 1];
+    }
 }
-*/
 
 // ----------------------------------------------------------------------------
 // search bar handling
