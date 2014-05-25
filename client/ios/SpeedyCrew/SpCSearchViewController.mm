@@ -8,6 +8,7 @@
 
 #import "SpCSearchViewController.h"
 #import "SpCSearchView.h"
+#import "SpCResultView.h"
 #import "SpCMapViewController.h"
 #import "SpCAppDelegate.h"
 #import "SpCDatabase.h"
@@ -60,7 +61,6 @@
             break;
         }
     }
-    NSLog(@"preparing for segue! identifier='%@' tag=%d", [segue identifier], tag);
     if (tag != 0) {
         SpCMapViewController* map = [segue destinationViewController];
         map.search = [self.searches objectAtIndex: tag - 1];
@@ -144,7 +144,8 @@
     UITableViewCell* cell = [tv dequeueReusableCellWithIdentifier:@"Search Result"];
     UILabel* label = (UILabel*)[cell viewWithTag: -1004];
     SpCSearchView* search = [self.searches objectAtIndex: path.section];
-    [label setText:[search.results objectAtIndex: path.row]];
+    SpCResultView* result = [search.results objectAtIndex: path.row];
+    [label setText:result.title];
     return cell;
 }
 
@@ -177,7 +178,6 @@
 
 - (IBAction)onHeaderNavigationClicked:(id)sender
 {
-    NSLog(@"header navigation clicked: %ld", long([self getFirstTagOf: sender]));
 }
 
 // ----------------------------------------------------------------------------

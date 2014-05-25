@@ -7,6 +7,7 @@
 //
 
 #import "SpCSearchView.h"
+#import "SpCResultView.h"
 #import "SpCAppDelegate.h" //-dk:TODO remove!
 #import "SpCDatabase.h"
 #include "Database.h"
@@ -39,9 +40,9 @@
     //-dk:TODO splice the current and the new objects together to retain
     //   state and possibly position
     [self.results removeAllObjects];
-    std::vector<std::string> names = db->queryColumn("select name from results where search='" + db->escape([self.id UTF8String]) + "';");
+    std::vector<std::string> names = db->queryColumn("select id from results where search='" + db->escape([self.id UTF8String]) + "';");
     for (std::vector<std::string>::const_iterator it(names.begin()), end(names.end()); it != end; ++it) {
-        [self.results addObject: [NSString stringWithFormat:@"%s", it->c_str()]];
+        [self.results addObject: [SpCResultView makeWithId:[NSString stringWithFormat:@"%s", it->c_str()]]];
     }
     return int([self.results count]);
 }

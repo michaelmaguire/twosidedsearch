@@ -13,6 +13,7 @@
 		AB6EDE6618786E830026A1AB /* libsqlite3.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = AB6EDE6518786E830026A1AB /* libsqlite3.dylib */; };
 		AB937E281929509400FC921D /* MapKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AB937E271929509400FC921D /* MapKit.framework */; };
 		AB937E2B192952F200FC921D /* SpCMapViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = AB937E2A192952F200FC921D /* SpCMapViewController.mm */; };
+		AB937E2E1932B0DF00FC921D /* SpCResultView.mm in Sources */ = {isa = PBXBuildFile; fileRef = AB937E2D1932B0DF00FC921D /* SpCResultView.mm */; };
 		AB9C2E45184EA15400454DCD /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AB9C2E44184EA15400454DCD /* Foundation.framework */; };
 		AB9C2E47184EA15400454DCD /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AB9C2E46184EA15400454DCD /* CoreGraphics.framework */; };
 		AB9C2E49184EA15400454DCD /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AB9C2E48184EA15400454DCD /* UIKit.framework */; };
@@ -56,6 +57,8 @@
 		AB937E271929509400FC921D /* MapKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MapKit.framework; path = System/Library/Frameworks/MapKit.framework; sourceTree = SDKROOT; };
 		AB937E29192952F200FC921D /* SpCMapViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SpCMapViewController.h; sourceTree = "<group>"; };
 		AB937E2A192952F200FC921D /* SpCMapViewController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = SpCMapViewController.mm; sourceTree = "<group>"; };
+		AB937E2C1932B0DF00FC921D /* SpCResultView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SpCResultView.h; sourceTree = "<group>"; };
+		AB937E2D1932B0DF00FC921D /* SpCResultView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = SpCResultView.mm; sourceTree = "<group>"; };
 		AB9C2E41184EA15400454DCD /* SpeedyCrew.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SpeedyCrew.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AB9C2E44184EA15400454DCD /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		AB9C2E46184EA15400454DCD /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
@@ -168,6 +171,8 @@
 				AB6EDE63187869E20026A1AB /* SpCDatabase.mm */,
 				ABD4EA791922DF9F00A37FA1 /* SpCSearchView.h */,
 				ABD4EA7A1922DF9F00A37FA1 /* SpCSearchView.mm */,
+				AB937E2C1932B0DF00FC921D /* SpCResultView.h */,
+				AB937E2D1932B0DF00FC921D /* SpCResultView.mm */,
 				AB6EDE5C187701AE0026A1AB /* SpCSearchViewController.h */,
 				AB6EDE5D187701AE0026A1AB /* SpCSearchViewController.mm */,
 				AB6EDE5F187799BB0026A1AB /* SpCUserViewController.h */,
@@ -307,6 +312,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AB937E2E1932B0DF00FC921D /* SpCResultView.mm in Sources */,
 				AB6EDE61187799BB0026A1AB /* SpCUserViewController.mm in Sources */,
 				AB9C2E51184EA15400454DCD /* main.mm in Sources */,
 				ABD4EA78191FE91F00A37FA1 /* SpCCaptainSearchViewController.mm in Sources */,

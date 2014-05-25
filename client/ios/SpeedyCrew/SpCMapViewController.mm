@@ -33,6 +33,7 @@
     MKCoordinateRegion region = MKCoordinateRegionMakeWithDistance(position, 5000, 500);
     [self.mapView setRegion: region animated: NO];
     [self.mapView addAnnotation: self.search];
+    [self.mapView addAnnotations: self.search.results];
 }
 
 - (void)didReceiveMemoryWarning
@@ -55,11 +56,13 @@
 // ----------------------------------------------------------------------------
 
 - (MKAnnotationView *)mapView:(MKMapView *)mapView viewForAnnotation:(id<MKAnnotation>) annotation {
-    NSLog(@"viewForAnnotation");
     MKPinAnnotationView *rc = [[MKPinAnnotationView alloc] initWithAnnotation:annotation reuseIdentifier:@"pin"];
-    rc.pinColor = MKPinAnnotationColorPurple;
     rc.canShowCallout = YES;
-    rc.draggable = YES;
+
+    if ([annotation.subtitle isEqualToString:@"drag to relocate"]) {
+        rc.pinColor = MKPinAnnotationColorPurple;
+        rc.draggable = YES;
+    }
     return rc;
 }
 
