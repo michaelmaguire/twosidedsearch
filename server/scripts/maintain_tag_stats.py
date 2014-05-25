@@ -14,7 +14,7 @@ def run(connection):
                         FROM speedycrew.search s
                         JOIN speedycrew.search_tag st ON s.id = st.search
                        WHERE created > now() - INTERVAL '7 days'
-                       GROUP BY st.tag, s.side""")
+                       GROUP BY st.tag""")
     connection.commit()
 
 if __name__ == "__main__":
