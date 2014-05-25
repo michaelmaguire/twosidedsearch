@@ -65,4 +65,35 @@
     return rc;
 }
 
+// ----------------------------------------------------------------------------
+// Annotation functions
+
+- (CLLocationCoordinate2D)coordinate
+{
+    return [self getPosition];
+}
+
+- (void)setCoordinate:(CLLocationCoordinate2D)position
+{
+#if 0
+    //-dk:TODO update the search position rather than just setting data!
+#else
+    SpCData* data = [SpCAppDelegate instance].data;
+    data.latitude  = position.latitude;
+    data.longitude = position.longitude;
+#endif
+}
+
+- (NSString*)title
+{
+    SpeedyCrew::Database* db = [SpCDatabase getDatabase];
+    std::string id = [self.id UTF8String];
+    std::string search = db->query<std::string>("select search from searches where id='" + id + "'");
+    return [NSString stringWithFormat:@"%s", search.c_str()];
+}
+
+- (NSString*)subtitle
+{
+    return @"drag to relocate";
+}
 @end

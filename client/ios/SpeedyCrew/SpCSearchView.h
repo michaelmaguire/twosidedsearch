@@ -8,9 +8,13 @@
 
 #import <Foundation/Foundation.h>
 #import <CoreLocation/CoreLocation.h>
+#import <MapKit/MapKit.h>
 
-@interface SpCSearchView : NSObject
+@interface SpCSearchView : NSObject<MKAnnotation>
 
+@property (nonatomic, readonly)       CLLocationCoordinate2D coordinate;
+@property (nonatomic, readonly, copy) NSString*              title;
+@property (nonatomic, readonly, copy) NSString*              subtitle;
 @property (readonly) NSString*               id;
 @property (readonly) NSString*               side;
 @property            bool                    expanded;
@@ -20,5 +24,6 @@
 - (SpCSearchView*)initWithId:(NSString*)id andSide:(NSString*)side;
 - (int)updateResults;
 - (CLLocationCoordinate2D)getPosition;
+- (void)setCoordinate:(CLLocationCoordinate2D)position;
 
 @end

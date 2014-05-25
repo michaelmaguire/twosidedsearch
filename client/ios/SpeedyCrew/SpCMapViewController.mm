@@ -31,7 +31,8 @@
 
     self.mapView.showsUserLocation = YES;
     MKCoordinateRegion region = MKCoordinateRegionMakeWithDistance(position, 5000, 500);
-    [ self.mapView setRegion: region animated: NO];
+    [self.mapView setRegion: region animated: NO];
+    [self.mapView addAnnotation: self.search];
 }
 
 - (void)didReceiveMemoryWarning
@@ -50,5 +51,16 @@
     // Pass the selected object to the new view controller.
 }
 */
+
+// ----------------------------------------------------------------------------
+
+- (MKAnnotationView *)mapView:(MKMapView *)mapView viewForAnnotation:(id<MKAnnotation>) annotation {
+    NSLog(@"viewForAnnotation");
+    MKPinAnnotationView *rc = [[MKPinAnnotationView alloc] initWithAnnotation:annotation reuseIdentifier:@"pin"];
+    rc.pinColor = MKPinAnnotationColorPurple;
+    rc.canShowCallout = YES;
+    rc.draggable = YES;
+    return rc;
+}
 
 @end

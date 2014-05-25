@@ -168,6 +168,9 @@
                             <mapView clipsSubviews="YES" multipleTouchEnabled="YES" tag="-1005" contentMode="scaleToFill" mapType="standard" translatesAutoresizingMaskIntoConstraints="NO" id="9Zr-tn-1Mw">
                                 <rect key="frame" x="0.0" y="65" width="320" height="367"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                <connections>
+                                    <outlet property="delegate" destination="x9z-Rd-cis" id="sDp-w1-D0F"/>
+                                </connections>
                             </mapView>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
