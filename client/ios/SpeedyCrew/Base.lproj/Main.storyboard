@@ -103,6 +103,7 @@
                                                     <connections>
                                                         <action selector="onHeaderNavigationClicked:" destination="6lY-qQ-pQY" eventType="touchUpInside" id="Aho-RN-YVx"/>
                                                         <action selector="onHeaderNavigationClicked:" destination="s4P-oZ-1DX" eventType="touchUpInside" id="rVC-sE-6At"/>
+                                                        <segue destination="x9z-Rd-cis" kind="modal" id="Aib-Vm-cU6"/>
                                                     </connections>
                                                 </button>
                                             </subviews>
@@ -125,6 +126,40 @@
                 <placeholder placeholderIdentifier="IBFirstResponder" id="Gah-gj-3oZ" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="-1360" y="-2136"/>
+        </scene>
+        <!--SpC Map View Controller-->
+        <scene sceneID="MLm-5D-eyf">
+            <objects>
+                <viewController id="x9z-Rd-cis" customClass="SpCMapViewController" sceneMemberID="viewController">
+                    <layoutGuides>
+                        <viewControllerLayoutGuide type="top" id="1UJ-rc-M3z"/>
+                        <viewControllerLayoutGuide type="bottom" id="CRd-Ge-5jU"/>
+                    </layoutGuides>
+                    <view key="view" contentMode="scaleToFill" id="jmi-Wr-bHg">
+                        <rect key="frame" x="0.0" y="0.0" width="320" height="480"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                        <subviews>
+                            <mapView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" fixedFrame="YES" mapType="standard" translatesAutoresizingMaskIntoConstraints="NO" id="9Zr-tn-1Mw">
+                                <rect key="frame" x="0.0" y="80" width="320" height="400"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                            </mapView>
+                            <navigationBar contentMode="scaleToFill" fixedFrame="YES" backIndicatorImage="Crew" translatesAutoresizingMaskIntoConstraints="NO" id="RSn-F8-pRQ">
+                                <rect key="frame" x="0.0" y="36" width="320" height="44"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
+                                <items>
+                                    <navigationItem title="Title" id="Fjw-nl-0ej"/>
+                                </items>
+                            </navigationBar>
+                        </subviews>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
+                    </view>
+                    <connections>
+                        <outlet property="backButton" destination="Fjw-nl-0ej" id="7th-tx-NpV"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="Cxe-8L-Euf" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="-774" y="-2136"/>
         </scene>
         <!--SpC Captain Search View Controller - I'm Captain-->
         <scene sceneID="MR8-Rg-Zhj">
