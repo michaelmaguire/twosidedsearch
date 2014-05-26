@@ -57,7 +57,7 @@
     int tag = 0;
     for (UIView* parent = button.superview; parent != Nil; parent = parent.superview) {
         if (parent.tag != 0) {
-            tag = parent.tag;
+            tag = (int)parent.tag;
             break;
         }
     }
@@ -124,6 +124,14 @@
     std::string text = db->query<std::string>("select search from searches where id='" + db->escape([search.id UTF8String]) + "';");
     UIButton* title = (UIButton*)[header viewWithTag: -1002];
     [title setTitle: [NSString stringWithFormat:@"%s", text.c_str()] forState:UIControlStateNormal];
+
+    UISwipeGestureRecognizer *swipe = [[UISwipeGestureRecognizer alloc]
+                                          initWithTarget:self
+                                                  action:@selector(onRemove:)];
+    swipe.direction               = UISwipeGestureRecognizerDirectionLeft;
+    swipe.numberOfTouchesRequired = 1;
+    [header addGestureRecognizer:swipe];
+
     return header;
 }
 
@@ -178,6 +186,17 @@
 
 - (IBAction)onHeaderNavigationClicked:(id)sender
 {
+}
+
+// ----------------------------------------------------------------------------
+
+- (void)onRemove:(UIGestureRecognizer *)recognizer
+{
+    UIView* view = (UIView*)recognizer.view;
+    //-dk:TODO this should really display a delete button...
+    SpCSearchView* search = [self.searches objectAtIndex:view.tag - 1];
+    SpCData* data = [SpCAppDelegate instance].data;
+    [data deleteSearch:search.id];
 }
 
 // ----------------------------------------------------------------------------

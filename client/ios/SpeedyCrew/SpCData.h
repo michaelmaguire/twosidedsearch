@@ -22,5 +22,6 @@
 
 - (void)addSearchWithText:(NSString*)text forSide:(NSString*)side;
 - (void)updateSearches;
+- (void)deleteSearch:(NSString*)id;
 
 @end

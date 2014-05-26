@@ -128,6 +128,7 @@
                                                 <constraint firstAttribute="bottom" secondItem="8yo-rz-DRI" secondAttribute="bottom" id="yxc-hW-Xk6"/>
                                             </constraints>
                                         </tableViewCellContentView>
+                                        <gestureRecognizers/>
                                     </tableViewCell>
                                 </prototypes>
                                 <connections>
@@ -137,6 +138,7 @@
                             </tableView>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
+                        <gestureRecognizers/>
                         <constraints>
                             <constraint firstItem="AGd-yb-SDG" firstAttribute="trailing" secondItem="O4D-RI-3tp" secondAttribute="trailing" id="0gd-Im-e7k"/>
                             <constraint firstItem="AGd-yb-SDG" firstAttribute="leading" secondItem="O4D-RI-3tp" secondAttribute="leading" id="UGa-WE-UNp"/>

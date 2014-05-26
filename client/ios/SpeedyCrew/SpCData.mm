@@ -72,6 +72,13 @@
     [self sendHttpRequest:@"create_search" withBody: query];
 }
 
+- (void)deleteSearch:(NSString*)id
+{
+    NSLog(@"removing search: '%@'", id);
+    NSString* query = [NSString stringWithFormat:@"x-id=%@&search=%@", self.identity, id];
+    [self sendHttpRequest:@"delete_search" withBody: query];
+}
+
 - (void)receivedResponse:(NSData*)data
 {
     NSLog(@"received reponse: '%@'", [[NSString alloc] initWithData: data encoding: NSUTF8StringEncoding]);
@@ -139,6 +146,9 @@
             else if ([type isEqual:@"create_search_response"]) {
                 [self sendHttpRequest: @"searches" withBody:[NSString stringWithFormat:@"x-id=%@", self.identity]];
             } 
+            else if ([type isEqual:@"delete_search_response"]) {
+                [self updateSearches];
+            }
             else {
                 NSLog(@"unprocessed message type='%@'", type);
             }
