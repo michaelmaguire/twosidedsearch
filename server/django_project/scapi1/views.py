@@ -7,6 +7,8 @@ import uuid
 import re
 from M2Crypto import X509
 
+MAX_FETCH_EVENTS = 100
+
 def json_response(object):
     """A convenience function for generating a JSON HTTP response."""
     return HttpResponse(json.dumps(object, indent=4),
@@ -95,6 +97,7 @@ def synchronise(request, device_sequence):
     header = "" # messages for the device app to parse
     sql = ""    # messages for the device app to feed to sqlite
 
+    header += "-- @VERSION=1\n"
     need_full_resync = False
     device_sequence = int(device_sequence) # TODO investigate size of int
     if device_sequence == 0:
@@ -140,13 +143,15 @@ def synchronise(request, device_sequence):
             sql += param("INSERT INTO search (id, query, side, address, postcode city, country, longitude, latitude, radius) VALUES (%s, %s, %s, %s, %s ,%s, %s, %s, %s, %s);\n",
                          row)                                 
 
-        cursor.execute("""SELECT s1.id,
-                                 s2.query,
+        cursor.execute("""SELECT s2.id AS other_search_id,
+                                 s1.id AS my_search_id,
                                  p2.username,
                                  d2.id AS fingerprint,
-                                 st_distance(s1.geography, s2.geography) AS distance,
+                                 s2.query,
                                  st_x(s2.geography::geometry) AS longitude,
-                                 st_y(s2.geography::geometry) AS latitude
+                                 st_y(s2.geography::geometry) AS latitude,
+                                 st_distance(s1.geography, s2.geography) AS distance,
+                                 1 AS score
                             FROM speedycrew.match m
                             JOIN speedycrew.search s2 ON m.b = s2.id
                             JOIN speedycrew.profile p2 ON s2.owner = p2.id
@@ -157,7 +162,7 @@ def synchronise(request, device_sequence):
                              AND s2.status = 'ACTIVE'""",
                        (profile_id, ))
         for row in cursor:
-            sql += param("INSERT INTO match (search, query, username, fingerprint, distance, longitude, latitude) VALUES (%s, %s, %s, %s, %s, %s, %s);\n",
+            sql += param("INSERT INTO match (id, search, username, fingerprint, query, longitude, latitude, distance, score) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);\n",
                          row)                           
 
         cursor.execute("""SELECT username, real_name, email, message
@@ -173,8 +178,83 @@ def synchronise(request, device_sequence):
 
         sql += "COMMIT;\n"
     else:
-        # TODO build incremental results
-        header += "-- @SQL"
+        # build incremental results
+        sql += "BEGIN;\n"
+        # maybe there is a better way to do this... it sure looks
+        # overgrown/ugly... the basic idea here is to read the
+        # appropriate range of events from the event table, LEFT
+        # JOINed against the various things it refers to (messages,
+        # searches, ...), so we can generate the necessary
+        # INSERT/UPDATE/DELETE statements for the denormalised data we
+        # push to the device database
+        #
+        # TODO: assumes one device per profile, need to fix
+        cursor.execute("""SELECT e.seq,
+                                 e.type,
+                                 message.body,
+                                 my_search.id,
+                                 my_search.query,
+                                 my_search.side,
+                                 my_search.address,
+                                 my_search.postcode,
+                                 my_search.city,
+                                 my_search.country,
+                                 my_search.radius,
+                                 st_x(my_search.geography::geometry) AS my_search_longitude,
+                                 st_y(my_search.geography::geometry) AS my_search_latitude,                           
+                                 match_search.id,
+                                 match_profile.username,
+                                 match_device.id AS match_fingerprint,
+                                 match_search.query,
+                                 st_distance(my_search.geography, match_search.geography) AS distance,
+                                 st_x(match_search.geography::geometry) AS longitude,
+                                 st_y(match_search.geography::geometry) AS latitude,
+                                 1 AS score
+                            FROM speedycrew.event e
+                       LEFT JOIN speedycrew.message ON e.message = message.id
+                       LEFT JOIN speedycrew.search my_search ON e.search = my_search.id
+                       LEFT JOIN speedycrew.search match_search ON e.match = match_search.id
+                       LEFT JOIN speedycrew.profile match_profile ON match_search.owner = match_profile.id
+                       LEFT JOIN speedycrew.device match_device ON match_profile.id = match_device.profile
+                           WHERE e.profile = %s
+                             AND e.seq > %s
+                           ORDER BY e.seq
+                           LIMIT %s""",
+                       (profile_id, device_sequence, MAX_FETCH_EVENTS))
+        count = 0
+        highest_sequence = None
+        for sequence, type, message_body, my_search_id, my_search_query, my_search_side, my_search_address, my_search_postcode, my_search_city, my_search_country, my_search_radius, my_search_latitude, my_search_longitude, match_search_id, match_username, match_fingerprint, match_query, match_distance, match_longitude, match_latitude, match_score in cursor:
+            count += 1
+            highest_sequence = sequence
+            if match_search_id:
+                if type == "INSERT":
+                    header += "-- @INSERT match/%s\n" % match_search_id
+                    sql += param("INSERT INTO match (id, search, username, fingerprint, query, latitude, longitude, distance, score) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);\n",
+                                 (match_search_id, my_search_id, match_username, match_fingerprint, match_query, match_distance, match_longitude, match_latitude, match_score))
+                elif type == "UPDATE":
+                    # TODO update for matches
+                    pass
+                elif type == "DELETE":
+                    header += "-- @DELETE match/%s\n" % match_search_id
+                    sql += param("DELETE FROM match WHERE id = %s;\n", (match_search_id,))
+            elif my_search_id:
+                if type == "INSERT":
+                    header += "-- @INSERT search/%s\n" % my_search_id
+                    sql += param("INSERT INTO search (id, query, side, address, postcode, city, country, radius, latitude, longitude) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);\n",
+                                 (my_search_id, my_search_query, my_search_side, my_search_address, my_search_postcode, my_search_city, my_search_country, my_search_radius, my_search_latitude, my_search_longitude))
+                elif type == "UPDATE":
+                    header += "-- @UPDATE search/%s\n" % my_search_id
+                    # TODO update for searches
+                elif type == "DELETE":
+                    header += "-- @DELETE search/%s\n" % my_search_id
+             
+        if count == MAX_FETCH_EVENTS:
+            # this means please call again immediately as there are
+            # probably more events for you
+            header += "-- @MORE\n"
+        if highest_sequence:
+            sql += param("UPDATE control SET sequence = %s;\n", (highest_sequence,))
+        sql += "COMMIT;\n"
 
     return HttpResponse(header + "-- @SQL\n" + sql, content_type="text/plain")
 
@@ -277,6 +357,8 @@ def update_profile(request):
                            "request_id" : request_id,
                            "status" : "OK" })
 
+# TODO this will be removed (made obsolete by the new synchronisation
+# system)
 def searches(request):
     """A view handler that returns a summary of the user's currently
     active searches."""
@@ -423,6 +505,8 @@ def delete_search(request):
                                "request_id" : request_id,
                                "status" : "ERROR" })
 
+# TODO this will be removed (made obsolete by the new synchronisation
+# system)
 def search_results(request):
     """A dumb request for all results for a given search ID."""
     profile_id = begin(request)
