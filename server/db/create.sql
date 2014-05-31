@@ -14,7 +14,6 @@ create table profile (
   password_hash text,
   status profile_status not null,
   message text,
-  next_batch_sequence integer not null default 0,
   created timestamptz not null default now(),
   modified timestamptz not null default now()
 );
@@ -110,7 +109,6 @@ create table match (
   a integer not null references search(id),
   b integer not null references search(id),
   status match_status not null,
-  batch_sequence integer,
   created timestamptz not null,
   primary key (a, b)
 );
@@ -246,11 +244,16 @@ create table speedycrew.event (
   type event_type not null,
   message integer references message(id),
   search integer references search(id),
+  match integer references search(id),
   primary key (profile, seq)
 );
 
 
+create table speedycrew.control	(
+  timeline integer not null
+);
 
+create unique index control_one_row on speedycrew.control((timeline is not null));
 
 -- some bits and pieces for tracking schema evolution once we have
 -- something solid enough to try for stable rollouts of schema changes

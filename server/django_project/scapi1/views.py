@@ -89,9 +89,18 @@ def param(fmt, values):
     module execute."""
     return fmt % tuple(map(escape, values)) # TODO this is not the modern way, use .format
 
-def synchronise(request, device_sequence):
+def synchronise(request):
     """A view handler for synchronising device data with the server."""
     profile_id = begin(request)
+
+    # TODO investigate size of int and better options
+
+    device_sequence = 0
+    device_timeline = 0
+    if "sequence" in request:
+        device_sequence = int(request["sequence"])
+    if "timeline" in request:
+        device_timeline = int(request["timeline"])
 
     cursor = connection.cursor()
     header = "" # messages for the device app to parse
@@ -99,7 +108,6 @@ def synchronise(request, device_sequence):
 
     header += "-- @VERSION=1\n"
     need_full_resync = False
-    device_sequence = int(device_sequence) # TODO investigate size of int
     if device_sequence == 0:
         need_full_resync = True
     cursor.execute("""SELECT low_sequence, high_sequence
@@ -112,6 +120,12 @@ def synchronise(request, device_sequence):
         # lowest event we have, or the highest event that we have
         # deleted (probably need to try implementing the trimming code
         # to decide which is more convenient)
+        need_full_resync = True
+
+    cursor.execute("""SELECT timeline
+                        FROM speedycrew.control""")
+    timeline = cursor.fetchone()[0]
+    if timeline != device_timeline:
         need_full_resync = True
     
     if need_full_resync:
@@ -165,16 +179,16 @@ def synchronise(request, device_sequence):
             sql += param("INSERT INTO match (id, search, username, fingerprint, query, longitude, latitude, distance, score) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);\n",
                          row)                           
 
-        cursor.execute("""SELECT username, real_name, email, message
+        cursor.execute("""SELECT username, real_name, email, status, message, created, modified
                             FROM speedycrew.profile
                            WHERE id = %s""",
                        (profile_id, ))
-        username, real_name, email, message = cursor.fetchone()
-        sql += param("INSERT INTO profile (username, real_name, email, message) VALUES (%s, %s, %s, %s);\n",
-                        (username, real_name, email, message))
+        username, real_name, email, status, message, created, modified = cursor.fetchone()
+        sql += param("INSERT INTO profile (username, real_name, email, status, message, created, modified) VALUES (%s, %s, %s, %s, %s, %s, %s);\n",
+                        (username, real_name, email, status, message, created, modified))
 
-        sql += param("INSERT INTO control (high_sequence) VALUES (%s);\n",
-                         (high_sequence,))
+        sql += param("INSERT INTO control (timeline, sequence) VALUES (%s, %s);\n",
+                         (timeline, high_sequence,))
 
         sql += "COMMIT;\n"
     else:

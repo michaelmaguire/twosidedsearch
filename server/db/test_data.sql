@@ -42,5 +42,7 @@ values (1, DATE '2013-11-10', 'AVAILABLE', 'Anywhere in London', now()),
        (3, DATE '2013-11-11', 'AVAILABLE', null, now()),
        (3, DATE '2013-11-12', 'AVAILABLE', null, now());
 
+insert into control
+values (1);
 
 commit;
