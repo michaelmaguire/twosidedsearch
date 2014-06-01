@@ -64,7 +64,7 @@ create type search_side as enum ('SEEK', 'PROVIDE');
 create type search_status as enum ('ACTIVE', 'DELETED');
 
 create table search (
-  id serial primary key,
+  id uuid primary key,
   owner integer not null references profile(id),
   query text not null,
   side search_side not null,
@@ -81,7 +81,7 @@ create table search (
 comment on table search is 'A search created by either a seeker or provider of a service';
 
 create table search_tag (
-  search integer not null references search(id),
+  search uuid not null references search(id),
   tag integer not null references tag(id),
   primary key (search, tag)
 );
@@ -102,12 +102,10 @@ comment on table profile_availability is 'A person''s availability status for ea
 
 create type match_status as enum ('ACTIVE', 'DELETED');
 
--- TODO -- drop match.batch_sequence, add a unique single integer ID
--- that can be referenced by event, to make things more uniform
-
 create table match (
-  a integer not null references search(id),
-  b integer not null references search(id),
+  a uuid not null references search(id),
+  b uuid not null references search(id),
+  score double precision not null,
   status match_status not null,
   created timestamptz not null,
   primary key (a, b)
@@ -134,17 +132,23 @@ language sql
 immutable
 returns null on null input;
 
-create or replace function run_search(i_search_id integer) returns void as $$
+create or replace function run_search(i_search_id uuid) returns void as $$
 declare
+  v_profile int;
+  v_other_profile int;
   v_side speedycrew.search_side;
   v_geography geography;
   v_radius float;
-  v_id integer;
+  v_id uuid;
   v_tag_ids integer[];
+  v_score float;
+  v_matches int;
+  v_distance float;
+  v_sequence int;
 begin
   -- load some data from this search into local variables
-  select s.side, s.geography, s.radius
-    into v_side, v_geography, v_radius
+  select s.side, s.geography, s.radius, s.owner
+    into v_side, v_geography, v_radius, v_profile
     from speedycrew.search s
    where s.id = i_search_id;
   if not found then
@@ -156,40 +160,65 @@ begin
    where st.search = i_search_id;
    -- SEEK has a radius (SEEKers are mobile)
   if v_side = 'SEEK' then
-    for v_id in select s.id
-                  from speedycrew.search s
-                  join speedycrew.search_tag st on st.search = s.id
-                 where st_dwithin(s.geography, v_geography, v_radius)
-                   and st.tag = any (v_tag_ids)
-                   and s.side = 'PROVIDE'
-    loop
-      begin
-        insert into speedycrew.match (a, b, status, created)
-        values (i_search_id, v_id, 'ACTIVE', now()),
-               (v_id, i_search_id, 'ACTIVE', now());
-      exception when unique_violation then
-        -- do nothing
-      end;
-    end loop;
+    create temporary table temp_matches as    
+    select s.id,
+           count(*) as matches,
+           st_distance(s.geography, v_geography) as distance,
+           count(*) + 1 / greatest(1, st_distance(s.geography, v_geography)) as score
+      from speedycrew.search s
+      join speedycrew.search_tag st on st.search = s.id
+     where st_dwithin(s.geography, v_geography, v_radius)
+       and st.tag = any (v_tag_ids)
+       and s.side = 'PROVIDE'
+     group by s.id;
   else
     -- v_side = 'PROVIDE'
-    for v_id in select s.id
-                  from speedycrew.search s
-                  join speedycrew.search_tag st on st.search = s.id
-                 where st_dwithin(s.geography, v_geography, s.radius)
-                   and st.tag = any (v_tag_ids)                  
-                   and s.side = 'SEEK'
-    loop
-      -- TODO avoid this duplicated code
-      begin
-        insert into speedycrew.match (a, b, status, created)
-        values (i_search_id, v_id, 'ACTIVE', now()),
-               (v_id, i_search_id, 'ACTIVE', now());
-        exception when unique_violation then
-        -- do nothing
-      end;
-    end loop;
+    create temporary table temp_matches as
+    select s.id,
+           count(*) as matches,
+           st_distance(s.geography, v_geography) as distance,
+           count(*) + 1 / greatest(1, st_distance(s.geography, v_geography)) as score
+      from speedycrew.search s
+      join speedycrew.search_tag st on st.search = s.id
+     where st_dwithin(s.geography, v_geography, s.radius)
+       and st.tag = any (v_tag_ids)                  
+       and s.side = 'SEEK'
+     group by s.id;
   end if;
+  -- now we feed the results out of the temp table in id order, to
+  -- avoid deadlocks on profile_sequence rows
+  for v_id, v_score, v_matches, v_distance in
+    select id, score, matches, distance
+      from temp_matches
+     order by id
+  loop
+      -- insert a match (plus replication event) for OUR match
+      insert into speedycrew.match (a, b, score, status, created)
+      values (i_search_id, v_id, v_score, 'ACTIVE', now());
+      update speedycrew.profile_sequence
+         set high_sequence = high_sequence + 1
+       where profile = v_profile
+   returning high_sequence into v_sequence;
+      insert into speedycrew.event (profile, seq, type, match)
+      values (v_profile, v_sequence, 'INSERT', v_id);
+      -- insert a match (plus replication event) for the other side
+      -- TODO damn it, despite our ORDER BY, there is of course still
+      -- a deadlock here... may need to break into smaller
+      -- transactions
+      select owner
+        into v_other_profile
+        from speedycrew.search
+       where id = v_id;
+      insert into speedycrew.match (b, a, score, status, created)
+      values (i_search_id, v_id, v_score, 'ACTIVE', now());
+      update speedycrew.profile_sequence
+         set high_sequence = high_sequence + 1
+       where profile = v_other_profile
+   returning high_sequence into v_sequence;
+      insert into speedycrew.event (profile, seq, type, match)
+      values (v_other_profile, v_sequence, 'INSERT', i_search_id);
+  end loop;  
+  drop table temp_matches;
 end;
 $$
 language 'plpgsql';
@@ -243,8 +272,8 @@ create table speedycrew.event (
   seq integer not null, 
   type event_type not null,
   message integer references message(id),
-  search integer references search(id),
-  match integer references search(id),
+  search uuid references search(id),
+  match uuid references search(id),
   primary key (profile, seq)
 );
 

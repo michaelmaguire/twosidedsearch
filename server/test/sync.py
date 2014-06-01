@@ -3,6 +3,7 @@
 import os
 import psycopg2
 import unittest
+import urllib
 import urllib2
 import sqlite3
 
@@ -49,11 +50,15 @@ def device_timeline_and_sequence(db):
     else:
         return (0, 0)
 
-def fetch_sync_data(db):
+def synchronise(db):
     timeline, sequence = device_timeline_and_sequence(db)
     script = urllib2.urlopen(base_url + "/api/1/synchronise?x-id=" + x_id + ";timeline=" + str(timeline) + ";sequence=" + str(sequence)).read()
-    print script
+    #print script
     db.executescript(script)
+    if script.find("@REFRESH") != -1:
+        return "refresh"
+    else:
+        return "incremental"
 
 class Simple(unittest.TestCase):
     def setUp(self):
@@ -62,13 +67,37 @@ class Simple(unittest.TestCase):
         self.cursor = self.local_db.cursor()
         
     def test_smoke(self):
-        fetch_sync_data(self.local_db)
+        self.assertEqual("refresh", synchronise(self.local_db))
         self.assertEqual(device_timeline_and_sequence(self.local_db), (1, 0))
-        fetch_sync_data(self.local_db)
+        self.assertEqual("incremental", synchronise(self.local_db))
         self.assertEqual(device_timeline_and_sequence(self.local_db), (1, 0))
 
     def test_post_search(self):
-        pass
+        # put a matchable query in first
+        data = urllib.urlencode({ "x-id" : "other-guy",
+                                  "id" : "00000000-0000-0000-0000-000000000000",
+                                  "query" : "test #tag1 #tag2",
+                                  "side" : "PROVIDE",
+                                  "longitude" : "0.01",
+                                  "latitude" : "50" })
+        urllib2.urlopen(base_url + "/api/1/create_search", data)
+
+        self.assertEqual("refresh", synchronise(self.local_db))
+        self.assertEqual(device_timeline_and_sequence(self.local_db), (1, 0))
+        data = urllib.urlencode({ "x-id" : x_id,
+                                  "id" : "00000000-0000-0000-0000-000000000001",
+                                  "query" : "test #tag1 #tag2",
+                                  "side" : "SEEK",
+                                  "radius" : "10000",
+                                  "longitude" : "0",
+                                  "latitude" : "50" })
+        urllib2.urlopen(base_url + "/api/1/create_search", data)
+        self.assertEqual("incremental", synchronise(self.local_db))
+        self.assertEqual(device_timeline_and_sequence(self.local_db), (1, 2))
+        self.cursor.execute("""SELECT id, query FROM search""")
+        self.assertEqual(("00000000-0000-0000-0000-000000000001", "test #tag1 #tag2"), self.cursor.fetchone())
+        self.cursor.execute("""SELECT * FROM match""")
+        print self.cursor.fetchone()
 
 if __name__ == "__main__":
     unittest.main()

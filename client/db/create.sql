@@ -19,10 +19,15 @@ create table profile (
 
 create table search (
   id text primary key,
-  query text,                         -- "I am a #chef"
-  side text,                          -- "PROVIDE" or "SEEK"
-  latitude float,
-  longitude float
+  query text not null,                -- "I am a #chef"
+  side text not null,                 -- "PROVIDE" or "SEEK"
+  address text,
+  postcode text,
+  city text,
+  country text,
+  radius float,
+  latitude float not null,
+  longitude float not null
 );
 
 create table match (

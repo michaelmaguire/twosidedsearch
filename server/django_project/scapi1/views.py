@@ -94,22 +94,22 @@ def synchronise(request):
     profile_id = begin(request)
 
     # TODO investigate size of int and better options
-
     device_sequence = 0
     device_timeline = 0
-    if "sequence" in request:
-        device_sequence = int(request["sequence"])
-    if "timeline" in request:
-        device_timeline = int(request["timeline"])
+    print request.REQUEST
+    if "sequence" in request.REQUEST:
+        device_sequence = int(request.REQUEST["sequence"])
+    if "timeline" in request.REQUEST:
+        device_timeline = int(request.REQUEST["timeline"])
+    print device_timeline, device_sequence
 
     cursor = connection.cursor()
     header = "" # messages for the device app to parse
     sql = ""    # messages for the device app to feed to sqlite
 
     header += "-- @VERSION=1\n"
+
     need_full_resync = False
-    if device_sequence == 0:
-        need_full_resync = True
     cursor.execute("""SELECT low_sequence, high_sequence
                         FROM speedycrew.profile_sequence
                        WHERE profile = %s""",
@@ -121,11 +121,17 @@ def synchronise(request):
         # deleted (probably need to try implementing the trimming code
         # to decide which is more convenient)
         need_full_resync = True
-
+        print "need full resync because low_sequence > device_sequence"
     cursor.execute("""SELECT timeline
                         FROM speedycrew.control""")
     timeline = cursor.fetchone()[0]
     if timeline != device_timeline:
+        # either the device has never been synced or there has been
+        # some kind of server-side problem major enough to require all
+        # clients to resync (example: database restored from backups,
+        # some data lost)
+        print "got timeline = ", timeline, " device_timeline = ", device_timeline
+        print "so need full resync"
         need_full_resync = True
     
     if need_full_resync:
@@ -154,7 +160,7 @@ def synchronise(request):
                              AND s.status = 'ACTIVE'""",
                        (profile_id, ))
         for row in cursor:
-            sql += param("INSERT INTO search (id, query, side, address, postcode city, country, longitude, latitude, radius) VALUES (%s, %s, %s, %s, %s ,%s, %s, %s, %s, %s);\n",
+            sql += param("INSERT INTO search (id, query, side, address, postcode, city, country, longitude, latitude, radius) VALUES (%s, %s, %s, %s, %s ,%s, %s, %s, %s, %s);\n",
                          row)                                 
 
         cursor.execute("""SELECT s2.id AS other_search_id,
@@ -241,6 +247,7 @@ def synchronise(request):
             count += 1
             highest_sequence = sequence
             if match_search_id:
+                print "match thingee"
                 if type == "INSERT":
                     header += "-- @INSERT match/%s\n" % match_search_id
                     sql += param("INSERT INTO match (id, search, username, fingerprint, query, latitude, longitude, distance, score) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);\n",
@@ -252,6 +259,7 @@ def synchronise(request):
                     header += "-- @DELETE match/%s\n" % match_search_id
                     sql += param("DELETE FROM match WHERE id = %s;\n", (match_search_id,))
             elif my_search_id:
+                print "search thingee"
                 if type == "INSERT":
                     header += "-- @INSERT search/%s\n" % my_search_id
                     sql += param("INSERT INTO search (id, query, side, address, postcode, city, country, radius, latitude, longitude) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);\n",
@@ -436,14 +444,20 @@ def create_search(request):
     longitude = request.REQUEST["longitude"]
     latitude = request.REQUEST["latitude"]
 
-
     # optional parameters
+    id = param_or_null(request, "id")
     request_id = param_or_null(request, "request_id")
     address = param_or_null(request, "address")
     city = param_or_null(request, "city")
     country = param_or_null(request, "country")
     postcode = param_or_null(request, "postcode")
     radius = param_or_null(request, "radius") # required if side = PROVIDE
+
+
+    if id == None:
+        # device should supply this, but for a short time only i'll
+        # make one up if none was included in the request
+        id = str(uuid.uuid4())
 
     tags = re.findall(r"#(\w+)", query)    
     if not tags:
@@ -452,7 +466,7 @@ def create_search(request):
                                "status" : "ERROR",
                                "message" : "query contains no tags" })
 
-    # resolve tags to tag IDs, creating this if necessary
+    # resolve tags to tag IDs, creating them if necessary
     tag_ids = []
     for tag in tags:
         cursor.execute("""SELECT id, status
@@ -476,19 +490,30 @@ def create_search(request):
                                        "blocked_tag" : tag,
                                        "message" : "tag is not allowed" })
             tag_ids.append(tag_id)
-        
+
     cursor.execute("""INSERT INTO speedycrew.search (id, owner, query, side, address, postcode, city, country, geography, radius, status, created)
-                      VALUES (DEFAULT, %s, %s, %s, %s, %s, %s, %s, speedycrew.make_geo(%s, %s), %s, 'ACTIVE', now())
-                   RETURNING id""",
-                   (profile_id, query, side, address, postcode, city, country, longitude, latitude, radius))
-    search_id = cursor.fetchone()[0]
+                      VALUES (%s, %s, %s, %s, %s, %s, %s, %s, speedycrew.make_geo(%s, %s), %s, 'ACTIVE', now())""",
+                   (id, profile_id, query, side, address, postcode, city, country, longitude, latitude, radius))
+
     for tag_id in tag_ids:
         cursor.execute("""INSERT INTO speedycrew.search_tag VALUES (%s, %s)""",
-                       (search_id, tag_id))
+                       (id, tag_id))
+
+        
+    # TODO review lock duration on profile records
+    cursor.execute("""UPDATE speedycrew.profile_sequence
+                         SET high_sequence = high_sequence + 1
+                       WHERE profile = %s
+                   RETURNING high_sequence""",
+                   (profile_id, ))
+    next_sequence, = cursor.fetchone()
+    cursor.execute("""INSERT INTO speedycrew.event (profile, seq, type, search)
+                      VALUES (%s, %s, 'INSERT', %s)""",
+                   (profile_id, next_sequence, id))
 
     # TODO since the user is waiting, do some kind of limited version
     # of run_search synchronously?
-    cursor.execute("""SELECT speedycrew.run_search(%s)""", (search_id, ))
+    cursor.execute("""SELECT speedycrew.run_search(%s::uuid)""", (id, ))
 
     # TODO feed some actual responses back?  that'd be friendly.  for
     # now, here, take a number, go and get the results with another
@@ -496,7 +521,7 @@ def create_search(request):
     return json_response({ "message_type" : "create_search_response",
                            "request_id" : request_id,
                            "status" : "OK",
-                           "search_id" : search_id })
+                           "search_id" : id })
 
 def delete_search(request):
     """End an existing active search."""
