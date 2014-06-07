@@ -171,7 +171,9 @@ def synchronise(request):
                                  st_x(s2.geography::geometry) AS longitude,
                                  st_y(s2.geography::geometry) AS latitude,
                                  st_distance(s1.geography, s2.geography) AS distance,
-                                 1 AS score
+                                 m.matches,
+                                 m.distance,
+                                 m.score
                             FROM speedycrew.match m
                             JOIN speedycrew.search s2 ON m.b = s2.id
                             JOIN speedycrew.profile p2 ON s2.owner = p2.id
@@ -182,7 +184,7 @@ def synchronise(request):
                              AND s2.status = 'ACTIVE'""",
                        (profile_id, ))
         for row in cursor:
-            sql += param("INSERT INTO match (id, search, username, fingerprint, query, longitude, latitude, distance, score) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);\n",
+            sql += param("INSERT INTO match (id, search, username, fingerprint, query, longitude, latitude, distance, matches, distance, score) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);\n",
                          row)                           
 
         cursor.execute("""SELECT username, real_name, email, status, message, created, modified
@@ -226,16 +228,18 @@ def synchronise(request):
                                  match_profile.username,
                                  match_device.id AS match_fingerprint,
                                  match_search.query,
-                                 st_distance(my_search.geography, match_search.geography) AS distance,
                                  st_x(match_search.geography::geometry) AS longitude,
                                  st_y(match_search.geography::geometry) AS latitude,
-                                 1 AS score
+                                 match.matches,
+                                 match.distance,
+                                 match.score
                             FROM speedycrew.event e
                        LEFT JOIN speedycrew.message ON e.message = message.id
                        LEFT JOIN speedycrew.search my_search ON e.search = my_search.id
                        LEFT JOIN speedycrew.search match_search ON e.match = match_search.id
                        LEFT JOIN speedycrew.profile match_profile ON match_search.owner = match_profile.id
                        LEFT JOIN speedycrew.device match_device ON match_profile.id = match_device.profile
+                       LEFT JOIN speedycrew.match ON e.search = match.a AND e.match = match.b
                            WHERE e.profile = %s
                              AND e.seq > %s
                            ORDER BY e.seq
@@ -243,15 +247,15 @@ def synchronise(request):
                        (profile_id, device_sequence, MAX_FETCH_EVENTS))
         count = 0
         highest_sequence = None
-        for sequence, type, message_body, my_search_id, my_search_query, my_search_side, my_search_address, my_search_postcode, my_search_city, my_search_country, my_search_radius, my_search_latitude, my_search_longitude, match_search_id, match_username, match_fingerprint, match_query, match_distance, match_longitude, match_latitude, match_score in cursor:
+        for sequence, type, message_body, my_search_id, my_search_query, my_search_side, my_search_address, my_search_postcode, my_search_city, my_search_country, my_search_radius, my_search_latitude, my_search_longitude, match_search_id, match_username, match_fingerprint, match_query, match_longitude, match_latitude, match_matches, match_distance, match_score in cursor:
             count += 1
             highest_sequence = sequence
             if match_search_id:
                 print "match thingee"
                 if type == "INSERT":
                     header += "-- @INSERT match/%s\n" % match_search_id
-                    sql += param("INSERT INTO match (id, search, username, fingerprint, query, latitude, longitude, distance, score) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);\n",
-                                 (match_search_id, my_search_id, match_username, match_fingerprint, match_query, match_distance, match_longitude, match_latitude, match_score))
+                    sql += param("INSERT INTO match (id, search, username, fingerprint, query, latitude, longitude, distance, matches, distance, score) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);\n",
+                                 (match_search_id, my_search_id, match_username, match_fingerprint, match_query, match_distance, match_longitude, match_latitude, match_matches, match_distance, match_score))
                 elif type == "UPDATE":
                     # TODO update for matches
                     pass

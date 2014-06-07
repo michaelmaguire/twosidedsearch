@@ -39,8 +39,9 @@ create table match (
   query text not null,                -- "I want a #chef"
   latitude float,
   longitude float,
-  distance float,                     -- or compute on fly?
-  score double                        -- for now, how many tags in intersection
+  matches int,
+  distance float,
+  score double
 );
 
 create table message (

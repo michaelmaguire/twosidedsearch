@@ -105,7 +105,9 @@ create type match_status as enum ('ACTIVE', 'DELETED');
 create table match (
   a uuid not null references search(id),
   b uuid not null references search(id),
-  score double precision not null,
+  matches int not null,
+  distance float not null,
+  score float not null,
   status match_status not null,
   created timestamptz not null,
   primary key (a, b)
@@ -132,19 +134,13 @@ language sql
 immutable
 returns null on null input;
 
-create or replace function run_search(i_search_id uuid) returns void as $$
+create or replace function find_matches(i_search_id uuid) returns table (search_id uuid, matches int, distance float, score float) as $$
 declare
   v_profile int;
-  v_other_profile int;
   v_side speedycrew.search_side;
   v_geography geography;
   v_radius float;
-  v_id uuid;
   v_tag_ids integer[];
-  v_score float;
-  v_matches int;
-  v_distance float;
-  v_sequence int;
 begin
   -- load some data from this search into local variables
   select s.side, s.geography, s.radius, s.owner
@@ -160,11 +156,11 @@ begin
    where st.search = i_search_id;
    -- SEEK has a radius (SEEKers are mobile)
   if v_side = 'SEEK' then
-    create temporary table temp_matches as    
+    return query
     select s.id,
-           count(*) as matches,
-           st_distance(s.geography, v_geography) as distance,
-           count(*) + 1 / greatest(1, st_distance(s.geography, v_geography)) as score
+           count(*)::int as matches,
+           st_distance(s.geography, v_geography)::float as distance,
+           (count(*) + 1 / greatest(1, st_distance(s.geography, v_geography)))::float as score
       from speedycrew.search s
       join speedycrew.search_tag st on st.search = s.id
      where st_dwithin(s.geography, v_geography, v_radius)
@@ -173,11 +169,11 @@ begin
      group by s.id;
   else
     -- v_side = 'PROVIDE'
-    create temporary table temp_matches as
+    return query
     select s.id,
-           count(*) as matches,
-           st_distance(s.geography, v_geography) as distance,
-           count(*) + 1 / greatest(1, st_distance(s.geography, v_geography)) as score
+           count(*)::int as matches,
+           st_distance(s.geography, v_geography)::float as distance,
+           (count(*) + 1 / greatest(1, st_distance(s.geography, v_geography)))::float as score
       from speedycrew.search s
       join speedycrew.search_tag st on st.search = s.id
      where st_dwithin(s.geography, v_geography, s.radius)
@@ -185,40 +181,72 @@ begin
        and s.side = 'SEEK'
      group by s.id;
   end if;
-  -- now we feed the results out of the temp table in id order, to
-  -- avoid deadlocks on profile_sequence rows
-  for v_id, v_score, v_matches, v_distance in
-    select id, score, matches, distance
-      from temp_matches
-     order by id
+end;
+$$
+language 'plpgsql';
+
+create or replace function find_matches_mirrored(i_search_id uuid) returns table (a uuid, b uuid, matches int, distance float, score float) as $$
+declare
+  v_search_id uuid;
+  v_matches int;
+  v_distance float;
+  v_score float;
+begin
+  for v_search_id, v_matches, v_distance, v_score in
+    select t.search_id, t.matches, t.distance, t.score
+      from speedycrew.find_matches(i_search_id) t
   loop
-      -- insert a match (plus replication event) for OUR match
-      insert into speedycrew.match (a, b, score, status, created)
-      values (i_search_id, v_id, v_score, 'ACTIVE', now());
+    a := i_search_id;
+    b := v_search_id;
+    matches = v_matches;
+    distance = v_distance;
+    score := v_score;
+    return next;
+    a := v_search_id;
+    b := i_search_id;
+    return next;
+  end loop;
+end;
+$$
+language 'plpgsql';
+
+create or replace function find_matches_mirrored_sorted(i_search_id uuid) returns table (a uuid, b uuid, matches int, distance float, score float) as $$
+begin
+  return query
+  select t.a, t.b, t.matches, t.distance, t.score
+    from speedycrew.find_matches_mirrored(i_search_id) t
+   order by t.a, t.b;
+end;
+$$
+language 'plpgsql';
+
+create or replace function run_search(i_search_id uuid) returns void as $$
+declare
+  v_profile int;
+  v_sequence int;
+  v_a uuid;
+  v_b uuid;
+  v_matches int;
+  v_distance float;
+  v_score float;
+begin
+  for v_a, v_b, v_matches, v_distance, v_score in
+    select t.a, t.b, t.matches, t.distance, t.score
+      from find_matches_mirrored_sorted(i_search_id) t
+  loop
+      select owner
+        into v_profile
+        from speedycrew.search
+       where id = v_a;
+      insert into speedycrew.match (a, b, matches, distance, score, status, created)
+      values (v_a, v_b, v_matches, v_distance, v_score, 'ACTIVE', now());
       update speedycrew.profile_sequence
          set high_sequence = high_sequence + 1
        where profile = v_profile
    returning high_sequence into v_sequence;
-      insert into speedycrew.event (profile, seq, type, match)
-      values (v_profile, v_sequence, 'INSERT', v_id);
-      -- insert a match (plus replication event) for the other side
-      -- TODO damn it, despite our ORDER BY, there is of course still
-      -- a deadlock here... may need to break into smaller
-      -- transactions
-      select owner
-        into v_other_profile
-        from speedycrew.search
-       where id = v_id;
-      insert into speedycrew.match (b, a, score, status, created)
-      values (i_search_id, v_id, v_score, 'ACTIVE', now());
-      update speedycrew.profile_sequence
-         set high_sequence = high_sequence + 1
-       where profile = v_other_profile
-   returning high_sequence into v_sequence;
-      insert into speedycrew.event (profile, seq, type, match)
-      values (v_other_profile, v_sequence, 'INSERT', i_search_id);
+      insert into speedycrew.event (profile, seq, type, search, match)
+      values (v_profile, v_sequence, 'INSERT', v_a, v_b);
   end loop;  
-  drop table temp_matches;
 end;
 $$
 language 'plpgsql';
