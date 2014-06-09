@@ -225,6 +225,18 @@ end;
 $$
 language 'plpgsql';
 
+-- this information is functionally dependent on profile.id, but is
+-- kept in a separate table because it will be frequently updated and
+-- I'm guessing up front without testing that keeping it small will be
+-- a good idea
+create table speedycrew.profile_sequence (
+  profile integer primary key references speedycrew.profile(id) not null,
+  low_sequence integer not null,
+  high_sequence integer not null
+);
+
+comment on table speedycrew.profile_sequence is 'Counters to keep track of the window of event sequence numbers we have for each profile.';
+
 -- Increment the high water sequence for a profile, and return it so
 -- that it can be used for a new event record.  This locks the
 -- profile_sequence row so care must be taken to avoid deadlocks when
@@ -330,23 +342,32 @@ create table speedycrew.file (
 
 comment on table speedycrew.file is 'Filesystem-like data storage for holding arbitrary profile data';
 
-
--- this information is functionally dependent on profile.id, but is
--- kept in a separate table because it will be frequently updated and
--- I'm guessing up front without testing that keeping it small will be
--- a good idea
-create table speedycrew.profile_sequence (
-  profile integer primary key references speedycrew.profile(id) not null,
-  low_sequence integer not null,
-  high_sequence integer not null
+create table speedycrew.room (
+  id uuid primary key,
+  name text,
+  creator int not null references speedycrew.profile(id),
+  created timestamptz not null
 );
 
-comment on table speedycrew.profile_sequence is 'Counters to keep track of the window of event sequence numbers we have for each profile.';
+comment on table speedycrew.room is 'A chat room or channel for discussion.';
+
+create table speedycrew.room_member (
+  room uuid references speedycrew.room(id),
+  profile int references speedycrew.profile(id),
+  creator int not null references speedycrew.profile(id),
+  created timestamptz not null
+);
+
+-- messages can either be in a room (instant messenger style) or free
+-- floating (more like an email); even when they are sent to a 'room',
+-- they must be sent to each other user in the room, because they need
+-- to be encrypted separately for each recipient by the sender device
 
 create table speedycrew.message (
-  id serial primary key,
+  id uuid primary key,
   recipient integer not null references speedycrew.profile(id),
   sender integer null references speedycrew.profile(id),
+  room uuid references speedycrew.room(id),
   body text not null,
   is_read boolean not null,
   is_starred boolean not null,
@@ -363,12 +384,13 @@ create table speedycrew.event (
   profile integer not null references speedycrew.profile(id),
   seq integer not null, 
   type event_type not null,
-  message integer references message(id),
+  message uuid references message(id),
   search uuid references search(id),
   match uuid references search(id),
+  room uuid references room(id),
+  other_profile int references profile(id),
   primary key (profile, seq)
 );
-
 
 create table speedycrew.control	(
   timeline integer not null
@@ -385,7 +407,7 @@ CREATE TABLE speedycrew.schema_change (
     created timestamp with time zone DEFAULT now() NOT NULL
 );
 
-comment on table speedycrew.schema_change is 'Track which changes have been applied.';
+comment on table speedycrew.schema_change is 'Track which changes have been applied to the schema.';
 
 CREATE FUNCTION speedycrew.provide_change(provided_name text) RETURNS void
     LANGUAGE sql
@@ -402,6 +424,5 @@ CREATE FUNCTION speedycrew.require_change(required_name text) RETURNS void
     end if;
   end;
 $$;
-
 
 commit;
