@@ -290,7 +290,8 @@ begin
   -- 'INSERT' events for a match we delete, they will simply be
   -- skipped by future incremental synchronisations
   for v_profile_id, v_a, v_b in
-    with foox as (select s.owner, m.a, m.b
+    with relevant_matches as (
+                  select s.owner, m.a, m.b
                     from speedycrew.search s
                     join speedycrew.match m on s.id = m.a
                    where m.a = i_search_id
@@ -300,7 +301,7 @@ begin
                     join speedycrew.match m on s.id = m.b
                    where m.b = i_search_id)
     select owner, a, b
-      from foox
+      from relevant_matches
      order by owner
   loop
     delete from speedycrew.match
