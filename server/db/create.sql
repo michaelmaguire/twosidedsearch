@@ -185,7 +185,9 @@ end;
 $$
 language 'plpgsql';
 
-create or replace function find_matches_mirrored(i_search_id uuid) returns table (a uuid, b uuid, matches int, distance float, score float) as $$
+create or replace function find_matches_mirrored(i_search_id uuid)
+returns table (a uuid, b uuid, matches int, distance float, score float) as 
+$$
 declare
   v_search_id uuid;
   v_matches int;
@@ -210,43 +212,105 @@ end;
 $$
 language 'plpgsql';
 
-create or replace function find_matches_mirrored_sorted(i_search_id uuid) returns table (a uuid, b uuid, matches int, distance float, score float) as $$
+create or replace function find_matches_mirrored_sorted(i_search_id uuid)
+returns table (profile int, a uuid, b uuid, matches int, distance float, score float) as 
+$$
 begin
   return query
-  select t.a, t.b, t.matches, t.distance, t.score
+  select s.owner, t.a, t.b, t.matches, t.distance, t.score
     from speedycrew.find_matches_mirrored(i_search_id) t
-   order by t.a, t.b;
+    join speedycrew.search s on s.id = t.a
+   order by s.owner;
 end;
 $$
 language 'plpgsql';
 
+-- Increment the high water sequence for a profile, and return it so
+-- that it can be used for a new event record.  This locks the
+-- profile_sequence row so care must be taken to avoid deadlocks when
+-- using this in a transaction involving more than one profile.
+create or replace function next_sequence(i_profile_id int) returns int as $$
+     update speedycrew.profile_sequence
+        set high_sequence = high_sequence + 1
+      where profile = i_profile_id
+  returning high_sequence;
+$$
+language 'sql';
+
 create or replace function run_search(i_search_id uuid) returns void as $$
 declare
   v_profile int;
-  v_sequence int;
   v_a uuid;
   v_b uuid;
   v_matches int;
   v_distance float;
   v_score float;
 begin
-  for v_a, v_b, v_matches, v_distance, v_score in
-    select t.a, t.b, t.matches, t.distance, t.score
+  -- we compute all the matches, sorted by profile so that we can
+  -- generate event sequences for each profile without causing
+  -- deadlocks
+  for v_profile, v_a, v_b, v_matches, v_distance, v_score in
+    select t.profile, t.a, t.b, t.matches, t.distance, t.score
       from find_matches_mirrored_sorted(i_search_id) t
   loop
-      select owner
-        into v_profile
-        from speedycrew.search
-       where id = v_a;
       insert into speedycrew.match (a, b, matches, distance, score, status, created)
       values (v_a, v_b, v_matches, v_distance, v_score, 'ACTIVE', now());
-      update speedycrew.profile_sequence
-         set high_sequence = high_sequence + 1
-       where profile = v_profile
-   returning high_sequence into v_sequence;
       insert into speedycrew.event (profile, seq, type, search, match)
-      values (v_profile, v_sequence, 'INSERT', v_a, v_b);
+      values (v_profile, next_sequence(v_profile), 'INSERT', v_a, v_b);
   end loop;  
+end;
+$$
+language 'plpgsql';
+
+create or replace function delete_search(i_search_id uuid) returns void as $$
+declare
+  v_profile_id int;
+  v_a uuid;
+  v_b uuid;
+begin
+  -- we need to remove all matches that have this search on the a side
+  -- or b side, generating events in profile order to avoid deadlocks
+  -- when we generate event sequences
+  --
+  -- we CAN delete the 'match' records now, because -- even though
+  -- they may be referenced by 'event' records, the event records
+  -- contain pairs of 'search' primary key; if there are still
+  -- 'INSERT' events for a match we delete, they will simply be
+  -- skipped by future incremental synchronisations
+  for v_profile_id, v_a, v_b in
+    with foox as (select s.owner, m.a, m.b
+                    from speedycrew.search s
+                    join speedycrew.match m on s.id = m.a
+                   where m.a = i_search_id
+                   union all
+                  select s.owner, m.a, m.b
+                    from speedycrew.search s
+                    join speedycrew.match m on s.id = m.b
+                   where m.b = i_search_id)
+    select owner, a, b
+      from foox
+     order by owner
+  loop
+    delete from speedycrew.match
+     where a = v_a and b = v_b;
+    insert into speedycrew.event (profile, seq, type, search, match)
+    values (v_profile_id, next_sequence(v_profile_id), 'DELETE', v_a, v_b);
+  end loop;      
+  -- we CAN'T delete the 'search' record yet, because it may be
+  -- references by events;
+  -- TODO when does it actually get deleted? we need some kind of
+  -- garbage collector that will sort these out periodically after
+  -- finding tthat they are not referenced...  this is one of the
+  -- weaker parts of this grand plan
+  update speedycrew.search
+     set status = 'DELETED'
+   where id = i_search_id;
+  select owner
+    into v_profile_id
+    from speedycrew.search
+   where id = i_search_id;
+  insert into speedycrew.event (profile, seq, type, search)
+  values (v_profile_id, next_sequence(v_profile_id), 'UPDATE', i_search_id);
 end;
 $$
 language 'plpgsql';
