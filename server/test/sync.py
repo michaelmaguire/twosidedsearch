@@ -98,6 +98,7 @@ class Simple(unittest.TestCase):
         self.assertEqual(("00000000-0000-0000-0000-000000000001", "test #tag1 #tag2"), self.cursor.fetchone())
         self.cursor.execute("""SELECT * FROM match""")
         print self.cursor.fetchone()
+        # TODO test delete in here too
 
 if __name__ == "__main__":
     unittest.main()
