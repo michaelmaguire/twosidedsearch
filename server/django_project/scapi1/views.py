@@ -533,13 +533,18 @@ def delete_search(request):
     search_id = request.REQUEST["search"]
     request_id = param_or_null(request, "request_id")
     cursor = connection.cursor()
-    cursor.execute("""UPDATE speedycrew.search
-                         SET status = 'DELETED'
+    # make sure the search belongs to this profile and it's in the
+    # right status
+    cursor.execute("""SELECT 1
+                        FROM speedycrew.search
                        WHERE id = %s
                          AND owner = %s
-                         AND status = 'ACTIVE'""",
+                         AND status = 'ACTIVE'
+                         FOR UPDATE""",
                    (search_id, profile_id))
     if cursor.rowcount == 1:
+        cursor.execute("""SELECT speedycrew.delete_search(%s::uuid)""",
+                       (search_id,))
         return json_response({ "message_type" : "delete_search_response",
                                "request_id" : request_id,
                                "status" : "OK" })
