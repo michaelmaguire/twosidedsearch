@@ -13,6 +13,62 @@
     <p>In all cases GET and POST are interchangeable.  GET is shown
     here due to laziness but devices should probably POST.</p>
 
+    <h2>Synchronisation</h2>
+    <p>The synchronisation mechanism is based on feeding
+    server-generated SQL directly to a local Sqlite3 database, using
+    the schema from <code>client/db/create.sql</code>.  The mechanism
+    for maintaining that schema (ie initially creating it, making
+    changes to it over time) havne't been worked out yet... but
+    assuming it's there:</p>
+    <ol>
+      <li><a href="synchronise?x-id=1234;timeline=0;sequence=0">/api/1/synchronise?x=1234;timeline=0;sequence=0</a>
+      where the <code>timeline</code> and <code>sequence</code>
+      parameters are optional, and should be loaded from the Sqlite
+      table 'control' if it contains a row (it should contain one row
+      if it's every been synchronised successfully, and no rows if it
+      is a newly created schema); this returns a SQL script in a
+      format that contains a header which consists of SQL comments (ie
+      beginning with --) which contain the following types of
+      instructions:
+	<ul>
+	  <li><code>@VERSION=1</code> -- to provide a way to signal
+	  protocol changes in the future</li>
+	  <li><code>@REFRESH</code> -- to signal that the server has
+	  determined that it needs to send a complete data
+	  transfusion, deleting and reinserting all replicated state
+	  (because the sequence number is too old for an incremental
+	  update, or the timeline number has changed due to a major
+	  data loss event on the server); in other words, incremental
+	  changes were not possible, and updates to individual
+	  database objects will not be described any further in
+	  control instructions (ie there will be no @INSERT, @UPDATE,
+	  @DELETE instructions)</li>
+	  <li><code>@INSERT uri</code> -- to indicate that the object identified by <i>uri</i> has been inserted</li>
+	  <li><code>@UPDATE uri</code> -- ... updated</li>
+	  <li><code>@DELETE uri</code> -- ... deleted</li>
+	  <li><code>@MORE</code> -- an incremental synchronisation hit
+	  the configured maximum size, and the client should rince and
+	  repeat to see if more changes are available</li>
+	  <li><code>@SQL</code> -- to signal the end of control
+	  instructions, after which there will be no more control
+	  messages so a client parser can stop reading and simply pass
+	  the rest to SQLite for processing (or indeed the entire
+	  document, since the header is an SQL comment)</li>
+	</ul>
+	The URIs used
+	in <code>@INSERT</code>, <code>@UPDATE</code>, <code>@DELETE</code>
+	instructions are as follows:
+	<ul>
+	  <li><code>match/12345678-1234-1234-1234-123456789012</code>
+	  -- a match (this is actually the ID of the search on the
+	  other side, but in the client database it is the primary key
+	  for a match record; it is a UUID in 8-4-4-4-12 format)</li>
+	  <li><code>search/12345678-1234-1234-1234-123456789012</code>
+	  -- a search belonging to the user</li>
+	</ul>
+      </li>
+    </ol>
+
     <h2>Profile management</h2>
     <ol>
       <li><a href="profile?x-id=1234">/api/1/profile?x-id=1234</a> to retrieve profile data</li>
@@ -24,10 +80,9 @@
     <h2>Search management</h2>
     <ol>
       <li><a href="searches?x-id=1234">/api/1/searches?x-id=1234</a> to list all active searches for this profile</li>
-      <li><a href="create_search?x-id=1234&side=SEEK&query=I+am+a+%23chef&longitude=-0.15&latitude=51.5&radius=5000">/api/1/create_search?x-id=1234&amp;side=PROVIDE&amp;query=I+am+a+%23chef&amp;longitude=-0.15&amp;latitude=51.5&amp;radius=5000</a> with optional extra parameters city, country, address, postcode (radius is required for side=SEEK, absent for side=PROVIDE)</li>
-      <li><a href="search_results?x-id=1234&search=1">/api/1/search_results?x-id=1234&amp;search=1</a> to fetch results for one search</li>
+      <li><a href="create_search?x-id=1234&id=12345678-1234-1234-1234-123456789012&side=SEEK&query=I+am+a+%23chef&longitude=-0.15&latitude=51.5&radius=5000">/api/1/create_search?x-id=1234&amp;side=PROVIDE&amp;query=I+am+a+%23chef&amp;longitude=-0.15&amp;latitude=51.5&amp;radius=5000</a> with optional extra parameters city, country, address, postcode (radius is required for side=SEEK, absent for side=PROVIDE) (note: id is new, and is a UUID in 8-4-4-4-12 format; if you miss it out, one will be made up automatically for a limited time only)</li>
+      <li><a href="search_results?x-id=1234&search=1">/api/1/search_results?x-id=1234&amp;search=1</a> to fetch results for one search [DEPRECATED -- will be deleted soon]</li>
       <li><a href="delete_search?x-id=1234&search=1">/api/1/delete_search?x-id=1234&amp;search=1</a></li>
-      <li>TODO: incremental search results (with high water sequence number retained by devices)</li>
       <li>TODO: no tracking/filtering of available dates yet (searches match based on location + tags only for now)</li>
     </ol>
 
