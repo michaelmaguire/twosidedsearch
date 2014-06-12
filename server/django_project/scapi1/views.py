@@ -20,10 +20,8 @@ def param_or_null(request, name):
     else:
         return request.REQUEST[name]
 
-def begin(request):
-    """The prelude to be used by all view functions to obtain or
-    create a profile ID using the device ID information present in the
-    request."""
+def get_device_id(request):
+    """Extract the device ID and certificate from a request."""
     # in development, we use a header or a parameter, but later we
     # will use some fancy-pants certificate stuff
     certificate = None
@@ -35,7 +33,13 @@ def begin(request):
         # TODO check we are in a dev system before allowing this
         device_id = request.REQUEST["x-id"]
     # this could be someone we've never heard of, or someone returning
-    profile_id = None
+    return device_id, certificate
+
+def begin(request):
+    """The prelude to be used by all view functions to obtain or
+    create a profile ID using the device ID information present in the
+    request."""
+    device_id, certificate = get_device_id(request)
     cursor = connection.cursor()
     # note that this actually serializes all access for a given device
     # since it locks the device row.  is that a bad thing?  could do
@@ -603,6 +607,21 @@ def search_results(request):
                            "request_id" : request_id,
                            "status" : "OK",
                            "results" : results })
+
+def set_notification(request):
+    """Update the notification tokens for devices."""
+    profile_id = begin(request)
+    device_id, certificate = get_device_id(request)
+    google_registration_id = param_or_null(request, "google_registration_id")
+    apple_device_token = param_or_null(request, "apple_device_token")
+    cursor = connection.cursor()
+    cursor.execute("""UPDATE speedycrew.device
+                         SET google_registration_id = %s,
+                             apple_device_token = %s
+                       WHERE id = %s""",
+                   (google_registration_id, apple_device_token, device_id))
+    return json_response({ "message_type" : "set_notification_response",
+                           "status" : "OK" })
 
 def trending(request):
     """A dump of popular tags."""

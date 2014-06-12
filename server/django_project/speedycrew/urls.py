@@ -10,6 +10,7 @@ urlpatterns = patterns('',
     url(r'^api/1/tags$', 'scapi1.views.tags', name='tags'),
     url(r'^api/1/profile$', 'scapi1.views.profile', name='profile'),
     url(r'^api/1/update_profile$', 'scapi1.views.update_profile', name='update_profile'),
+    url(r'^api/1/set_notification$', 'scapi1.views.set_notification', name='set_notification'),
 
     url(r'^api/1/searches$', 'scapi1.views.searches', name='searches'),
     url(r'^api/1/create_search$', 'scapi1.views.create_search', name='create_search'),

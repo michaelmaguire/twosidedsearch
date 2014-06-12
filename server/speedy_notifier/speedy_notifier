@@ -1,0 +1,63 @@
+#!/usr/bin/python
+
+import json
+import psycopg2
+import psycopg2.extensions
+import select
+import sys
+import urllib2
+
+def post_google_notification(api_key, registration_id):
+    # http://developer.android.com/google/gcm/server.html
+    print "I want to tickle the Google device with token", registration_id
+    url = "https://android.googleapis.com/gcm/send"
+    headers = { "Content-type": "application/json",
+                "Authorization": "key=" + api_key }
+    data = { "registration_ids": [ registration_id ],
+             "collapse_key": "tickle",
+             "dry_run": True }
+    # TODO http-keepalive?
+    request = urllib2.Request(url, json.dumps(data), headers)
+    f = urllib2.urlopen(request)
+    response = json.loads(f.read())
+    # TODO log failures?  stats?
+    print response
+
+def post_apple_notification(cert_path, device_token):
+    print "I want to tickle the Apple device with token", device_token
+    # TODO http://www.raywenderlich.com/32960/apple-push-notification-services-in-ios-6-tutorial-part-1
+
+def run(dsn, google_api_key, apple_cert_path):
+    db = psycopg2.connect(dsn)
+    db.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+    cursor = db.cursor()
+    # http://initd.org/psycopg/docs/advanced.html
+    cursor.execute("LISTEN tickle")
+    # TODO provide tidy exit/shutdown, tidy DB reconnection etc
+    while True:
+        if select.select([db], [], [], 60) == ([], [], []):
+            pass
+        else:
+            db.poll()
+            while db.notifies:
+                notify = db.notifies.pop()
+                profile_id = notify.payload
+                cursor.execute("""SELECT google_registration_id, apple_device_token
+                                    FROM speedycrew.device
+                                   WHERE (google_registration_id IS NOT NULL OR
+                                          apple_device_token IS NOT NULL)
+                                     AND profile = %s""",
+                               (profile_id, ))                
+                for google_registration_id, apple_device_token in cursor:
+                    if google_registration_id:
+                        post_google_notification(google_api_key, google_registration_id)
+                    if apple_device_token:
+                        post_apple_notification(apple_cert_path, apple_device_token)
+
+if __name__ == "__main__":
+    # TODO config file?
+    # TODO make this into an honest daemon, package etc
+    dsn = sys.argv[1]
+    google_api_key = "AIzaSyDlHRufS28XTavwzHFjj6eSlPeiT3dgN9k"
+    apple_cert_path = ""
+    run(dsn, google_api_key, apple_cert_path)
