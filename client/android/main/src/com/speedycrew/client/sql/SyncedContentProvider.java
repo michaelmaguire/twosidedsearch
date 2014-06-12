@@ -14,18 +14,29 @@ public class SyncedContentProvider extends ContentProvider {
 
 	SyncedSQLiteOpenHelper mSyncedSQLiteOpenHelper;
 
+	// These are table names in our SQLite database.
+	public final static String TABLE_SEARCH = "search";
+	public final static String TABLE_MATCH = "match";
+
+	// Column names in relevant tables.
+	public final static String SEARCH_COLUMN_QUERY = "query";
+	public final static String MATCH_COLUMN_OWNER = "owner"; // I made this up
+																// -- ask Thomas
+																// what this
+																// should be.
+
 	// used for the UriMacher
-	private static final int SEARCH = 10;
-	private static final int MATCH = 20;
+	private static final int SEARCH_INDEX = 10;
+	private static final int MATCH_INDEX = 20;
 
 	private static final String AUTHORITY = "com.speedycrew.client.sql.synced.contentprovider";
-	private static final String BASE_PATH = "search";
+	private static final String BASE_PATH = TABLE_SEARCH;
 	public static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/" + BASE_PATH);
 
 	private static final UriMatcher sURIMatcher = new UriMatcher(UriMatcher.NO_MATCH);
 	static {
-		sURIMatcher.addURI(AUTHORITY, BASE_PATH, SEARCH);
-		sURIMatcher.addURI(AUTHORITY, BASE_PATH + "/#", MATCH);
+		sURIMatcher.addURI(AUTHORITY, BASE_PATH, SEARCH_INDEX);
+		sURIMatcher.addURI(AUTHORITY, BASE_PATH + "/#", MATCH_INDEX);
 	}
 
 	@Override
