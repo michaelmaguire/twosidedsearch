@@ -22,7 +22,7 @@ public class RequestHelperServiceConnector extends ServiceConnector {
 			Message createMessage = Message.obtain();
 			createMessage.obj = new String("1/create_search");
 			createMessage.setData(produceCreateSearchBundle(isProvider, searchString));
-			createMessage.what = ConnectionService.MSG_MAKE_REQUEST_WITH_PARAMETERS;
+			createMessage.what = ConnectionService.MSG_MAKE_ENRICHED_REQUEST_WITH_PARAMETERS;
 			super.send(createMessage, new Messenger(new Handler(handlerCallback)));
 		} catch (Exception e) {
 			Log.e(LOGTAG, "send error: " + e);
@@ -35,7 +35,7 @@ public class RequestHelperServiceConnector extends ServiceConnector {
 			Message fetchResultsMessage = Message.obtain();
 			fetchResultsMessage.obj = new String("1/search_results");
 			fetchResultsMessage.setData(produceCreateSearchResultsBundle(searchId));
-			fetchResultsMessage.what = ConnectionService.MSG_MAKE_REQUEST_WITH_PARAMETERS;
+			fetchResultsMessage.what = ConnectionService.MSG_MAKE_ENRICHED_REQUEST_WITH_PARAMETERS;
 			super.send(fetchResultsMessage, new Messenger(new Handler(handlerCallback)));
 		} catch (Exception e) {
 			Log.e(LOGTAG, "send error: " + e);
@@ -48,8 +48,25 @@ public class RequestHelperServiceConnector extends ServiceConnector {
 			Message msg = Message.obtain();
 			msg.obj = new String("1/update_profile");
 			msg.setData(produceProfileUpdateBundle(displayName, blurbMessage, contactEmail));
-			msg.what = ConnectionService.MSG_MAKE_REQUEST_WITH_PARAMETERS;
+			msg.what = ConnectionService.MSG_MAKE_ENRICHED_REQUEST_WITH_PARAMETERS;
 			super.send(msg, new Messenger(new Handler(handlerCallback)));
+		} catch (Exception e) {
+			Log.e(LOGTAG, "send error: " + e);
+			throw e;
+		}
+	}
+
+	private static final String PARAMETER_NAME_GOOGLE_REGISTRATION_ID = "google_registration_id";
+
+	public void sendRegistrationIdToBackend(String regid, Handler.Callback handlerCallback) throws Exception {
+		try {
+			Message msg = Message.obtain();
+			msg.obj = new String("1/1/set_notification");
+			Bundle bundle = new Bundle();
+			bundle.putString(PARAMETER_NAME_GOOGLE_REGISTRATION_ID, regid);
+			msg.setData(bundle);
+			msg.what = ConnectionService.MSG_MAKE_SIMPLE_REQUEST_WITH_PARAMETERS;
+			super.send(msg, null);
 		} catch (Exception e) {
 			Log.e(LOGTAG, "send error: " + e);
 			throw e;

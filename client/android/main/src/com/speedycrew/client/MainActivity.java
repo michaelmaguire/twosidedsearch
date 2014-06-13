@@ -11,6 +11,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 
+import com.speedycrew.client.connection.NotificationsReceiver;
+
 public class MainActivity extends Activity {
 	private static final String LOGTAG = MainActivity.class.getName();
 
@@ -21,8 +23,7 @@ public class MainActivity extends Activity {
 		setContentView(R.layout.activity_main);
 
 		// use this to start and trigger a service
-		Intent serviceStartingIntent = new Intent(this,
-				com.speedycrew.client.connection.ConnectionService.class);
+		Intent serviceStartingIntent = new Intent(this, com.speedycrew.client.connection.ConnectionService.class);
 		// potentially add data to the intent
 		// serviceStartingIntent.putExtra("KEY1",
 		// "Value to be used by the service");
@@ -32,22 +33,14 @@ public class MainActivity extends Activity {
 		bar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
 		bar.setDisplayOptions(0, ActionBar.DISPLAY_SHOW_TITLE);
 
-		bar.addTab(bar
-				.newTab()
-				.setText("I'm Crew")
-				.setTabListener(
-						new TabListener<CrewFragment>(this, "crew",
-								CrewFragment.class)));
-		bar.addTab(bar
-				.newTab()
-				.setText("I'm Hiring")
-				.setTabListener(
-						new TabListener<HiringFragment>(this, "hiring",
-								HiringFragment.class)));
+		bar.addTab(bar.newTab().setText("I'm Crew").setTabListener(new TabListener<CrewFragment>(this, "crew", CrewFragment.class)));
+		bar.addTab(bar.newTab().setText("I'm Hiring").setTabListener(new TabListener<HiringFragment>(this, "hiring", HiringFragment.class)));
 
 		if (savedInstanceState != null) {
 			bar.setSelectedNavigationItem(savedInstanceState.getInt("tab", 0));
 		}
+
+		NotificationsReceiver.getInstance(this).registerForNotifications(this);
 
 	}
 
@@ -57,8 +50,7 @@ public class MainActivity extends Activity {
 		outState.putInt("tab", getActionBar().getSelectedNavigationIndex());
 	}
 
-	public static class TabListener<T extends Fragment> implements
-			ActionBar.TabListener {
+	public static class TabListener<T extends Fragment> implements ActionBar.TabListener {
 		private final Activity mActivity;
 		private final String mTag;
 		private final Class<T> mClass;
@@ -69,8 +61,7 @@ public class MainActivity extends Activity {
 			this(activity, tag, clz, null);
 		}
 
-		public TabListener(Activity activity, String tag, Class<T> clz,
-				Bundle args) {
+		public TabListener(Activity activity, String tag, Class<T> clz, Bundle args) {
 			mActivity = activity;
 			mTag = tag;
 			mClass = clz;
@@ -81,8 +72,7 @@ public class MainActivity extends Activity {
 			// initial state is that a tab isn't shown.
 			mFragment = mActivity.getFragmentManager().findFragmentByTag(mTag);
 			if (mFragment != null && !mFragment.isDetached()) {
-				FragmentTransaction ft = mActivity.getFragmentManager()
-						.beginTransaction();
+				FragmentTransaction ft = mActivity.getFragmentManager().beginTransaction();
 				ft.detach(mFragment);
 				ft.commit();
 			}
@@ -91,8 +81,7 @@ public class MainActivity extends Activity {
 		@Override
 		public void onTabSelected(Tab tab, FragmentTransaction ft) {
 			if (mFragment == null) {
-				mFragment = Fragment.instantiate(mActivity, mClass.getName(),
-						mArgs);
+				mFragment = Fragment.instantiate(mActivity, mClass.getName(), mArgs);
 				ft.add(android.R.id.content, mFragment, mTag);
 			} else {
 				ft.attach(mFragment);
@@ -143,4 +132,5 @@ public class MainActivity extends Activity {
 			return super.onOptionsItemSelected(item);
 		}
 	}
+
 }
