@@ -101,6 +101,7 @@ class RateLimiter:
                 self.failure(t)
                 return []
         except Exception, e:
+            # TODO logging etc
             self.failure(t)
             return []
 
