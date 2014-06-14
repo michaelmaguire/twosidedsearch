@@ -5,54 +5,227 @@ import psycopg2
 import psycopg2.extensions
 import select
 import sys
+import time
 import urllib2
 
-def post_google_notification(api_key, registration_id):
-    # http://developer.android.com/google/gcm/server.html
-    print "I want to tickle the Google device with token", registration_id
-    url = "https://android.googleapis.com/gcm/send"
-    headers = { "Content-type": "application/json",
-                "Authorization": "key=" + api_key }
-    data = { "registration_ids": [ registration_id ],
-             "collapse_key": "tickle",
-             "dry_run": True }
-    # TODO http-keepalive?
-    request = urllib2.Request(url, json.dumps(data), headers)
-    f = urllib2.urlopen(request)
-    response = json.loads(f.read())
-    # TODO log failures?  stats?
-    print response
+# We try to balance the following goals:
+#
+# * reasonably low latency for notifications
+# * batching to reduce calls
+# * rate limiting so we don't get banned
+# * don't cause too many devices to wake up and DoS-attack our servers
+#
+# Here are the rules we follow:
+#
+# * don't exceed (GOOGLE|APPLE)_BATCH_SIZE
+# * don't exceed MAX_(GOOGLE|APPLE)_REQUESTS_PER_SECOND
+# * after an error response, don't try again until 
+#   (GOOGLE|APPLE)_INITIAL_BACKOFF seconds
+# * after each successive error, double the time until it reaches
+#   (GOOGLE|APPLE)_MAX_BACKOFF seconds
+#
+# Here's a questionable idea not yet implement:
+#
+# * consider waiting up to BATCH_WAIT_PERIOD to try to fill bigger
+#   batches (this introduces latency immediately, but might
+#   reduce latency overall depending on the *_REQUESTS_PER_SECOND
+#   setting...)
 
-def post_apple_notification(cert_path, device_token):
-    print "I want to tickle the Apple device with token", device_token
-    # TODO http://www.raywenderlich.com/32960/apple-push-notification-services-in-ios-6-tutorial-part-1
+GOOGLE_BATCH_SIZE=50
+GOOGLE_MAX_REQUESTS_PER_SECOND=1
+GOOGLE_INITIAL_BACKOFF=1
+GOOGLE_MAX_BACKOFF=60
+
+APPLE_BATCH_SIZE=100
+APPLE_MAX_REQUESTS_PER_SECOND=1
+APPLE_INITIAL_BACKOFF=1
+APPLE_MAX_BACKOFF=60
+
+class RateLimiter:
+    """A simple mechanism for keeping track of when we are next
+    allowed to make requests to a remote service, to avoid having our
+    asses banned by the walled garden overlords."""
+
+    def __init__(self, sender, max_requests_per_second, initial_backoff, max_backoff, batch_size):
+        """Constructor."""
+        self.sender = sender
+        self.min_time_between_requests = 1.0 / max_requests_per_second
+        self.initial_backoff = initial_backoff
+        self.max_backoff = max_backoff
+        self.batch_size = batch_size
+        self.next_time = 0
+        self.backoff = self.initial_backoff
+        self.tokens = []
+        
+    def success(self, t):
+        """Record that we just made a succesful request at time t."""
+        self.next_time = t + self.min_time_between_requests
+        self.backoff = self.initial_backoff
+
+    def failure(self, t):
+        """Record that we just made a request at time t and it failed."""
+        self.next_time = t + max(self.backoff, self.min_time_between_requests)
+        self.backoff = min(self.backoff * 2, self.max_backoff)        
+
+    def can_send(self, t):
+        """Check if we can send at time t."""
+        return t >= self.next_time;
+
+    def time_until_next_work(self, t):
+        """How long after time t does this rate limiter next want
+        'work' to be called?"""
+        if len(self.tokens) == 0:
+            return 60 # means I don't have any work, "forever"
+        else:
+            return max(self.next_time - t, 0)
+
+    def add(self, token):
+        """Add a token to the output buffer."""
+        self.tokens.append(token)
+        
+    def work(self, t):
+        """Send a batch if possible, otherwise do nothing.  Returns a
+        list of tokens which the sender reported as defunct and should
+        be removed."""
+        if not self.can_send(t):
+            return []
+        if len(self.tokens) == 0:
+            return []
+        try:
+            ok, removes = self.sender(self.tokens[:self.batch_size])
+            if ok:
+                self.success(t)
+                self.tokens = self.tokens[self.batch_size:]
+                return removes
+            else:
+                self.failure(t)
+                return []
+        except Exception, e:
+            self.failure(t)
+            return []
+
+class GoogleSender:
+    """A functor for sending a batch of registration IDs to Google
+    Cloud Notification to tickle a bunch of Android devices."""
+
+    def __init__(self, api_key):
+        self.api_key = api_key
+
+    def __call__(self, batch):
+        # http://developer.android.com/google/gcm/server.html
+        url = "https://android.googleapis.com/gcm/send"
+        headers = { "Content-type": "application/json",
+                    "Authorization": "key=" + self.api_key }
+        data = { "registration_ids": batch,
+                 "collapse_key": "tickle",
+                 "dry_run": True }
+        # TODO try to use http-keepalive to reuse socket between
+        # requests?
+        request = urllib2.Request(url, json.dumps(data), headers)
+        f = urllib2.urlopen(request)
+        response = json.loads(f.read())
+        print headers, data
+        print response
+        removes = []
+        ok = False
+        if u"results" in response and len(response[u"results"]) == len(batch):
+            for token, result in zip(batch, response[u"results"]):
+                if u"error" in result:
+                    if result[u"error"] in ("InvalidRegistration", "NotRegistered"):
+                        # these tokens need to be forgotten according to Google
+                        removes.append(token)
+            ok = True
+            # TODO check result thoroughly, log errors if we can't understand it
+        return ok, removes
+
+class AppleSender:
+    """A functor for sending a batch of device tokens to Apple APNS in
+    order to tickle a bunch of Jesus phones."""
+
+    def __init__(self, cert_path):
+        self.cert_path = cert_path
+
+    def __call__(self, batch):
+        # TODO http://www.raywenderlich.com/32960/apple-push-notification-services-in-ios-6-tutorial-part-1
+        print "AppleSender needs to learn how to send"
+        return False, []
+
+def process_removes(cursor, apple_removes, google_removes):
+    """Forget any device IDs which we've been told are bad (presumably
+    because the user uninstalled the app?)."""
+
+    # Not currently indexed, so these queries will really suck.
+    for x in apple_removes:
+        cursor.execute("""UPDATE speedycrew.device
+                             SET apple_device_token = NULL
+                           WHERE apple_device_token = %s""",
+                       (x,))
+        cursor.execute("""COMMIT""")
+    for x in google_removes:
+        cursor.execute("""UPDATE speedycrew.device
+                             SET google_registration_id = NULL
+                           WHERE google_registration_id = %s""",
+                       (x,))
+        cursor.execute("""COMMIT""")
 
 def run(dsn, google_api_key, apple_cert_path):
-    db = psycopg2.connect(dsn)
-    db.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
-    cursor = db.cursor()
-    # http://initd.org/psycopg/docs/advanced.html
+    # we have one database connection just to receive NOTIFY events
+    # that trigger us when something has changed, because it needs
+    # to use a weird isolation level to work according to psycoph2
+    # docs
+    notification_conn = psycopg2.connect(dsn)
+    notification_conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+    cursor = notification_conn.cursor()
+    cursor.execute("SET application_name = 'speedy_notifier listener'")
     cursor.execute("LISTEN tickle")
+    # we have another connection which we will use to consume data
+    # from the tickle_queue table
+    consume_conn = psycopg2.connect(dsn)
+    cursor = consume_conn.cursor()
+    cursor.execute("SET application_name = 'speedy_notifier consumer'")
+
+    # TODO use advisory locks to make sure that only one speedy_notifier is active?
     # TODO provide tidy exit/shutdown, tidy DB reconnection etc
+
+    apple_rate_limiter = RateLimiter(AppleSender(apple_cert_path),
+                                     APPLE_MAX_REQUESTS_PER_SECOND,
+                                     APPLE_INITIAL_BACKOFF,
+                                     APPLE_MAX_BACKOFF,
+                                     APPLE_BATCH_SIZE)
+
+    google_rate_limiter = RateLimiter(GoogleSender(google_api_key),
+                                      GOOGLE_MAX_REQUESTS_PER_SECOND,
+                                      GOOGLE_INITIAL_BACKOFF,
+                                      GOOGLE_MAX_BACKOFF,
+                                      GOOGLE_BATCH_SIZE)
+
     while True:
-        if select.select([db], [], [], 60) == ([], [], []):
-            pass
-        else:
-            db.poll()
-            while db.notifies:
-                notify = db.notifies.pop()
-                profile_id = notify.payload
-                cursor.execute("""SELECT google_registration_id, apple_device_token
-                                    FROM speedycrew.device
-                                   WHERE (google_registration_id IS NOT NULL OR
-                                          apple_device_token IS NOT NULL)
-                                     AND profile = %s""",
-                               (profile_id, ))                
-                for google_registration_id, apple_device_token in cursor:
-                    if google_registration_id:
-                        post_google_notification(google_api_key, google_registration_id)
-                    if apple_device_token:
-                        post_apple_notification(apple_cert_path, apple_device_token)
+        now = time.time()
+        apple_removes = apple_rate_limiter.work(now)
+        google_removes = google_rate_limiter.work(now)
+        process_removes(cursor, apple_removes, google_removes)
+        wait_time = min(apple_rate_limiter.time_until_next_work(now),
+                        google_rate_limiter.time_until_next_work(now))
+        if select.select([notification_conn], [], [], wait_time) != ([], [], []):
+            # http://initd.org/psycopg/docs/advanced.html
+            notification_conn.poll()
+            while notification_conn.notifies:
+                notify = notification_conn.notifies.pop()                
+            cursor.execute("""BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ""")
+            cursor.execute("""SELECT d.google_registration_id, d.apple_device_token
+                                FROM speedycrew.device d
+                                JOIN speedycrew.tickle_queue q ON d.profile = q.profile
+                               WHERE d.google_registration_id IS NOT NULL
+                                  OR d.apple_device_token IS NOT NULL""")
+            for google_registration_id, apple_device_token in cursor:
+                if google_registration_id:
+                    google_rate_limiter.add(google_registration_id)
+                elif apple_device_token:
+                    apple_rate_limiter.add(apple_device_token)
+            # REPEATABLE READ says we can't delete anything here that
+            # we didn't see above
+            cursor.execute("""DELETE FROM speedycrew.tickle_queue""")
+            cursor.execute("""COMMIT""")
 
 if __name__ == "__main__":
     # TODO config file?
