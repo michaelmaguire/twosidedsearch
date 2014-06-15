@@ -75,7 +75,7 @@ class RateLimiter:
         """How long after time t does this rate limiter next want
         'work' to be called?"""
         if len(self.tokens) == 0:
-            return 60 # means I don't have any work, "forever"
+            return 10 # means I don't have any work, "forever"
         else:
             return max(self.next_time - t, 0)
 
@@ -151,42 +151,126 @@ class AppleSender:
         print "AppleSender needs to learn how to send"
         return False, []
 
-def process_removes(cursor, apple_removes, google_removes):
-    """Forget any device IDs which we've been told are bad (presumably
-    because the user uninstalled the app?)."""
+class DbConsumer:
+    """A mechanism for pulling profile IDs from "tickle_queue", with
+    transparent reconnection."""
 
-    # Not currently indexed, so these queries will really suck.
-    for x in apple_removes:
-        cursor.execute("""UPDATE speedycrew.device
-                             SET apple_device_token = NULL
-                           WHERE apple_device_token = %s""",
-                       (x,))
-        cursor.execute("""COMMIT""")
-    for x in google_removes:
-        cursor.execute("""UPDATE speedycrew.device
-                             SET google_registration_id = NULL
-                           WHERE google_registration_id = %s""",
-                       (x,))
-        cursor.execute("""COMMIT""")
+    def __init__(self, dsn):
+        self.dsn = dsn
+        self.conn = None
+
+    def reconnect(self):
+        self.conn = psycopg2.connect(dsn)
+        self.cursor = self.conn.cursor()
+        self.cursor.execute("SET application_name = 'speedy_notifier consumer'")
+
+    def forget_tokens(self, apple_tokens, google_tokens):
+        """Forget tokens that have been rejected by Apple/Google."""
+        try:
+            if self.conn == None:
+                self.reconnect()
+            for x in apple_tokens:
+                self.cursor.execute("""UPDATE speedycrew.device
+                                          SET apple_device_token = NULL
+                                        WHERE apple_device_token = %s""",
+                                    (x,))
+                self.cursor.execute("""COMMIT""")
+            for x in google_tokens:
+                self.cursor.execute("""UPDATE speedycrew.device
+                                          SET google_registration_id = NULL
+                                        WHERE google_registration_id = %s""",
+                                    (x,))
+                self.cursor.execute("""COMMIT""")
+        except Exception, e:
+            print e
+            try: self.conn.close()
+            except: pass
+            self.cursor = None
+            self.conn = None
+            time.sleep(1)
+
+    def pull(self):
+        """Returns a list of Apple device tokens and a list of Google
+        registration IDs associated with the device in the
+        tickle_queue, and clears the tickle_queue."""
+        print "pull"
+        apple_device_tokens = []
+        google_registration_ids = []
+        try:
+            if self.conn == None:
+                self.reconnect()
+            self.cursor.execute("""BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ""")
+            self.cursor.execute("""SELECT d.google_registration_id, d.apple_device_token
+                                     FROM speedycrew.device d
+                                     JOIN speedycrew.tickle_queue q ON d.profile = q.profile
+                                    WHERE d.google_registration_id IS NOT NULL
+                                       OR d.apple_device_token IS NOT NULL""")
+            for google_registration_id, apple_device_token in self.cursor:
+                if google_registration_id:
+                    google_registration_ids.append(google_registration_id)
+                elif apple_device_token:
+                    apple_device_tokens.append(apple_device_token)
+            # REPEATABLE READ says we can't delete anything here that
+            # we didn't see above
+            self.cursor.execute("""DELETE FROM speedycrew.tickle_queue""")
+            self.cursor.execute("""COMMIT""")
+            
+        except Exception, e:
+            print e
+            try: self.conn.close()
+            except: pass
+            self.cursor = None
+            self.conn = None
+            time.sleep(1) # prevents reconnect attempts in tight loop
+        return apple_device_tokens, google_registration_ids
+
+class DbListener:
+    """A mechanism for waiting for PostgreSQL NOTIFY events, with
+    transparent reconnection."""
+
+    def __init__(self, dsn):
+        self.dsn = dsn
+        self.conn = None
+
+    def reconnect(self):
+        self.conn = psycopg2.connect(dsn)
+        self.conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+        cursor = self.conn.cursor()
+        cursor.execute("SET application_name = 'speedy_notifier listener'")
+        cursor.execute("LISTEN tickle")
+
+    def wait_for_notify(self, timeout):
+        """Returns True if one or more NOTIFY messages was received,
+        and False if the timeout was reached, or there was a database
+        connection error."""
+        try:
+            if self.conn == None:
+                self.reconnect()
+            if select.select([self.conn], [], [], timeout) != ([], [], []):
+                # http://initd.org/psycopg/docs/advanced.html
+                self.conn.poll()
+                while self.conn.notifies:
+                    notify = self.conn.notifies.pop()
+                return True
+            else:
+                return False            
+        except Exception, e:
+            print e
+            try:
+                self.conn.close()
+            except:
+                pass
+            self.conn = None
+            time.sleep(1) # prevents reconnect attempts in tight loop
+            return False
 
 def run(dsn, google_api_key, apple_cert_path):
-    # we have one database connection just to receive NOTIFY events
-    # that trigger us when something has changed, because it needs
-    # to use a weird isolation level to work according to psycoph2
-    # docs
-    notification_conn = psycopg2.connect(dsn)
-    notification_conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
-    cursor = notification_conn.cursor()
-    cursor.execute("SET application_name = 'speedy_notifier listener'")
-    cursor.execute("LISTEN tickle")
-    # we have another connection which we will use to consume data
-    # from the tickle_queue table
-    consume_conn = psycopg2.connect(dsn)
-    cursor = consume_conn.cursor()
-    cursor.execute("SET application_name = 'speedy_notifier consumer'")
+
+    listener = DbListener(dsn)
+    consumer = DbConsumer(dsn)
 
     # TODO use advisory locks to make sure that only one speedy_notifier is active?
-    # TODO provide tidy exit/shutdown, tidy DB reconnection etc
+    # TODO provide tidy exit/shutdown
 
     apple_rate_limiter = RateLimiter(AppleSender(apple_cert_path),
                                      APPLE_MAX_REQUESTS_PER_SECOND,
@@ -202,31 +286,17 @@ def run(dsn, google_api_key, apple_cert_path):
 
     while True:
         now = time.time()
-        apple_removes = apple_rate_limiter.work(now)
-        google_removes = google_rate_limiter.work(now)
-        process_removes(cursor, apple_removes, google_removes)
+        apple_rejected_tokens = apple_rate_limiter.work(now)
+        google_rejected_tokens = google_rate_limiter.work(now)
+        consumer.forget_tokens(apple_rejected_tokens, google_rejected_tokens)
         wait_time = min(apple_rate_limiter.time_until_next_work(now),
                         google_rate_limiter.time_until_next_work(now))
-        if select.select([notification_conn], [], [], wait_time) != ([], [], []):
-            # http://initd.org/psycopg/docs/advanced.html
-            notification_conn.poll()
-            while notification_conn.notifies:
-                notify = notification_conn.notifies.pop()                
-            cursor.execute("""BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ""")
-            cursor.execute("""SELECT d.google_registration_id, d.apple_device_token
-                                FROM speedycrew.device d
-                                JOIN speedycrew.tickle_queue q ON d.profile = q.profile
-                               WHERE d.google_registration_id IS NOT NULL
-                                  OR d.apple_device_token IS NOT NULL""")
-            for google_registration_id, apple_device_token in cursor:
-                if google_registration_id:
-                    google_rate_limiter.add(google_registration_id)
-                elif apple_device_token:
-                    apple_rate_limiter.add(apple_device_token)
-            # REPEATABLE READ says we can't delete anything here that
-            # we didn't see above
-            cursor.execute("""DELETE FROM speedycrew.tickle_queue""")
-            cursor.execute("""COMMIT""")
+        if listener.wait_for_notify(wait_time):
+            apple_tokens, google_tokens = consumer.pull()
+            for token in apple_tokens:
+                apple_rate_limiter.add(token)
+            for token in google_tokens:
+                google_rate_limiter.add(token)
 
 if __name__ == "__main__":
     # TODO config file?
