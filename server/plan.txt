@@ -1,0 +1,91 @@
+Some proposals and thoughts on how to manage our servers and deploy
+our software:
+
+1.  All software packaged using 'dpkg', and deployed on servers
+    running Debian GNU/Linux ("stable" distro).  Probably no need
+    to get carried away with Chef/Puppet etc while we have single
+    digit number of servers to worry about.
+
+2.  Software broken down into the following packages:
+
+      speedy-app      -- the web app (runs on Apache/Django/Python)
+      speedy-notifier -- the push notification daemon
+      speedy-jobs     -- periodic jobs (computing the trending tags,
+      		      	 purging old data, ...)
+   
+    These can be installed on any number of servers, initially one
+    but should work in such as way that you can spread work and add
+    redundancy by adding more.
+
+3.  Development environment:
+
+    The current miniscule set-up on 'cauldron' seems fine for a dev
+    (or pre-production) environment.  We could begin pushing packages
+    to it so that it's managed roughly the same way as a future
+    production machine.
+
+4.  Production environment -- stealth phase:
+
+    A single tiny virtual machine running Postgres plus
+    speedy-notifier, speedy-app and speedy-jobs just like the dev
+    environment should be sufficient for an early production system.
+
+5.  Production environment -- growth phase:
+
+    Generally, we should start at the bottom of the price list of our
+    hosting provider and decide when to add more instance and when to
+    work our way up the price list.  The current provider is
+    DigitalOcean, but we should periodically shop around.
+
+    https://www.digitalocean.com/pricing/
+
+    Some of the following steps could be involved in scaling up the DB:
+    * dedicated database VM (separate from app server)
+    * dedicated beefy database server running on non-virtualised hardware
+    * streaming replica database slaves which can be used to serve some
+      kinds of queries (speculation: sychronisation requests could be very
+      common)
+    * a distributed system like PostgreSQL-XL could be an interesting way
+      to scale
+
+    Some of the following steps could be involved in scaling up the
+    web server:
+    * pool of dedicated VMs or physical machines with some type of
+      load balancer in front (being entirely stateless, the Apache/Django
+      app can handle any request on any server, the problem is
+      deciding how to distribute requests coming in for a single domain
+      name, or alternatively teach clients to ask for different
+      domain names)
+
+    I suspect we can go a very long way with just 1-2 VMs.  But I want
+    to make sure we build systems that will work in other
+    configurations.
+    
+6.  Production evironment -- massive explosion:
+
+    Erm, I dunno, rewrite everything with something webscale and close
+    to the metal like Javascript and NoSQL.
+
+7.  Backup, failover etc
+
+    * database should be streamed to another location (different data
+      centre, one of our houses etc)
+    * database shoule be periodically dumped and archived off-site
+    * once we have more than one DB machine in production we should set
+      up streaming replication between a pair of database nodes so that
+      we could do a manual fail over if needed
+    * DNS (initially /etc/hosts file) should be used to locate the
+      current master database by an alias like eg 'db', so that
+      by pointing that name at another IP you can redirect all
+      clients
+    * we should probably build in some way for the app to indicate to
+      clients that it is down in a user-friendly way, in case emergency
+      back-end work, data centre migrations and other kinds of down
+      time require it
+
+8.  Monitoring
+
+    We should choose one of the popular monitoring tools like Munin,
+    Nagios, ... to monitor our machines.
+
+... work in process ...
