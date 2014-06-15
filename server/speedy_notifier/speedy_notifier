@@ -33,19 +33,6 @@ import urllib2
 #   reduce latency overall depending on the *_REQUESTS_PER_SECOND
 #   setting...)
 
-GOOGLE_BATCH_SIZE=50
-GOOGLE_MAX_REQUESTS_PER_SECOND=1
-GOOGLE_INITIAL_BACKOFF=1
-GOOGLE_MAX_BACKOFF=60
-
-APPLE_BATCH_SIZE=100
-APPLE_MAX_REQUESTS_PER_SECOND=1
-APPLE_INITIAL_BACKOFF=1
-APPLE_MAX_BACKOFF=60
-
-LOG_NAME="test.log"
-LOG_KEEP=5
-
 class RateLimiter:
     """A simple mechanism for keeping track of when we are next
     allowed to make requests to a remote service, to avoid having our
@@ -168,8 +155,8 @@ class DbConsumer:
         self.conn = None
 
     def reconnect(self):
-        logger.info("DbConsumer -- connecting to %s...", dsn)
-        self.conn = psycopg2.connect(dsn)
+        logger.info("DbConsumer -- connecting to %s...", self.dsn)
+        self.conn = psycopg2.connect(self.dsn)
         self.cursor = self.conn.cursor()
         self.cursor.execute("SET application_name = 'speedy_notifier consumer'")
         logger.info("DbConsumer -- connected")
@@ -244,8 +231,8 @@ class DbListener:
         self.conn = None
 
     def reconnect(self):
-        logger.info("DbListener -- connecting to %s...", dsn)
-        self.conn = psycopg2.connect(dsn)
+        logger.info("DbListener -- connecting to %s...", self.dsn)
+        self.conn = psycopg2.connect(self.dsn)
         self.conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
         cursor = self.conn.cursor()
         cursor.execute("SET application_name = 'speedy_notifier listener'")
@@ -278,26 +265,26 @@ class DbListener:
             time.sleep(1) # prevents reconnect attempts in tight loop
             return False
 
-def run(dsn, google_api_key, apple_cert_path):
+def run(config):
 
     logger.info("starting")
-    listener = DbListener(dsn)
-    consumer = DbConsumer(dsn)
+    listener = DbListener(config["POSTGRES_DSN"])
+    consumer = DbConsumer(config["POSTGRES_DSN"])
 
     # TODO use advisory locks to make sure that only one speedy_notifier is active?
     # TODO provide tidy exit/shutdown
 
-    apple_rate_limiter = RateLimiter(AppleSender(apple_cert_path),
-                                     APPLE_MAX_REQUESTS_PER_SECOND,
-                                     APPLE_INITIAL_BACKOFF,
-                                     APPLE_MAX_BACKOFF,
-                                     APPLE_BATCH_SIZE)
+    apple_rate_limiter = RateLimiter(AppleSender(config["APPLE_CERT_PATH"]),
+                                     config["APPLE_MAX_REQUESTS_PER_SECOND"],
+                                     config["APPLE_INITIAL_BACKOFF"],
+                                     config["APPLE_MAX_BACKOFF"],
+                                     config["APPLE_BATCH_SIZE"])
 
-    google_rate_limiter = RateLimiter(GoogleSender(google_api_key),
-                                      GOOGLE_MAX_REQUESTS_PER_SECOND,
-                                      GOOGLE_INITIAL_BACKOFF,
-                                      GOOGLE_MAX_BACKOFF,
-                                      GOOGLE_BATCH_SIZE)
+    google_rate_limiter = RateLimiter(GoogleSender(config["GOOGLE_API_KEY"]),
+                                      config["GOOGLE_MAX_REQUESTS_PER_SECOND"],
+                                      config["GOOGLE_INITIAL_BACKOFF"],
+                                      config["GOOGLE_MAX_BACKOFF"],
+                                      config["GOOGLE_BATCH_SIZE"])
 
     while True:
         now = time.time()
@@ -314,17 +301,16 @@ def run(dsn, google_api_key, apple_cert_path):
                 google_rate_limiter.add(token)
 
 logger = logging.getLogger("speedy_notifier")
-logger.setLevel(logging.DEBUG)
-handler = logging.handlers.TimedRotatingFileHandler(LOG_NAME,                                                       
-                                                    when = 'midnight',
-                                                    backupCount = LOG_KEEP)
-handler.setFormatter(logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s"))
-logger.addHandler(handler)
 
 if __name__ == "__main__":
-    # TODO config file?
     # TODO make this into an honest daemon, package etc
-    dsn = sys.argv[1]
-    google_api_key = "AIzaSyDlHRufS28XTavwzHFjj6eSlPeiT3dgN9k"
-    apple_cert_path = ""
-    run(dsn, google_api_key, apple_cert_path)
+    config_path = sys.argv[1]
+    config = {}
+    execfile(config_path, config)
+    logger.setLevel(config["LOG_LEVEL"])
+    handler = logging.handlers.TimedRotatingFileHandler(config["LOG_NAME"],
+                                                        when = 'midnight',
+                                                        backupCount = config["LOG_KEEP"])
+    handler.setFormatter(logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s"))
+    logger.addHandler(handler)
+    run(config)
