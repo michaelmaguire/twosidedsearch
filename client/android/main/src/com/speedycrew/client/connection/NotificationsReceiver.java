@@ -55,14 +55,14 @@ public class NotificationsReceiver {
 
 	String regid;
 
-	public void registerForNotifications(Activity activity) {
-		if (checkPlayServices(activity)) {
+	public void registerForNotifications(Context context) {
+		if (checkPlayServices(context)) {
 
-			gcm = GoogleCloudMessaging.getInstance(activity);
-			regid = getRegistrationId(activity);
+			gcm = GoogleCloudMessaging.getInstance(context);
+			regid = getRegistrationId(context);
 
 			if (regid.isEmpty()) {
-				registerInBackground(activity);
+				registerInBackground(context);
 			}
 		} else {
 			Log.i(LOGTAG, "No valid Google Play Services APK found.");
@@ -75,11 +75,14 @@ public class NotificationsReceiver {
 	 * doesn't, display a dialog that allows users to download the APK from the
 	 * Google Play Store or enable it in the device's system settings.
 	 */
-	public boolean checkPlayServices(Activity activity) {
-		int resultCode = GooglePlayServicesUtil.isGooglePlayServicesAvailable(activity);
+	public boolean checkPlayServices(Context context) {
+		int resultCode = GooglePlayServicesUtil.isGooglePlayServicesAvailable(context);
 		if (resultCode != ConnectionResult.SUCCESS) {
 			if (GooglePlayServicesUtil.isUserRecoverableError(resultCode)) {
-				GooglePlayServicesUtil.getErrorDialog(resultCode, activity, PLAY_SERVICES_RESOLUTION_REQUEST).show();
+				Log.i(LOGTAG, "Play Services need to be installed on this device.");
+				// TODO: How to display error dialog with only a context?
+				// GooglePlayServicesUtil.getErrorDialog(resultCode, context,
+				// PLAY_SERVICES_RESOLUTION_REQUEST).show();
 			} else {
 				Log.i(LOGTAG, "Play Services not supported on this device.");
 

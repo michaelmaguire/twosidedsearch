@@ -22,7 +22,7 @@ public class HiringFragment extends SearchFragment implements View.OnClickListen
 		mQueryHandler = new QueryHandler(getActivity(), mSearchResultsListAdapter);
 
 		// Query for hiring searches.
-		mQueryHandler.startQuery(TOKEN_GROUP, null, SyncedContentProvider.CONTENT_URI, SEARCH_PROJECTION, "isHiring=1", null, null);
+		mQueryHandler.startQuery(TOKEN_GROUP, null, SyncedContentProvider.SEARCH_URI, SEARCH_PROJECTION, "isHiring=1", null, null);
 
 		Button searchButton = (Button) view.findViewById(R.id.searchButton);
 		searchButton.setOnClickListener(this);

@@ -4,6 +4,8 @@ import android.app.Application;
 import android.content.Context;
 import android.util.Log;
 
+import com.speedycrew.client.connection.NotificationsReceiver;
+
 public class SpeedyCrewApplication extends Application {
 	private static Context context;
 
@@ -15,6 +17,8 @@ public class SpeedyCrewApplication extends Application {
 		Log.i(LOGTAG, "onCreate");
 
 		SpeedyCrewApplication.context = getApplicationContext();
+
+		NotificationsReceiver.getInstance(this).registerForNotifications(context);
 	}
 
 	public static Context getAppContext() {

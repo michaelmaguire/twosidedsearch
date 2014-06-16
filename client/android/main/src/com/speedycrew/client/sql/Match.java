@@ -13,6 +13,9 @@ public interface Match extends android.provider.BaseColumns {
 
 	// Columns names
 
+	// key into Search table.
+	public final static String SEARCH_ID = "searchId";
+
 	// I made this up -- ask Thomas what this should be.
 	public final static String OWNER = "owner";
 

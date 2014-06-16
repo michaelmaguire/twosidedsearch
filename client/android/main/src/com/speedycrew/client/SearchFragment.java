@@ -11,7 +11,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.provider.ContactsContract.CommonDataKinds.Phone;
 import android.util.Log;
 import android.view.View;
 import android.widget.CursorTreeAdapter;
@@ -153,13 +152,12 @@ public class SearchFragment extends Fragment implements View.OnClickListener {
 			// group
 
 			// Return a cursor that points to this search's matches
-			Uri.Builder builder = SyncedContentProvider.CONTENT_URI.buildUpon();
+			Uri.Builder builder = SyncedContentProvider.SEARCH_URI.buildUpon();
 			ContentUris.appendId(builder, groupCursor.getLong(GROUP_ID_COLUMN_INDEX));
 			builder.appendEncodedPath(Match.TABLE_NAME);
 			Uri matchUri = builder.build();
 
-			mQueryHandler.startQuery(SearchFragment.TOKEN_CHILD, groupCursor.getPosition(), matchUri, SearchFragment.MATCH_PROJECTION, Phone.MIMETYPE + "=?",
-					new String[] { Phone.CONTENT_ITEM_TYPE }, null);
+			mQueryHandler.startQuery(SearchFragment.TOKEN_CHILD, groupCursor.getPosition(), matchUri, SearchFragment.MATCH_PROJECTION, null, null, null);
 
 			return null;
 		}

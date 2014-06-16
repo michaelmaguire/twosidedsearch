@@ -16,8 +16,8 @@ public class SyncedSQLiteOpenHelper extends SQLiteOpenHelper {
 	// http://www.vogella.com/tutorials/AndroidSQLite/article.html
 	private static final String CREATE_SEARCHES = "CREATE TABLE " + Search.TABLE_NAME + " ( " + Search._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " + Search.IS_HIRING
 			+ " INTEGER, " + Search.QUERY_STRING + " TEXT NOT NULL );";
-	private static final String CREATE_MATCHES = "CREATE TABLE " + Match.TABLE_NAME + " ( " + Match._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " + Match.OWNER
-			+ " TEXT NOT NULL );";
+	private static final String CREATE_MATCHES = "CREATE TABLE " + Match.TABLE_NAME + " ( " + Match._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " + Match.SEARCH_ID + " INTEGER, "
+			+ Match.OWNER + " TEXT NOT NULL );";
 
 	public SyncedSQLiteOpenHelper(Context context) {
 		super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -48,6 +48,8 @@ public class SyncedSQLiteOpenHelper extends SQLiteOpenHelper {
 		executeCaughtLoggedSQL(db, "INSERT INTO search (queryString,isHiring) VALUES ('chef London', 1);");
 		executeCaughtLoggedSQL(db, "INSERT INTO search (queryString,isHiring) VALUES ('burger chef London', 1);");
 		executeCaughtLoggedSQL(db, "INSERT INTO search (queryString,isHiring) VALUES ('burger chef London', 0);");
+
+		executeCaughtLoggedSQL(db, "INSERT INTO match (searchId, owner) VALUES (2, 'The man');");
 
 	}
 
