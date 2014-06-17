@@ -2,6 +2,7 @@ package com.speedycrew.client.connection;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 import java.util.Set;
 
 import org.apache.http.HttpResponse;
@@ -26,8 +27,11 @@ import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
 import org.apache.http.params.HttpProtocolParams;
 import org.apache.http.util.EntityUtils;
+import org.json.JSONException;
 import org.json.JSONObject;
 
+import android.database.SQLException;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.os.Message;
 import android.os.Messenger;
@@ -35,6 +39,8 @@ import android.util.Base64;
 import android.util.Log;
 
 import com.google.android.gms.maps.model.LatLng;
+import com.speedycrew.client.SpeedyCrewApplication;
+import com.speedycrew.client.sql.SyncedSQLiteOpenHelper;
 import com.speedycrew.client.util.BaseService;
 
 /**
@@ -44,6 +50,7 @@ import com.speedycrew.client.util.BaseService;
 public class ConnectionService extends BaseService {
 
 	private static LatLng sLatLng;
+	private SyncedSQLiteOpenHelper mSyncedSQLiteOpenHelper;
 
 	public synchronized static void setLatLng(LatLng latLng) {
 		sLatLng = latLng;
@@ -76,6 +83,10 @@ public class ConnectionService extends BaseService {
 		public static final String MESSAGE = "message";
 		public static final String SEARCH = "search";
 		public static final String STATUS = "status";
+		public static final String PARAMETER_NAME_GOOGLE_REGISTRATION_ID = "google_registration_id";
+		public static final String TIMELINE = "timeline";
+		public static final String SEQUENCE = "sequence";
+
 		/**
 		 * This is actually a SpeedyCrew server parameter name passed right
 		 * through.
@@ -211,20 +222,59 @@ public class ConnectionService extends BaseService {
 						throw e;
 					}
 
+					String resultString = null;
+
 					try {
 						final int statusCode = response.getStatusLine().getStatusCode();
 						if (statusCode < 200 || statusCode >= 300) {
 							throw new Exception("HTTP statusCode " + statusCode);
 						}
 
-						String resultString = EntityUtils.toString(response.getEntity());
-
-						jsonResponse = new JSONObject(resultString);
+						resultString = EntityUtils.toString(response.getEntity());
 
 					} catch (Exception e) {
 						Log.e(LOGTAG, "makeRequestWithParameters: error reading response: " + e.getMessage());
 						throw e;
 					}
+
+					try {
+						Log.i(LOGTAG, "makeRequestWithParameters: resultString[" + resultString + "]");
+
+						jsonResponse = new JSONObject(resultString);
+					} catch (JSONException jsone) {
+						Log.i(LOGTAG, "makeRequestWithParameters: error parsing as JSON" + jsone.getMessage());
+
+						if (resultString.startsWith("-- @VERSION=1")) {
+							// It's a SQL update message.
+							Log.i(LOGTAG, "makeRequestWithParameters: SQL response");
+
+							SQLiteDatabase db = mSyncedSQLiteOpenHelper.getWritableDatabase();
+
+							String line = null;
+							Scanner scanner = new Scanner(resultString);
+							db.beginTransaction();
+							try {
+								while (scanner.hasNextLine()) {
+									line = scanner.nextLine();
+									if (line.startsWith("--")) {
+										Log.i(LOGTAG, "makeRequestWithParameters: comment line[" + line + "]");
+									} else {
+										Log.i(LOGTAG, "makeRequestWithParameters: SQL line[" + line + "]");
+										db.execSQL(line);
+									}
+								}
+								db.setTransactionSuccessful();
+							} catch (SQLException sqle) {
+								Log.e(LOGTAG, "makeRequestWithParameters: SQLException for line[" + line + "]", sqle);
+							} finally {
+								db.endTransaction();
+								scanner.close();
+							}
+
+						}
+
+					}
+
 				} catch (Throwable t) {
 					final String errorMessage = "makeRequestWithParameters: " + t.getMessage();
 					Log.e(LOGTAG, errorMessage);
@@ -260,6 +310,8 @@ public class ConnectionService extends BaseService {
 	public void onStartingService() {
 		try {
 			KeyManager.getInstance();
+
+			mSyncedSQLiteOpenHelper = new SyncedSQLiteOpenHelper(SpeedyCrewApplication.getAppContext());
 
 			Log.i(LOGTAG, "onStartService - ConnectionService is running");
 		} catch (Exception e) {

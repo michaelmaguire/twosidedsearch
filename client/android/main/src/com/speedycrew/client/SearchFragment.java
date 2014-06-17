@@ -4,7 +4,6 @@ import org.json.JSONObject;
 
 import android.app.Fragment;
 import android.content.AsyncQueryHandler;
-import android.content.ContentUris;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
@@ -28,9 +27,9 @@ import com.speedycrew.client.util.RequestHelperServiceConnector;
 public class SearchFragment extends Fragment implements View.OnClickListener {
 	private static final String LOGTAG = SearchFragment.class.getName();
 
-	static final String[] SEARCH_PROJECTION = new String[] { Search._ID, Search.QUERY_STRING };
+	static final String[] SEARCH_PROJECTION = new String[] { Search._ID, Search.ID, Search.QUERY };
 
-	static final String[] MATCH_PROJECTION = new String[] { Match._ID, Match.OWNER };
+	static final String[] MATCH_PROJECTION = new String[] { Match._ID, Match.USERNAME, Match.FINGERPRINT };
 
 	static final int TOKEN_GROUP = 0;
 	static final int TOKEN_CHILD = 1;
@@ -105,7 +104,14 @@ public class SearchFragment extends Fragment implements View.OnClickListener {
 
 							} else {
 
-								// TODO: Refresh expandable list from database.
+								mRequestHelperServiceConnector.sendSynchronize(0, 0, new Handler.Callback() {
+
+									@Override
+									public boolean handleMessage(Message msg) {
+										Toast.makeText(getActivity(), "Got synchronise results", Toast.LENGTH_SHORT).show();
+										return false;
+									}
+								});
 
 							}
 						} catch (Exception e) {
@@ -136,11 +142,17 @@ public class SearchFragment extends Fragment implements View.OnClickListener {
 	public class SearchResultsListAdapter extends SimpleCursorTreeAdapter {
 
 		Context mContext;
-		private static final int GROUP_ID_COLUMN_INDEX = 0;
+
+		// This is String id from server, not built-in _id.
+		final static int SEARCH_ID_COLUMN_INDEX = 1;
 
 		public SearchResultsListAdapter(Context context) {
-			super(context, null, android.R.layout.simple_expandable_list_item_1, new String[] { Search.QUERY_STRING }, new int[] { android.R.id.text1 },
-					android.R.layout.simple_expandable_list_item_1, new String[] { Match.OWNER }, new int[] { android.R.id.text1 });
+			// Need to set in projection both the _ID (for Android controls) and
+			// ID (retrieved from server).
+			// The _ID is needed otherwise you will see errors like Unable to
+			// find column 'id'.
+			super(context, null, android.R.layout.simple_expandable_list_item_1, SEARCH_PROJECTION, new int[] { android.R.id.text1 },
+					android.R.layout.simple_expandable_list_item_1, MATCH_PROJECTION, new int[] { android.R.id.text1 });
 
 			mContext = context;
 		}
@@ -153,7 +165,14 @@ public class SearchFragment extends Fragment implements View.OnClickListener {
 
 			// Return a cursor that points to this search's matches
 			Uri.Builder builder = SyncedContentProvider.SEARCH_URI.buildUpon();
-			ContentUris.appendId(builder, groupCursor.getLong(GROUP_ID_COLUMN_INDEX));
+
+			// Can't use getColumnIndex() yet because table might not even exist
+			// yet, e.g. on first time startup.
+			// builder.appendEncodedPath(groupCursor.getString(groupCursor.getColumnIndex(Search.ID)));
+			// Must appendPath so that search id gets encoded as it contains
+			// hyphens.
+			builder.appendPath(groupCursor.getString(SEARCH_ID_COLUMN_INDEX));
+
 			builder.appendEncodedPath(Match.TABLE_NAME);
 			Uri matchUri = builder.build();
 
@@ -161,6 +180,5 @@ public class SearchFragment extends Fragment implements View.OnClickListener {
 
 			return null;
 		}
-
 	}
 }

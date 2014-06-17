@@ -14,10 +14,21 @@ public class SyncedSQLiteOpenHelper extends SQLiteOpenHelper {
 
 	// "The database tables should use the identifier _id for the primary key of the table. Several Android functions rely on this standard."
 	// http://www.vogella.com/tutorials/AndroidSQLite/article.html
-	private static final String CREATE_SEARCHES = "CREATE TABLE " + Search.TABLE_NAME + " ( " + Search._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " + Search.IS_HIRING
-			+ " INTEGER, " + Search.QUERY_STRING + " TEXT NOT NULL );";
-	private static final String CREATE_MATCHES = "CREATE TABLE " + Match.TABLE_NAME + " ( " + Match._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " + Match.SEARCH_ID + " INTEGER, "
-			+ Match.OWNER + " TEXT NOT NULL );";
+	private static final String CREATE_SEARCH = "CREATE TABLE " + Search.TABLE_NAME + " ( " + Search._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " + Search.ID + " TEXT NOT NULL, "
+			+ Search.QUERY + " TEXT NOT NULL, " + Search.SIDE + " TEXT NOT NULL, " + Search.ADDRESS + " TEXT, " + Search.POSTCODE + " TEXT, " + Search.CITY + " TEXT, "
+			+ Search.COUNTRY + " TEXT, " + Search.LONGITUDE + " TEXT NOT NULL, " + Search.LATITUDE + " TEXT NOT NULL, " + Search.RADIUS + " TEXT);";
+
+	private static final String CREATE_MATCH = "CREATE TABLE " + Match.TABLE_NAME + " ( " + Match._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " + Match.ID + " TEXT NOT NULL, "
+			+ Match.SEARCH + " TEXT NOT NULL, " + Match.USERNAME + " TEXT, " + Match.FINGERPRINT + " TEXT NOT NULL, " + Match.QUERY + " TEXT NOT NULL, " + Match.LONGITUDE
+			+ " TEXT, " + Match.LATITUDE + " TEXT, " + Match.DISTANCE + " TEXT, " + Match.MATCHES + " TEXT, " + Match.SCORE + " TEXT);";
+
+	private static final String CREATE_CONTROL = "CREATE TABLE " + Control.TABLE_NAME + " ( " + Control.TIMELINE + " INTEGER, " + Control.SEQUENCE + " INTEGER);";
+
+	private static final String CREATE_PROFILE = "CREATE TABLE " + Profile.TABLE_NAME + " ( " + Profile._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " + Profile.USERNAME + " TEXT, "
+			+ Profile.REAL_NAME + " TEXT, " + Profile.EMAIL + " TEXT, " + Profile.STATUS + " TEXT, " + Profile.MESSAGE + " TEXT, " + Profile.CREATED + " TEXT, " + Profile.MODIFIED
+			+ " TEXT);";
+
+	private static final String CREATE_MESSAGE = "CREATE TABLE " + Message.TABLE_NAME + " ( " + Message._ID + " INTEGER PRIMARY KEY AUTOINCREMENT);";
 
 	public SyncedSQLiteOpenHelper(Context context) {
 		super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -37,17 +48,20 @@ public class SyncedSQLiteOpenHelper extends SQLiteOpenHelper {
 	 * This will only get called if the database doesn't already exist on device -- to test this, do a full uninstall.
 	 */
 	public void onCreate(SQLiteDatabase db) {
-		executeCaughtLoggedSQL(db, CREATE_SEARCHES);
-		executeCaughtLoggedSQL(db, CREATE_MATCHES);
+		executeCaughtLoggedSQL(db, CREATE_SEARCH);
+		executeCaughtLoggedSQL(db, CREATE_MATCH);
+		executeCaughtLoggedSQL(db, CREATE_CONTROL);
+		executeCaughtLoggedSQL(db, CREATE_PROFILE);
+		executeCaughtLoggedSQL(db, CREATE_MESSAGE);
 
 		// Testing
-		createTestEntries(db);
+		// createTestEntries(db);
 	}
 
 	private void createTestEntries(SQLiteDatabase db) {
-		executeCaughtLoggedSQL(db, "INSERT INTO search (queryString,isHiring) VALUES ('chef London', 1);");
-		executeCaughtLoggedSQL(db, "INSERT INTO search (queryString,isHiring) VALUES ('burger chef London', 1);");
-		executeCaughtLoggedSQL(db, "INSERT INTO search (queryString,isHiring) VALUES ('burger chef London', 0);");
+		executeCaughtLoggedSQL(db, "INSERT INTO search (query,side) VALUES ('chef seeker London', 'SEEK');");
+		executeCaughtLoggedSQL(db, "INSERT INTO search (query,side) VALUES ('burger chef seeker London', 'SEEK');");
+		executeCaughtLoggedSQL(db, "INSERT INTO search (query,side) VALUES ('burger chef provider London', 'PROVIDE');");
 
 		executeCaughtLoggedSQL(db, "INSERT INTO match (searchId, owner) VALUES (2, 'The man');");
 

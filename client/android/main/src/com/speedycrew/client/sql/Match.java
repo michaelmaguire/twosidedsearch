@@ -13,10 +13,16 @@ public interface Match extends android.provider.BaseColumns {
 
 	// Columns names
 
+	public final static String ID = "id";
 	// key into Search table.
-	public final static String SEARCH_ID = "searchId";
-
-	// I made this up -- ask Thomas what this should be.
-	public final static String OWNER = "owner";
+	public final static String SEARCH = "search";
+	public final static String USERNAME = "username";
+	public final static String FINGERPRINT = "fingerprint";
+	public final static String QUERY = "query";
+	public final static String LONGITUDE = "longitude";
+	public final static String LATITUDE = "latitude";
+	public final static String DISTANCE = "distance";
+	public final static String MATCHES = "matches";
+	public final static String SCORE = "score";
 
 }

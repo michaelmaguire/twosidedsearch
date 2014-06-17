@@ -27,7 +27,7 @@ public class SyncedContentProvider extends ContentProvider {
 	private static final UriMatcher sURIMatcher = new UriMatcher(UriMatcher.NO_MATCH);
 	static {
 		sURIMatcher.addURI(AUTHORITY, Search.TABLE_NAME, URI_SEARCH_INDEX);
-		sURIMatcher.addURI(AUTHORITY, Search.TABLE_NAME + "/#/" + Match.TABLE_NAME, URI_MATCH_INDEX);
+		sURIMatcher.addURI(AUTHORITY, Search.TABLE_NAME + "/*/" + Match.TABLE_NAME, URI_MATCH_INDEX);
 	}
 
 	@Override
@@ -53,7 +53,7 @@ public class SyncedContentProvider extends ContentProvider {
 			break;
 		case URI_MATCH_INDEX:
 			queryBuilder.setTables(Match.TABLE_NAME);
-			queryBuilder.appendWhere("searchId" + "=" + pathSegments.get(1));
+			queryBuilder.appendWhere(Match.SEARCH + "='" + pathSegments.get(1) + "'");
 			break;
 		default:
 			Log.e(LOGTAG, "Unhandled URI[" + uri + "]");
