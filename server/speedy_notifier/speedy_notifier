@@ -286,19 +286,23 @@ def run(config):
                                       config["GOOGLE_MAX_BACKOFF"],
                                       config["GOOGLE_BATCH_SIZE"])
 
-    while True:
-        now = time.time()
-        apple_rejected_tokens = apple_rate_limiter.work(now)
-        google_rejected_tokens = google_rate_limiter.work(now)
-        consumer.forget_tokens(apple_rejected_tokens, google_rejected_tokens)
-        wait_time = min(apple_rate_limiter.time_until_next_work(now),
-                        google_rate_limiter.time_until_next_work(now))
-        if listener.wait_for_notify(wait_time):
-            apple_tokens, google_tokens = consumer.pull()
-            for token in apple_tokens:
-                apple_rate_limiter.add(token)
-            for token in google_tokens:
-                google_rate_limiter.add(token)
+    try:
+        while True:
+            now = time.time()
+            apple_rejected_tokens = apple_rate_limiter.work(now)
+            google_rejected_tokens = google_rate_limiter.work(now)
+            consumer.forget_tokens(apple_rejected_tokens, google_rejected_tokens)
+            wait_time = min(apple_rate_limiter.time_until_next_work(now),
+                            google_rate_limiter.time_until_next_work(now))
+            if listener.wait_for_notify(wait_time):
+                apple_tokens, google_tokens = consumer.pull()
+                for token in apple_tokens:
+                    apple_rate_limiter.add(token)
+                for token in google_tokens:
+                    google_rate_limiter.add(token)
+    except KeyboardInterrupt:
+        # SIGINT received, could do some resource clean-up...
+        logger.info("shutting down")
 
 logger = logging.getLogger("speedy_notifier")
 
