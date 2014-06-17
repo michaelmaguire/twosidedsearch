@@ -174,7 +174,6 @@ def synchronise(request):
                                  s2.query,
                                  st_x(s2.geography::geometry) AS longitude,
                                  st_y(s2.geography::geometry) AS latitude,
-                                 st_distance(s1.geography, s2.geography) AS distance,
                                  m.matches,
                                  m.distance,
                                  m.score
@@ -188,7 +187,7 @@ def synchronise(request):
                              AND s2.status = 'ACTIVE'""",
                        (profile_id, ))
         for row in cursor:
-            sql += param("INSERT INTO match (id, search, username, fingerprint, query, longitude, latitude, distance, matches, distance, score) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);\n",
+            sql += param("INSERT INTO match (id, search, username, fingerprint, query, longitude, latitude, matches, distance, score) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);\n",
                          row)                           
 
         cursor.execute("""SELECT username, real_name, email, status, message, created, modified
