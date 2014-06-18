@@ -1,0 +1,9 @@
+Package: speedy-notifier
+Version: 1.0
+Section: unknown
+Priority: extra
+Maintainer: Thomas Munro <munro@ip9.org>
+Architecture: all
+Depends: python, python-psycopg2, adduser
+Description: Speedycrew notifier daemon
+ Daemon for tickling iOS and Android phones when synchronisation is required.

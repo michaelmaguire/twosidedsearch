@@ -3,6 +3,7 @@
 import json
 import logging
 import logging.handlers
+import os
 import psycopg2
 import psycopg2.extensions
 import select
@@ -265,14 +266,13 @@ class DbListener:
             time.sleep(1) # prevents reconnect attempts in tight loop
             return False
 
-def run(config):
+def run(config, daemon):
 
     logger.info("starting")
     listener = DbListener(config["POSTGRES_DSN"])
     consumer = DbConsumer(config["POSTGRES_DSN"])
 
     # TODO use advisory locks to make sure that only one speedy_notifier is active?
-    # TODO provide tidy exit/shutdown
 
     apple_rate_limiter = RateLimiter(AppleSender(config["APPLE_CERT_PATH"]),
                                      config["APPLE_MAX_REQUESTS_PER_SECOND"],
@@ -285,6 +285,25 @@ def run(config):
                                       config["GOOGLE_INITIAL_BACKOFF"],
                                       config["GOOGLE_MAX_BACKOFF"],
                                       config["GOOGLE_BATCH_SIZE"])
+
+    # if we get this far, we daemonize ourselves if requests
+    if daemon:
+        pid = os.fork()
+        if pid < 0:
+            print "Failed to fork"
+            return 1
+        elif pid > 0:
+            # this is the parent, return OK
+            return 0
+        else:
+            # this is the child, so we double-fork
+            if os.fork() > 0:
+                return 0
+            # TODO check error        
+        # TODO close or redirect stdin/stdout/stderr
+        if "PID_FILE" in config:
+            with open(config["PID_FILE"], "w") as f:
+                f.write(str(os.getpid()))
 
     try:
         while True:
@@ -307,14 +326,27 @@ def run(config):
 logger = logging.getLogger("speedy_notifier")
 
 if __name__ == "__main__":
-    # TODO make this into an honest daemon, package etc
+    if len(sys.argv) < 2:
+        print "Bad args"
+        sys.exit(1)
+    daemon = False
+    if len(sys.argv) > 2:
+        if sys.argv[2] == "--daemon":
+            daemon = True
+        else:
+            print "Worse args"
+            sys.exit(1)
+
     config_path = sys.argv[1]
     config = {}
     execfile(config_path, config)
+
     logger.setLevel(config["LOG_LEVEL"])
     handler = logging.handlers.TimedRotatingFileHandler(config["LOG_NAME"],
                                                         when = 'midnight',
                                                         backupCount = config["LOG_KEEP"])
     handler.setFormatter(logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s"))
     logger.addHandler(handler)
-    run(config)
+
+    
+    sys.exit(run(config, daemon))
