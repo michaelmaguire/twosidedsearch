@@ -108,10 +108,8 @@ def synchronise(request):
     print device_timeline, device_sequence
 
     cursor = connection.cursor()
-    header = "" # messages for the device app to parse
-    sql = ""    # messages for the device app to feed to sqlite
-
-    header += "-- @VERSION=1\n"
+    metadata = [] # messages to tell the app which objects changed
+    sql = []      # statements for the device to feed to sqlite
 
     need_full_resync = False
     cursor.execute("""SELECT low_sequence, high_sequence
@@ -139,13 +137,12 @@ def synchronise(request):
         need_full_resync = True
     
     if need_full_resync:
-        header += "-- @REFRESH\n"
-        sql += "BEGIN;\n"
-        sql += "DELETE FROM profile;\n"
-        sql += "DELETE FROM message;\n"
-        sql += "DELETE FROM match;\n"
-        sql += "DELETE FROM search;\n"
-        sql += "DELETE FROM control;\n"
+
+        sql.append("DELETE FROM profile")
+        sql.append("DELETE FROM message")
+        sql.append("DELETE FROM match")
+        sql.append("DELETE FROM search")
+        sql.append("DELETE FROM control")
 
         # TODO messages etc
 
@@ -164,8 +161,8 @@ def synchronise(request):
                              AND s.status = 'ACTIVE'""",
                        (profile_id, ))
         for row in cursor:
-            sql += param("INSERT INTO search (id, query, side, address, postcode, city, country, longitude, latitude, radius) VALUES (%s, %s, %s, %s, %s ,%s, %s, %s, %s, %s);\n",
-                         row)                                 
+            sql.append(param("INSERT INTO search (id, query, side, address, postcode, city, country, longitude, latitude, radius) VALUES (%s, %s, %s, %s, %s ,%s, %s, %s, %s, %s)",
+                             row))                    
 
         cursor.execute("""SELECT s2.id AS other_search_id,
                                  s1.id AS my_search_id,
@@ -187,24 +184,23 @@ def synchronise(request):
                              AND s2.status = 'ACTIVE'""",
                        (profile_id, ))
         for row in cursor:
-            sql += param("INSERT INTO match (id, search, username, fingerprint, query, longitude, latitude, matches, distance, score) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);\n",
-                         row)                           
+            sql.append(param("INSERT INTO match (id, search, username, fingerprint, query, longitude, latitude, matches, distance, score) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                             row))    
 
         cursor.execute("""SELECT username, real_name, email, status, message, created, modified
                             FROM speedycrew.profile
                            WHERE id = %s""",
                        (profile_id, ))
         username, real_name, email, status, message, created, modified = cursor.fetchone()
-        sql += param("INSERT INTO profile (username, real_name, email, status, message, created, modified) VALUES (%s, %s, %s, %s, %s, %s, %s);\n",
-                        (username, real_name, email, status, message, created, modified))
+        sql.append(param("INSERT INTO profile (username, real_name, email, status, message, created, modified) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+                         (username, real_name, email, status, message, created, modified)))
 
-        sql += param("INSERT INTO control (timeline, sequence) VALUES (%s, %s);\n",
-                         (timeline, high_sequence,))
+        sql.append(param("INSERT INTO control (timeline, sequence) VALUES (%s, %s)",
+                         (timeline, high_sequence,)))
 
-        sql += "COMMIT;\n"
     else:
         # build incremental results
-        sql += "BEGIN;\n"
+
         # maybe there is a better way to do this... it sure looks
         # overgrown/ugly... the basic idea here is to read the
         # appropriate range of events from the event table, LEFT
@@ -256,9 +252,9 @@ def synchronise(request):
             if match_search_id:
                 print "match thingee"
                 if type == "INSERT":
-                    header += "-- @INSERT match/%s\n" % match_search_id
-                    sql += param("INSERT INTO match (id, search, username, fingerprint, query, latitude, longitude, distance, matches, distance, score) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);\n",
-                                 (match_search_id, my_search_id, match_username, match_fingerprint, match_query, match_distance, match_longitude, match_latitude, match_matches, match_distance, match_score))
+                    metadata.append({ "INSERT" : "match/%s" % match_search_id })
+                    sql.append(param("INSERT INTO match (id, search, username, fingerprint, query, latitude, longitude, distance, matches, distance, score) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                                     (match_search_id, my_search_id, match_username, match_fingerprint, match_query, match_distance, match_longitude, match_latitude, match_matches, match_distance, match_score)))
                 elif type == "UPDATE":
                     # TODO update for matches
                     pass
@@ -268,24 +264,31 @@ def synchronise(request):
             elif my_search_id:
                 print "search thingee"
                 if type == "INSERT":
-                    header += "-- @INSERT search/%s\n" % my_search_id
-                    sql += param("INSERT INTO search (id, query, side, address, postcode, city, country, radius, latitude, longitude) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);\n",
-                                 (my_search_id, my_search_query, my_search_side, my_search_address, my_search_postcode, my_search_city, my_search_country, my_search_radius, my_search_latitude, my_search_longitude))
+                    metadata.append({ "INSERT" : "search/%s" % my_search_id })
+                    sql.append(param("INSERT INTO search (id, query, side, address, postcode, city, country, radius, latitude, longitude) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                                     (my_search_id, my_search_query, my_search_side, my_search_address, my_search_postcode, my_search_city, my_search_country, my_search_radius, my_search_latitude, my_search_longitude)))
                 elif type == "UPDATE":
-                    header += "-- @UPDATE search/%s\n" % my_search_id
+                    metadata.append({ "UPDATE" : "search/%s" % my_search_id })
                     # TODO update for searches
                 elif type == "DELETE":
-                    header += "-- @DELETE search/%s\n" % my_search_id
+                    metadata.append({ "DELETE" : "search/%s" % my_search_id })
              
         if count == MAX_FETCH_EVENTS:
             # this means please call again immediately as there are
             # probably more events for you
-            header += "-- @MORE\n"
+            metadata.append({ "more" : True })
         if highest_sequence:
-            sql += param("UPDATE control SET sequence = %s;\n", (highest_sequence,))
-        sql += "COMMIT;\n"
+            sql.append(param("UPDATE control SET sequence = %s", (highest_sequence,)))
 
-    return HttpResponse(header + "-- @SQL\n" + sql, content_type="text/plain")
+    if need_full_resync:
+        operation = "refresh"
+    else:
+        operation = "incremental"
+    return json_response({ "message_type" : "synchronise_response",
+                           "status" : "OK",
+                           "metadata" : metadata,
+                           "operation" : operation,
+                           "sql" : sql })
 
 def docs(request):
     """A view handler for showing the documentation/test interface."""

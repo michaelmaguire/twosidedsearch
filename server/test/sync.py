@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+import json
 import os
 import psycopg2
 import unittest
@@ -52,13 +53,12 @@ def device_timeline_and_sequence(db):
 
 def synchronise(db):
     timeline, sequence = device_timeline_and_sequence(db)
-    script = urllib2.urlopen(base_url + "/api/1/synchronise?x-id=" + x_id + ";timeline=" + str(timeline) + ";sequence=" + str(sequence)).read()
-    #print script
-    db.executescript(script)
-    if script.find("@REFRESH") != -1:
-        return "refresh"
-    else:
-        return "incremental"
+    text = urllib2.urlopen(base_url + "/api/1/synchronise?x-id=" + x_id + ";timeline=" + str(timeline) + ";sequence=" + str(sequence)).read()
+    object = json.loads(text)
+    cursor = db.cursor()
+    for statement in object["sql"]:
+        cursor.execute(statement)
+    return object["operation"]
 
 class Simple(unittest.TestCase):
     def setUp(self):
