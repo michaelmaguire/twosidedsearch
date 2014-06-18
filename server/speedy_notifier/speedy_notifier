@@ -34,6 +34,9 @@ import urllib2
 #   reduce latency overall depending on the *_REQUESTS_PER_SECOND
 #   setting...)
 
+LEADER_LOCK = 42 # the advisory lock ID used for coordinating
+                 # notification work
+
 class RateLimiter:
     """A simple mechanism for keeping track of when we are next
     allowed to make requests to a remote service, to avoid having our
@@ -154,12 +157,14 @@ class DbConsumer:
     def __init__(self, dsn):
         self.dsn = dsn
         self.conn = None
+        self.leader = False
 
     def reconnect(self):
         logger.info("DbConsumer -- connecting to %s...", self.dsn)
         self.conn = psycopg2.connect(self.dsn)
         self.cursor = self.conn.cursor()
         self.cursor.execute("SET application_name = 'speedy_notifier consumer'")
+        self.cursor.execute("ROLLBACK")
         logger.info("DbConsumer -- connected")
 
     def forget_tokens(self, apple_tokens, google_tokens):
@@ -196,6 +201,17 @@ class DbConsumer:
         try:
             if self.conn == None:
                 self.reconnect()
+            if not self.leader:
+                self.cursor.execute("""SELECT pg_try_advisory_lock(%s)""",
+                                    (LEADER_LOCK, ))
+                if self.cursor.fetchone()[0]:
+                    self.leader = True
+                    logger.info("I am now the leader and can process notifications")
+                else:
+                    # some other client holds the advisory lock and I will
+                    # just pretend I didn't see anything in the tickle_queue
+                    logger.debug("Ignoring because I am not the leader")
+                    return apple_device_tokens, google_registration_ids
             self.cursor.execute("""BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ""")
             self.cursor.execute("""SELECT d.google_registration_id, d.apple_device_token
                                      FROM speedycrew.device d
@@ -238,6 +254,7 @@ class DbListener:
         cursor = self.conn.cursor()
         cursor.execute("SET application_name = 'speedy_notifier listener'")
         cursor.execute("LISTEN tickle")
+        cursor.execute("ROLLBACK")
         logger.info("DbListener -- connected")
 
     def wait_for_notify(self, timeout):
