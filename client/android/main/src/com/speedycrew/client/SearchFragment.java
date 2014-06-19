@@ -6,31 +6,33 @@ import android.app.Fragment;
 import android.content.AsyncQueryHandler;
 import android.content.Context;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.provider.ContactsContract.CommonDataKinds.Phone;
 import android.util.Log;
 import android.view.View;
 import android.widget.CursorTreeAdapter;
 import android.widget.EditText;
+import android.widget.SimpleCursorTreeAdapter;
 import android.widget.Toast;
 
 import com.speedycrew.client.connection.ConnectionService;
 import com.speedycrew.client.connection.ConnectionService.Key;
+import com.speedycrew.client.sql.Match;
+import com.speedycrew.client.sql.Search;
 import com.speedycrew.client.sql.SyncedContentProvider;
 import com.speedycrew.client.util.RequestHelperServiceConnector;
 
 public class SearchFragment extends Fragment implements View.OnClickListener {
 	private static final String LOGTAG = SearchFragment.class.getName();
 
-	private static final String[] SEARCH_PROJECTION = new String[] { SyncedContentProvider._ID, SyncedContentProvider.DISPLAY_NAME };
-	private static final int GROUP_ID_COLUMN_INDEX = 0;
+	static final String[] SEARCH_PROJECTION = new String[] { Search._ID, Search.ID, Search.QUERY };
 
-	private static final String[] MATCH_PROJECTION = new String[] { Phone._ID, Phone.NUMBER };
+	static final String[] MATCH_PROJECTION = new String[] { Match._ID, Match.USERNAME, Match.FINGERPRINT };
 
-	private static final int TOKEN_GROUP = 0;
-	private static final int TOKEN_CHILD = 1;
+	static final int TOKEN_GROUP = 0;
+	static final int TOKEN_CHILD = 1;
 
 	static final class QueryHandler extends AsyncQueryHandler {
 		private CursorTreeAdapter mAdapter;
@@ -71,7 +73,8 @@ public class SearchFragment extends Fragment implements View.OnClickListener {
 
 		mRequestHelperServiceConnector = new RequestHelperServiceConnector(getActivity(), ConnectionService.class);
 
-		mRequestHelperServiceConnector.start();
+		// Our adapter and queryHandler is set up in our subclass'
+		// onCreateView() method.
 
 	}
 
@@ -101,7 +104,14 @@ public class SearchFragment extends Fragment implements View.OnClickListener {
 
 							} else {
 
-								// TODO: Refresh expandable list from database.
+								mRequestHelperServiceConnector.sendSynchronize(0, 0, new Handler.Callback() {
+
+									@Override
+									public boolean handleMessage(Message msg) {
+										Toast.makeText(getActivity(), "Got synchronise results", Toast.LENGTH_SHORT).show();
+										return false;
+									}
+								});
 
 							}
 						} catch (Exception e) {
@@ -119,4 +129,56 @@ public class SearchFragment extends Fragment implements View.OnClickListener {
 		}
 	}
 
+	/**
+	 * Following examples at
+	 * http://www.vogella.com/tutorials/AndroidSQLite/article.html and
+	 * http://www
+	 * .java2s.com/Code/Android/UI/DemonstratesexpandablelistsbackedbyCursors
+	 * .htm
+	 * 
+	 * @author michael
+	 * 
+	 */
+	public class SearchResultsListAdapter extends SimpleCursorTreeAdapter {
+
+		Context mContext;
+
+		// This is String id from server, not built-in _id.
+		final static int SEARCH_ID_COLUMN_INDEX = 1;
+
+		public SearchResultsListAdapter(Context context) {
+			// Need to set in projection both the _ID (for Android controls) and
+			// ID (retrieved from server).
+			// The _ID is needed otherwise you will see errors like Unable to
+			// find column 'id'.
+			super(context, null, R.layout.search_group, SEARCH_PROJECTION, new int[] { R.id.query, R.id.query, R.id.query }, R.layout.search_result_child, MATCH_PROJECTION,
+					new int[] { R.id.fingerprint, R.id.fingerprint, R.id.fingerprint });
+
+			mContext = context;
+		}
+
+		@Override
+		protected Cursor getChildrenCursor(Cursor groupCursor) {
+			// Given the group, we return a cursor for all the children within
+			// that
+			// group
+
+			// Return a cursor that points to this search's matches
+			Uri.Builder builder = SyncedContentProvider.SEARCH_URI.buildUpon();
+
+			// Can't use getColumnIndex() yet because table might not even exist
+			// yet, e.g. on first time startup.
+			// builder.appendEncodedPath(groupCursor.getString(groupCursor.getColumnIndex(Search.ID)));
+			// Must appendPath so that search id gets encoded as it contains
+			// hyphens.
+			builder.appendPath(groupCursor.getString(SEARCH_ID_COLUMN_INDEX));
+
+			builder.appendEncodedPath(Match.TABLE_NAME);
+			Uri matchUri = builder.build();
+
+			mQueryHandler.startQuery(SearchFragment.TOKEN_CHILD, groupCursor.getPosition(), matchUri, SearchFragment.MATCH_PROJECTION, null, null, null);
+
+			return null;
+		}
+	}
 }

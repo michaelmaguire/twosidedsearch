@@ -7,6 +7,9 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ExpandableListView;
 
+import com.speedycrew.client.sql.Search;
+import com.speedycrew.client.sql.SyncedContentProvider;
+
 public class HiringFragment extends SearchFragment implements View.OnClickListener {
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -18,6 +21,9 @@ public class HiringFragment extends SearchFragment implements View.OnClickListen
 		elv.setAdapter(mSearchResultsListAdapter);
 
 		mQueryHandler = new QueryHandler(getActivity(), mSearchResultsListAdapter);
+
+		// Query for hiring searches.
+		mQueryHandler.startQuery(TOKEN_GROUP, null, SyncedContentProvider.SEARCH_URI, SEARCH_PROJECTION, Search.SIDE + "=" + Search.VALUE_PROVIDE, null, null);
 
 		Button searchButton = (Button) view.findViewById(R.id.searchButton);
 		searchButton.setOnClickListener(this);

@@ -11,8 +11,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 
-import com.speedycrew.client.connection.NotificationsReceiver;
-
 public class MainActivity extends Activity {
 	private static final String LOGTAG = MainActivity.class.getName();
 
@@ -39,8 +37,6 @@ public class MainActivity extends Activity {
 		if (savedInstanceState != null) {
 			bar.setSelectedNavigationItem(savedInstanceState.getInt("tab", 0));
 		}
-
-		NotificationsReceiver.getInstance(this).registerForNotifications(this);
 
 	}
 
