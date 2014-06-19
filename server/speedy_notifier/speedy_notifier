@@ -114,8 +114,7 @@ class GoogleSender:
         headers = { "Content-type": "application/json",
                     "Authorization": "key=" + self.api_key }
         data = { "registration_ids": batch,
-                 "collapse_key": "tickle",
-                 "dry_run": True }
+                 "collapse_key": "tickle" }
         # TODO try to use http-keepalive to reuse socket between
         # requests?
         data_json = json.dumps(data)
