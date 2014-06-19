@@ -3,6 +3,7 @@
 import json
 import logging
 import logging.handlers
+import os
 import psycopg2
 import psycopg2.extensions
 import select
@@ -32,6 +33,9 @@ import urllib2
 #   batches (this introduces latency immediately, but might
 #   reduce latency overall depending on the *_REQUESTS_PER_SECOND
 #   setting...)
+
+LEADER_LOCK = 42 # the advisory lock ID used for coordinating
+                 # notification work
 
 class RateLimiter:
     """A simple mechanism for keeping track of when we are next
@@ -110,8 +114,7 @@ class GoogleSender:
         headers = { "Content-type": "application/json",
                     "Authorization": "key=" + self.api_key }
         data = { "registration_ids": batch,
-                 "collapse_key": "tickle",
-                 "dry_run": True }
+                 "collapse_key": "tickle" }
         # TODO try to use http-keepalive to reuse socket between
         # requests?
         data_json = json.dumps(data)
@@ -153,12 +156,14 @@ class DbConsumer:
     def __init__(self, dsn):
         self.dsn = dsn
         self.conn = None
+        self.leader = False
 
     def reconnect(self):
         logger.info("DbConsumer -- connecting to %s...", self.dsn)
         self.conn = psycopg2.connect(self.dsn)
         self.cursor = self.conn.cursor()
         self.cursor.execute("SET application_name = 'speedy_notifier consumer'")
+        self.cursor.execute("COMMIT")
         logger.info("DbConsumer -- connected")
 
     def forget_tokens(self, apple_tokens, google_tokens):
@@ -195,8 +200,19 @@ class DbConsumer:
         try:
             if self.conn == None:
                 self.reconnect()
+            if not self.leader:
+                self.cursor.execute("""SELECT pg_try_advisory_lock(%s)""",
+                                    (LEADER_LOCK, ))
+                if self.cursor.fetchone()[0]:
+                    self.leader = True
+                    logger.info("I am now the leader and can process notifications")
+                else:
+                    # some other client holds the advisory lock and I will
+                    # just pretend I didn't see anything in the tickle_queue
+                    logger.debug("Ignoring because I am not the leader")
+                    return apple_device_tokens, google_registration_ids
             self.cursor.execute("""BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ""")
-            self.cursor.execute("""SELECT d.google_registration_id, d.apple_device_token
+            self.cursor.execute("""SELECT DISTINCT d.google_registration_id, d.apple_device_token
                                      FROM speedycrew.device d
                                      JOIN speedycrew.tickle_queue q ON d.profile = q.profile
                                     WHERE d.google_registration_id IS NOT NULL
@@ -265,14 +281,13 @@ class DbListener:
             time.sleep(1) # prevents reconnect attempts in tight loop
             return False
 
-def run(config):
+def run(config, daemon):
 
     logger.info("starting")
     listener = DbListener(config["POSTGRES_DSN"])
     consumer = DbConsumer(config["POSTGRES_DSN"])
 
     # TODO use advisory locks to make sure that only one speedy_notifier is active?
-    # TODO provide tidy exit/shutdown
 
     apple_rate_limiter = RateLimiter(AppleSender(config["APPLE_CERT_PATH"]),
                                      config["APPLE_MAX_REQUESTS_PER_SECOND"],
@@ -286,31 +301,67 @@ def run(config):
                                       config["GOOGLE_MAX_BACKOFF"],
                                       config["GOOGLE_BATCH_SIZE"])
 
-    while True:
-        now = time.time()
-        apple_rejected_tokens = apple_rate_limiter.work(now)
-        google_rejected_tokens = google_rate_limiter.work(now)
-        consumer.forget_tokens(apple_rejected_tokens, google_rejected_tokens)
-        wait_time = min(apple_rate_limiter.time_until_next_work(now),
-                        google_rate_limiter.time_until_next_work(now))
-        if listener.wait_for_notify(wait_time):
-            apple_tokens, google_tokens = consumer.pull()
-            for token in apple_tokens:
-                apple_rate_limiter.add(token)
-            for token in google_tokens:
-                google_rate_limiter.add(token)
+    # if we get this far, we daemonize ourselves if requests
+    if daemon:
+        pid = os.fork()
+        if pid < 0:
+            print "Failed to fork"
+            return 1
+        elif pid > 0:
+            # this is the parent, return OK
+            return 0
+        else:
+            # this is the child, so we double-fork
+            if os.fork() > 0:
+                return 0
+            # TODO check error        
+        # TODO close or redirect stdin/stdout/stderr
+        if "PID_FILE" in config:
+            with open(config["PID_FILE"], "w") as f:
+                f.write(str(os.getpid()))
+
+    try:
+        while True:
+            now = time.time()
+            apple_rejected_tokens = apple_rate_limiter.work(now)
+            google_rejected_tokens = google_rate_limiter.work(now)
+            consumer.forget_tokens(apple_rejected_tokens, google_rejected_tokens)
+            wait_time = min(apple_rate_limiter.time_until_next_work(now),
+                            google_rate_limiter.time_until_next_work(now))
+            if listener.wait_for_notify(wait_time):
+                apple_tokens, google_tokens = consumer.pull()
+                for token in apple_tokens:
+                    apple_rate_limiter.add(token)
+                for token in google_tokens:
+                    google_rate_limiter.add(token)
+    except KeyboardInterrupt:
+        # SIGINT received, could do some resource clean-up...
+        logger.info("shutting down")
 
 logger = logging.getLogger("speedy_notifier")
 
 if __name__ == "__main__":
-    # TODO make this into an honest daemon, package etc
+    if len(sys.argv) < 2:
+        print "Bad args"
+        sys.exit(1)
+    daemon = False
+    if len(sys.argv) > 2:
+        if sys.argv[2] == "--daemon":
+            daemon = True
+        else:
+            print "Worse args"
+            sys.exit(1)
+
     config_path = sys.argv[1]
     config = {}
     execfile(config_path, config)
+
     logger.setLevel(config["LOG_LEVEL"])
     handler = logging.handlers.TimedRotatingFileHandler(config["LOG_NAME"],
                                                         when = 'midnight',
                                                         backupCount = config["LOG_KEEP"])
     handler.setFormatter(logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s"))
     logger.addHandler(handler)
-    run(config)
+
+    
+    sys.exit(run(config, daemon))

@@ -16,47 +16,43 @@
     <h2>Synchronisation</h2>
     <p>The synchronisation mechanism is based on feeding
     server-generated SQL directly to a local Sqlite3 database, using
-    the schema from <code>client/db/create.sql</code>.  The mechanism
-    for maintaining that schema (ie initially creating it, making
-    changes to it over time) havne't been worked out yet... but
-    assuming it's there:</p>
+    the schema from <code>client/db/create.sql</code>.  (Soon the
+    schema will be auto-magically recreated by the server, watch this
+    space...)</p>
     <ol>
       <li><a href="synchronise?x-id=1234;timeline=0;sequence=0">/api/1/synchronise?x=1234;timeline=0;sequence=0</a>
       where the <code>timeline</code> and <code>sequence</code>
       parameters are optional, and should be loaded from the Sqlite
       table 'control' if it contains a row (it should contain one row
       if it's every been synchronised successfully, and no rows if it
-      is a newly created schema); this returns a SQL script in a
-      format that contains a header which consists of SQL comments (ie
-      beginning with --) which contain the following types of
-      instructions:
+      is a newly created schema); this returns a JSON document
+      containing a top level dictionary with the following members:
 	<ul>
-	  <li><code>@VERSION=1</code> -- to provide a way to signal
-	  protocol changes in the future</li>
-	  <li><code>@REFRESH</code> -- to signal that the server has
-	  determined that it needs to send a complete data
+	  <li><code>{ "operation" : "refresh" }</code> if the server
+	  has determined that it needs to send a complete data
 	  transfusion, deleting and reinserting all replicated state
 	  (because the sequence number is too old for an incremental
 	  update, or the timeline number has changed due to a major
-	  data loss event on the server); in other words, incremental
-	  changes were not possible, and updates to individual
-	  database objects will not be described any further in
-	  control instructions (ie there will be no @INSERT, @UPDATE,
-	  @DELETE instructions)</li>
-	  <li><code>@INSERT uri</code> -- to indicate that the object identified by <i>uri</i> has been inserted</li>
-	  <li><code>@UPDATE uri</code> -- ... updated</li>
-	  <li><code>@DELETE uri</code> -- ... deleted</li>
-	  <li><code>@MORE</code> -- an incremental synchronisation hit
-	  the configured maximum size, and the client should rince and
-	  repeat to see if more changes are available</li>
-	  <li><code>@SQL</code> -- to signal the end of control
-	  instructions, after which there will be no more control
-	  messages so a client parser can stop reading and simply pass
-	  the rest to SQLite for processing (or indeed the entire
-	  document, since the header is an SQL comment)</li>
+	  data loss event on the server); or <code>{ "operation" :
+	  "incremental" }</code> if it is possible to send a series of
+	  changes</li>
+	  <li><code>metadata</code> is a list of dictionaries like these:
+	    <ol>
+	      <li><code>{ "INSERT" :  "uri" }</code> -- to indicate that the object identified by <i>uri</i> has been inserted</li>
+	      <li><code>{ "UPDATE" :  "uri" }</code> -- ... updated</li>
+	      <li><code>{ "DELETE" : "uri" }</code> -- ... deleted</li>
+	      <li><code>{ "more" : true }</code> -- an incremental
+		synchronisation hit the configured maximum size, and
+		the client should rince and repeat to see if more
+		changes are available</li>
+	    </ol>
+	  </li>
+	  <li><code>{ "sql" : [ "INSERT ..." ... ] }</code> contains a
+	  list of SQL statements to be executed, as one transaction,
+	  by the client.</li>
 	</ul>
 	The URIs used
-	in <code>@INSERT</code>, <code>@UPDATE</code>, <code>@DELETE</code>
+	in <code>INSERT</code>, <code>UPDATE</code>, <code>DELETE</code>
 	instructions are as follows:
 	<ul>
 	  <li><code>match/12345678-1234-1234-1234-123456789012</code>

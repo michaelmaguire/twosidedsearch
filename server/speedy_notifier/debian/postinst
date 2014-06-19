@@ -1,0 +1,8 @@
+#!/bin/bash
+
+adduser --system --no-create-home speedy
+mkdir -p /var/log/speedy_notifier
+chown speedy /var/log/speedy_notifier
+update-rc.d speedy_notifier defaults
+mkdir -p /var/run/speedy_notifier
+chown speedy /var/run/speedy_notifier
