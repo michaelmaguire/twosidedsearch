@@ -212,7 +212,7 @@ class DbConsumer:
                     logger.debug("Ignoring because I am not the leader")
                     return apple_device_tokens, google_registration_ids
             self.cursor.execute("""BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ""")
-            self.cursor.execute("""SELECT d.google_registration_id, d.apple_device_token
+            self.cursor.execute("""SELECT DISTINCT d.google_registration_id, d.apple_device_token
                                      FROM speedycrew.device d
                                      JOIN speedycrew.tickle_queue q ON d.profile = q.profile
                                     WHERE d.google_registration_id IS NOT NULL
