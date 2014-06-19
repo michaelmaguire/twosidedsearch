@@ -61,9 +61,9 @@ public class NotificationsReceiver {
 			gcm = GoogleCloudMessaging.getInstance(context);
 			regid = getRegistrationId(context);
 
-			// if (regid.isEmpty()) {
-			registerInBackground(context);
-			// }
+			if (regid.isEmpty()) {
+				registerInBackground(context);
+			}
 		} else {
 			Log.i(LOGTAG, "No valid Google Play Services APK found.");
 
