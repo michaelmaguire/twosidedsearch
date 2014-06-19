@@ -151,7 +151,8 @@ public class SearchFragment extends Fragment implements View.OnClickListener {
 			// ID (retrieved from server).
 			// The _ID is needed otherwise you will see errors like Unable to
 			// find column 'id'.
-			super(context, null, R.layout.search_group, SEARCH_PROJECTION, new int[] { R.id.query }, R.layout.search_result_child, MATCH_PROJECTION, new int[] { R.id.fingerprint });
+			super(context, null, R.layout.search_group, SEARCH_PROJECTION, new int[] { R.id.query, R.id.query, R.id.query }, R.layout.search_result_child, MATCH_PROJECTION,
+					new int[] { R.id.fingerprint, R.id.fingerprint, R.id.fingerprint });
 
 			mContext = context;
 		}
