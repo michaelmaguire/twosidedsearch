@@ -21,6 +21,7 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.speedycrew.client.MainActivity;
+import com.speedycrew.client.SpeedyCrewApplication;
 import com.speedycrew.client.util.RequestHelperServiceConnector;
 
 public class NotificationsReceiver {
@@ -61,9 +62,9 @@ public class NotificationsReceiver {
 			gcm = GoogleCloudMessaging.getInstance(context);
 			regid = getRegistrationId(context);
 
-			if (regid.isEmpty()) {
-				registerInBackground(context);
-			}
+			// if (regid.isEmpty()) {
+			registerInBackground(context);
+			// }
 		} else {
 			Log.i(LOGTAG, "No valid Google Play Services APK found.");
 
@@ -223,7 +224,8 @@ public class NotificationsReceiver {
 	public static class GcmIntentService extends IntentService {
 		public static final int NOTIFICATION_ID = 1;
 		private NotificationManager mNotificationManager;
-		NotificationCompat.Builder builder;
+		NotificationCompat.Builder mBuilder;
+		RequestHelperServiceConnector mRequestHelperServiceConnector = new RequestHelperServiceConnector(SpeedyCrewApplication.getAppContext(), ConnectionService.class);
 
 		public GcmIntentService() {
 			super("GcmIntentService");
@@ -231,42 +233,64 @@ public class NotificationsReceiver {
 
 		@Override
 		protected void onHandleIntent(Intent intent) {
-			Bundle extras = intent.getExtras();
-			GoogleCloudMessaging gcm = GoogleCloudMessaging.getInstance(this);
-			// The getMessageType() intent parameter must be the intent you
-			// received
-			// in your BroadcastReceiver.
-			String messageType = gcm.getMessageType(intent);
+			try {
+				Bundle extras = intent.getExtras();
+				Log.i(LOGTAG, "GcmIntentService onHandleIntent: " + extras.toString());
 
-			if (!extras.isEmpty()) { // has effect of unparcelling Bundle
-				/*
-				 * Filter messages based on message type. Since it is likely
-				 * that GCM will be extended in the future with new message
-				 * types, just ignore any message types you're not interested
-				 * in, or that you don't recognize.
-				 */
-				if (GoogleCloudMessaging.MESSAGE_TYPE_SEND_ERROR.equals(messageType)) {
-					sendNotification("Send error: " + extras.toString());
-				} else if (GoogleCloudMessaging.MESSAGE_TYPE_DELETED.equals(messageType)) {
-					sendNotification("Deleted messages on server: " + extras.toString());
-					// If it's a regular GCM message, do some work.
-				} else if (GoogleCloudMessaging.MESSAGE_TYPE_MESSAGE.equals(messageType)) {
-					// This loop represents the service doing some work.
-					for (int i = 0; i < 5; i++) {
-						Log.i(LOGTAG, "Working... " + (i + 1) + "/5 @ " + SystemClock.elapsedRealtime());
-						try {
-							Thread.sleep(5000);
-						} catch (InterruptedException e) {
-						}
-					}
-					Log.i(LOGTAG, "Completed work @ " + SystemClock.elapsedRealtime());
-					// Post notification of received message.
-					sendNotification("Received: " + extras.toString());
-					Log.i(LOGTAG, "Received: " + extras.toString());
+				// Check for our workaround to SERVICE_NOT_AVAILABLE from
+				// GCM.register:
+				// @See
+				// http://stackoverflow.com/questions/17618982/gcm-service-not-available-on-android-2-2/17721385#17721385
+				String regid = intent.getExtras().getString("registration_id");
+				if (regid != null && !regid.equals("")) {
+					/*
+					 * Do what ever you want with the regId eg. send it to your
+					 * server
+					 */
+					Log.i(LOGTAG, "Received: registration_id[" + regid + "]");
+
+					persistRegistrationId(SpeedyCrewApplication.getAppContext(), mRequestHelperServiceConnector, regid);
+
 				}
+
+				GoogleCloudMessaging gcm = GoogleCloudMessaging.getInstance(this);
+				// The getMessageType() intent parameter must be the intent you
+				// received
+				// in your BroadcastReceiver.
+				String messageType = gcm.getMessageType(intent);
+
+				if (!extras.isEmpty()) { // has effect of unparcelling Bundle
+					/*
+					 * Filter messages based on message type. Since it is likely
+					 * that GCM will be extended in the future with new message
+					 * types, just ignore any message types you're not
+					 * interested in, or that you don't recognize.
+					 */
+					if (GoogleCloudMessaging.MESSAGE_TYPE_SEND_ERROR.equals(messageType)) {
+						sendNotification("Send error: " + extras.toString());
+					} else if (GoogleCloudMessaging.MESSAGE_TYPE_DELETED.equals(messageType)) {
+						sendNotification("Deleted messages on server: " + extras.toString());
+						// If it's a regular GCM message, do some work.
+					} else if (GoogleCloudMessaging.MESSAGE_TYPE_MESSAGE.equals(messageType)) {
+						// This loop represents the service doing some work.
+						for (int i = 0; i < 5; i++) {
+							Log.i(LOGTAG, "Working... " + (i + 1) + "/5 @ " + SystemClock.elapsedRealtime());
+							try {
+								Thread.sleep(5000);
+							} catch (InterruptedException e) {
+							}
+						}
+						Log.i(LOGTAG, "Completed work @ " + SystemClock.elapsedRealtime());
+						// Post notification of received message.
+						sendNotification("Received: " + extras.toString());
+						Log.i(LOGTAG, "Received: " + extras.toString());
+					}
+				}
+			} finally {
+				// Release the wake lock provided by the
+				// WakefulBroadcastReceiver.
+				GcmBroadcastReceiver.completeWakefulIntent(intent);
 			}
-			// Release the wake lock provided by the WakefulBroadcastReceiver.
-			GcmBroadcastReceiver.completeWakefulIntent(intent);
 		}
 
 		// Put the message into a notification and post it.
@@ -295,30 +319,6 @@ public class NotificationsReceiver {
 			// launching.
 			startWakefulService(context, (intent.setComponent(comp)));
 			setResultCode(Activity.RESULT_OK);
-
-			// Check for our workaround to SERVICE_NOT_AVAILABLE from
-			// GCM.register:
-			// @See
-			// http://stackoverflow.com/questions/17618982/gcm-service-not-available-on-android-2-2/17721385#17721385
-			String regid = intent.getExtras().getString("registration_id");
-			if (regid != null && !regid.equals("")) {
-				/*
-				 * Do what ever you want with the regId eg. send it to your
-				 * server
-				 */
-				Log.i(LOGTAG, "Received: registration_id[" + regid + "]");
-				// Wanted to do this, but causes a runtime error:
-				// CallNotAllowedExceptionL BroadcastReceiver components are not
-				// allowed to bind to services.
-				// RequestHelperServiceConnector requestHelperServiceConnector =
-				// new RequestHelperServiceConnector(context,
-				// ConnectionService.class);
-				// persistRegistrationId(context, requestHelperServiceConnector,
-				// regid);
-
-				// TODO: Write this to our SpeedyCrew server.
-
-			}
 		}
 	}
 }
