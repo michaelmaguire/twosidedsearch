@@ -164,7 +164,7 @@ class DbConsumer:
         self.conn = psycopg2.connect(self.dsn)
         self.cursor = self.conn.cursor()
         self.cursor.execute("SET application_name = 'speedy_notifier consumer'")
-        self.cursor.execute("ROLLBACK")
+        self.cursor.execute("COMMIT")
         logger.info("DbConsumer -- connected")
 
     def forget_tokens(self, apple_tokens, google_tokens):
@@ -254,7 +254,6 @@ class DbListener:
         cursor = self.conn.cursor()
         cursor.execute("SET application_name = 'speedy_notifier listener'")
         cursor.execute("LISTEN tickle")
-        cursor.execute("ROLLBACK")
         logger.info("DbListener -- connected")
 
     def wait_for_notify(self, timeout):
