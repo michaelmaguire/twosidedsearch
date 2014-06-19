@@ -2,7 +2,6 @@ package com.speedycrew.client.connection;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Scanner;
 import java.util.Set;
 
 import org.apache.http.HttpResponse;
@@ -27,6 +26,7 @@ import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
 import org.apache.http.params.HttpProtocolParams;
 import org.apache.http.util.EntityUtils;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -241,38 +241,32 @@ public class ConnectionService extends BaseService {
 						Log.i(LOGTAG, "makeRequestWithParameters: resultString[" + resultString + "]");
 
 						jsonResponse = new JSONObject(resultString);
-					} catch (JSONException jsone) {
-						Log.i(LOGTAG, "makeRequestWithParameters: error parsing as JSON" + jsone.getMessage());
 
-						if (resultString.startsWith("-- @VERSION=1")) {
-							// It's a SQL update message.
-							Log.i(LOGTAG, "makeRequestWithParameters: SQL response");
+						Log.i(LOGTAG, "makeRequestWithParameters: jsonResponse[" + jsonResponse + "]");
 
+						JSONArray sqlArray = jsonResponse.getJSONArray("sql");
+						if (sqlArray != null) {
 							SQLiteDatabase db = mSyncedSQLiteOpenHelper.getWritableDatabase();
-
-							String line = null;
-							Scanner scanner = new Scanner(resultString);
-							db.beginTransaction();
+							String sqlStatement = null;
 							try {
-								while (scanner.hasNextLine()) {
-									line = scanner.nextLine();
-									if (line.startsWith("--")) {
-										Log.i(LOGTAG, "makeRequestWithParameters: comment line[" + line + "]");
-									} else {
-										Log.i(LOGTAG, "makeRequestWithParameters: SQL line[" + line + "]");
-										db.execSQL(line);
-									}
+								db.beginTransaction();
+
+								final int length = sqlArray.length();
+								for (int i = 0; i < length; ++i) {
+									sqlStatement = sqlArray.getString(i);
+									Log.i(LOGTAG, "makeRequestWithParameters: SQL sqlStatement[" + sqlStatement + "]");
+									db.execSQL(sqlStatement);
 								}
 								db.setTransactionSuccessful();
 							} catch (SQLException sqle) {
-								Log.e(LOGTAG, "makeRequestWithParameters: SQLException for line[" + line + "]", sqle);
+								Log.e(LOGTAG, "makeRequestWithParameters: SQLException for sqlStatement[" + sqlStatement + "]", sqle);
 							} finally {
 								db.endTransaction();
-								scanner.close();
 							}
-
 						}
 
+					} catch (JSONException jsone) {
+						Log.i(LOGTAG, "makeRequestWithParameters: error parsing as JSON" + jsone.getMessage());
 					}
 
 				} catch (Throwable t) {

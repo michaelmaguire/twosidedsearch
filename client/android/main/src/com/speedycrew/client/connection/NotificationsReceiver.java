@@ -12,7 +12,6 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.SystemClock;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.WakefulBroadcastReceiver;
 import android.util.Log;
@@ -266,26 +265,17 @@ public class NotificationsReceiver {
 					 * types, just ignore any message types you're not
 					 * interested in, or that you don't recognize.
 					 */
-					if (GoogleCloudMessaging.MESSAGE_TYPE_SEND_ERROR.equals(messageType)) {
-						sendNotification("Send error: " + extras.toString());
+					if (GoogleCloudMessaging.MESSAGE_TYPE_MESSAGE.equals(messageType)) {
+						Log.i(LOGTAG, "Received: MESSAGE_TYPE_MESSAGE" + extras.toString());
+						mRequestHelperServiceConnector.sendSynchronize(0, 0, null);
+					} else if (GoogleCloudMessaging.MESSAGE_TYPE_SEND_ERROR.equals(messageType)) {
+						Log.i(LOGTAG, "Received: MESSAGE_TYPE_SEND_ERROR");
 					} else if (GoogleCloudMessaging.MESSAGE_TYPE_DELETED.equals(messageType)) {
-						sendNotification("Deleted messages on server: " + extras.toString());
-						// If it's a regular GCM message, do some work.
-					} else if (GoogleCloudMessaging.MESSAGE_TYPE_MESSAGE.equals(messageType)) {
-						// This loop represents the service doing some work.
-						for (int i = 0; i < 5; i++) {
-							Log.i(LOGTAG, "Working... " + (i + 1) + "/5 @ " + SystemClock.elapsedRealtime());
-							try {
-								Thread.sleep(5000);
-							} catch (InterruptedException e) {
-							}
-						}
-						Log.i(LOGTAG, "Completed work @ " + SystemClock.elapsedRealtime());
-						// Post notification of received message.
-						sendNotification("Received: " + extras.toString());
-						Log.i(LOGTAG, "Received: " + extras.toString());
+						Log.i(LOGTAG, "Received: MESSAGE_TYPE_DELETED");
 					}
 				}
+			} catch (Exception e) {
+				Log.e(LOGTAG, "GcmIntentService: Exception", e);
 			} finally {
 				// Release the wake lock provided by the
 				// WakefulBroadcastReceiver.
