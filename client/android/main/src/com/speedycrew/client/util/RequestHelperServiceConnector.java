@@ -56,14 +56,29 @@ public class RequestHelperServiceConnector extends ServiceConnector {
 		}
 	}
 
-	private static final String PARAMETER_NAME_GOOGLE_REGISTRATION_ID = "google_registration_id";
-
 	public void sendRegistrationIdToBackend(String regid, Handler.Callback handlerCallback) throws Exception {
 		try {
 			Message msg = Message.obtain();
-			msg.obj = new String("1/1/set_notification");
+			msg.obj = new String("1/set_notification");
 			Bundle bundle = new Bundle();
-			bundle.putString(PARAMETER_NAME_GOOGLE_REGISTRATION_ID, regid);
+			bundle.putString(ConnectionService.Key.PARAMETER_NAME_GOOGLE_REGISTRATION_ID, regid);
+			msg.setData(bundle);
+			msg.what = ConnectionService.MSG_MAKE_SIMPLE_REQUEST_WITH_PARAMETERS;
+			super.send(msg, null);
+		} catch (Exception e) {
+			Log.e(LOGTAG, "send error: " + e);
+			throw e;
+		}
+	}
+
+	public void sendSynchronize(long timeline, long sequence, Handler.Callback handlerCallback) throws Exception {
+		try {
+			Message msg = Message.obtain();
+			// Note NZ 's' instead 'z'.
+			msg.obj = new String("1/synchronise");
+			Bundle bundle = new Bundle();
+			bundle.putString(ConnectionService.Key.TIMELINE, Long.toString(timeline));
+			bundle.putString(ConnectionService.Key.SEQUENCE, Long.toString(sequence));
 			msg.setData(bundle);
 			msg.what = ConnectionService.MSG_MAKE_SIMPLE_REQUEST_WITH_PARAMETERS;
 			super.send(msg, null);

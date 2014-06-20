@@ -1,40 +1,67 @@
 package com.speedycrew.client;
 
-import java.util.Vector;
-
-import org.json.JSONArray;
 import org.json.JSONObject;
 
 import android.app.Fragment;
+import android.content.AsyncQueryHandler;
 import android.content.Context;
-import android.graphics.Typeface;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.View.OnClickListener;
-import android.view.ViewGroup;
-import android.widget.BaseExpandableListAdapter;
+import android.widget.CursorTreeAdapter;
 import android.widget.EditText;
-import android.widget.TextView;
+import android.widget.SimpleCursorTreeAdapter;
 import android.widget.Toast;
 
-import com.speedycrew.client.android.model.Search;
-import com.speedycrew.client.android.model.SearchResult;
 import com.speedycrew.client.connection.ConnectionService;
 import com.speedycrew.client.connection.ConnectionService.Key;
+import com.speedycrew.client.sql.Match;
+import com.speedycrew.client.sql.Search;
+import com.speedycrew.client.sql.SyncedContentProvider;
 import com.speedycrew.client.util.RequestHelperServiceConnector;
 
 public class SearchFragment extends Fragment implements View.OnClickListener {
 	private static final String LOGTAG = SearchFragment.class.getName();
 
+	static final String[] SEARCH_PROJECTION = new String[] { Search._ID, Search.ID, Search.QUERY };
+
+	static final String[] MATCH_PROJECTION = new String[] { Match._ID, Match.USERNAME, Match.FINGERPRINT };
+
+	static final int TOKEN_GROUP = 0;
+	static final int TOKEN_CHILD = 1;
+
+	static final class QueryHandler extends AsyncQueryHandler {
+		private CursorTreeAdapter mAdapter;
+
+		public QueryHandler(Context context, CursorTreeAdapter adapter) {
+			super(context.getContentResolver());
+			this.mAdapter = adapter;
+		}
+
+		@Override
+		protected void onQueryComplete(int token, Object cookie, Cursor cursor) {
+			switch (token) {
+			case TOKEN_GROUP:
+				mAdapter.setGroupCursor(cursor);
+				break;
+
+			case TOKEN_CHILD:
+				int groupPosition = (Integer) cookie;
+				mAdapter.setChildrenCursor(groupPosition, cursor);
+				break;
+			}
+		}
+	}
+
 	private RequestHelperServiceConnector mRequestHelperServiceConnector;
 
-	protected SearchResultsListAdapter mSearchResultsListAdapter;
+	protected QueryHandler mQueryHandler;
 
-	Vector<Search> mSearchGroups = new Vector<Search>();
+	protected SearchResultsListAdapter mSearchResultsListAdapter;
 
 	@Override
 	public void onCreate(Bundle saved) {
@@ -46,74 +73,9 @@ public class SearchFragment extends Fragment implements View.OnClickListener {
 
 		mRequestHelperServiceConnector = new RequestHelperServiceConnector(getActivity(), ConnectionService.class);
 
-		mRequestHelperServiceConnector.start();
+		// Our adapter and queryHandler is set up in our subclass'
+		// onCreateView() method.
 
-	}
-
-	void addSearch(final Search search) {
-		getActivity().runOnUiThread(new Runnable() {
-			public void run() {
-				mSearchGroups.add(search);
-				mSearchResultsListAdapter.notifyDataSetChanged();
-			}
-		});
-	}
-
-	void addSearchResultToSearch(final Search search, final SearchResult searchResult) {
-		getActivity().runOnUiThread(new Runnable() {
-			public void run() {
-				search.addSearchResult(searchResult);
-				mSearchResultsListAdapter.notifyDataSetChanged();
-			}
-		});
-	}
-
-	private class SearchResultsHandlerCallback implements Handler.Callback {
-
-		private static final String JSON_KEY_RESULTS = "results";
-		private final Search mSearch;
-
-		SearchResultsHandlerCallback(Search search) {
-			mSearch = search;
-		}
-
-		@Override
-		public boolean handleMessage(Message responseMessage) {
-			try {
-				switch (responseMessage.what) {
-				case ConnectionService.MSG_JSON_RESPONSE:
-					final String responseString = responseMessage.obj.toString();
-
-					Log.i(LOGTAG, "handleMessage search results MSG_JSON_RESPONSE: " + responseString);
-
-					{
-						JSONObject responseJson = new JSONObject(responseString);
-						String status = responseJson.getString(Key.STATUS);
-						if (!"OK".equalsIgnoreCase(status)) {
-							String errorMessage = responseJson.getString(Key.MESSAGE);
-
-							Toast.makeText(getActivity(), errorMessage, Toast.LENGTH_SHORT).show();
-
-						} else {
-
-							JSONArray results = responseJson.getJSONArray(JSON_KEY_RESULTS);
-
-							for (int i = 0; i < results.length(); ++i) {
-								SearchResult sr = new SearchResult(results.getJSONObject(i));
-								addSearchResultToSearch(mSearch, sr);
-							}
-
-						}
-					}
-
-					return true;
-					// break;
-				}
-			} catch (Exception e) {
-				Log.i(LOGTAG, "SearchResultsHandlerCallback handleMessage error: " + e);
-			}
-			return false;
-		}
 	}
 
 	@Override
@@ -141,13 +103,16 @@ public class SearchFragment extends Fragment implements View.OnClickListener {
 								Toast.makeText(getActivity(), errorMessage, Toast.LENGTH_SHORT).show();
 
 							} else {
-								String searchId = responseJson.getString(ConnectionService.Key.SEARCH_ID);
 
-								Search search = new Search(searchId, queryString);
+								mRequestHelperServiceConnector.sendSynchronize(0, 0, new Handler.Callback() {
 
-								addSearch(search);
+									@Override
+									public boolean handleMessage(Message msg) {
+										Toast.makeText(getActivity(), "Got synchronise results", Toast.LENGTH_SHORT).show();
+										return false;
+									}
+								});
 
-								mRequestHelperServiceConnector.getSearchResults(searchId, new SearchResultsHandlerCallback(search));
 							}
 						} catch (Exception e) {
 							Log.e(LOGTAG, "onClick get results error: " + e);
@@ -164,89 +129,56 @@ public class SearchFragment extends Fragment implements View.OnClickListener {
 		}
 	}
 
-	// TODO: Change to be a subclass of
-	// http://developer.android.com/reference/android/widget/SimpleCursorTreeAdapter.html
-	// and then follow example in
-	// http://www.vogella.com/tutorials/AndroidSQLite/article.html to
-	// hook this in with a database.
-	public class SearchResultsListAdapter extends BaseExpandableListAdapter {
+	/**
+	 * Following examples at
+	 * http://www.vogella.com/tutorials/AndroidSQLite/article.html and
+	 * http://www
+	 * .java2s.com/Code/Android/UI/DemonstratesexpandablelistsbackedbyCursors
+	 * .htm
+	 * 
+	 * @author michael
+	 * 
+	 */
+	public class SearchResultsListAdapter extends SimpleCursorTreeAdapter {
 
-		@Override
-		public int getGroupCount() {
-			return mSearchGroups.size();
+		Context mContext;
+
+		// This is String id from server, not built-in _id.
+		final static int SEARCH_ID_COLUMN_INDEX = 1;
+
+		public SearchResultsListAdapter(Context context) {
+			// Need to set in projection both the _ID (for Android controls) and
+			// ID (retrieved from server).
+			// The _ID is needed otherwise you will see errors like Unable to
+			// find column 'id'.
+			super(context, null, R.layout.search_group, SEARCH_PROJECTION, new int[] { R.id.query, R.id.query, R.id.query }, R.layout.search_result_child, MATCH_PROJECTION,
+					new int[] { R.id.fingerprint, R.id.fingerprint, R.id.fingerprint });
+
+			mContext = context;
 		}
 
 		@Override
-		public int getChildrenCount(int i) {
-			return mSearchGroups.elementAt(i).getNumberOfSearchResults();
+		protected Cursor getChildrenCursor(Cursor groupCursor) {
+			// Given the group, we return a cursor for all the children within
+			// that
+			// group
+
+			// Return a cursor that points to this search's matches
+			Uri.Builder builder = SyncedContentProvider.SEARCH_URI.buildUpon();
+
+			// Can't use getColumnIndex() yet because table might not even exist
+			// yet, e.g. on first time startup.
+			// builder.appendEncodedPath(groupCursor.getString(groupCursor.getColumnIndex(Search.ID)));
+			// Must appendPath so that search id gets encoded as it contains
+			// hyphens.
+			builder.appendPath(groupCursor.getString(SEARCH_ID_COLUMN_INDEX));
+
+			builder.appendEncodedPath(Match.TABLE_NAME);
+			Uri matchUri = builder.build();
+
+			mQueryHandler.startQuery(SearchFragment.TOKEN_CHILD, groupCursor.getPosition(), matchUri, SearchFragment.MATCH_PROJECTION, null, null, null);
+
+			return null;
 		}
-
-		@Override
-		public Object getGroup(int i) {
-			return mSearchGroups.elementAt(i);
-		}
-
-		@Override
-		public Object getChild(int i, int i1) {
-			return mSearchGroups.elementAt(i).getSearchResultAt(i1);
-		}
-
-		@Override
-		public long getGroupId(int i) {
-			return i;
-		}
-
-		@Override
-		public long getChildId(int i, int i1) {
-			return i1;
-		}
-
-		@Override
-		public boolean hasStableIds() {
-			return true;
-		}
-
-		@Override
-		public View getGroupView(int groupPosition, boolean isExpanded, View convertView, ViewGroup parent) {
-			String searchName = getGroup(groupPosition).toString();
-			if (convertView == null) {
-				LayoutInflater inflater = (LayoutInflater) getActivity().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-				convertView = inflater.inflate(R.layout.search_group, null);
-			}
-			TextView item = (TextView) convertView.findViewById(R.id.queryString);
-			item.setTypeface(null, Typeface.BOLD);
-			item.setText(searchName);
-			return convertView;
-		}
-
-		@Override
-		public View getChildView(final int groupPosition, final int childPosition, boolean isLastChild, View convertView, ViewGroup parent) {
-			final String searchResult = getChild(groupPosition, childPosition).toString();
-			LayoutInflater inflater = getActivity().getLayoutInflater();
-
-			if (convertView == null) {
-				convertView = inflater.inflate(R.layout.search_result_child, null);
-			}
-
-			TextView item = (TextView) convertView.findViewById(R.id.result);
-
-			convertView.setOnClickListener(new OnClickListener() {
-
-				public void onClick(View v) {
-					Log.e(LOGTAG, "onClick for search result: " + searchResult);
-
-				}
-			});
-
-			item.setText(searchResult);
-			return convertView;
-		}
-
-		@Override
-		public boolean isChildSelectable(int i, int i1) {
-			return true;
-		}
-
 	}
-
 }
