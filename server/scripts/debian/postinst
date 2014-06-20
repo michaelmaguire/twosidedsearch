@@ -1,0 +1,5 @@
+#!/bin/bash
+
+adduser --system --no-create-home speedy
+
+#DEBHELPER#

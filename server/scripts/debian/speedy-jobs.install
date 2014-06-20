@@ -1,0 +1,3 @@
+garbage_collector.py usr/lib/speedy-jobs/
+maintain_tag_stats.py usr/lib/speedy-jobs/
+debian/speedy-jobs.conf etc/

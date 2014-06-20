@@ -187,4 +187,8 @@ def run(connection):
     collect_deleted_searches(connection)
 
 if __name__ == "__main__":
-    run(psycopg2.connect(sys.argv[1]))
+    config_path = sys.argv[1]
+    config = {}
+    execfile(config_path, config)
+    dsn = config["POSTGRES_DSN"]
+    run(psycopg2.connect(dsn))

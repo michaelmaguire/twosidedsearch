@@ -1,0 +1,9 @@
+Source: speedy-jobs
+Maintainer: Thomas Munro <munro@ip9.org>
+
+Package: speedy-jobs
+Architecture: all
+Section: unknown
+Depends: cron, python, python-psycopg2
+Description: Speedycrew periodic jobs
+ Jobs that run periodically to maintain the Speedycrew system.
