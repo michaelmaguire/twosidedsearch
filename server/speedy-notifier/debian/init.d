@@ -1,6 +1,6 @@
 #! /bin/sh
 ### BEGIN INIT INFO
-# Provides:          speedy_notifier
+# Provides:          speedy-notifier
 # Required-Start:    $remote_fs $syslog
 # Required-Stop:     $remote_fs $syslog
 # Default-Start:     2 3 4 5
@@ -16,10 +16,10 @@
 # PATH should only include /usr/* if it runs after the mountnfs.sh script
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 DESC="Speedycrew notification daemon"
-NAME=speedy_notifier
-DAEMON=/usr/bin/$NAME
-DAEMON_ARGS="/etc/speedy_notifier.conf --daemon"
-PIDFILE=/var/run/speedy_notifier/speedy_notifier.pid
+NAME=speedy-notifier
+DAEMON=/usr/lib/$NAME/$NAME
+DAEMON_ARGS="/etc/$NAME.conf --daemon"
+PIDFILE=/var/run/$NAME/$NAME.pid
 SCRIPTNAME=/etc/init.d/$NAME
 
 # Exit if the package is not installed
