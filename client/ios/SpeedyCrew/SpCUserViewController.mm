@@ -1,20 +1,22 @@
 //
-//  SpCSearchViewController.m
+//  SpCUserViewController.m
 //  SpeedyCrew
 //
-//  Created by Dietmar Kühl on 03/01/2014.
+//  Created by Dietmar Kühl on 04/01/2014.
 //  Copyright (c) 2014 Dietmar Kühl. All rights reserved.
 //
 
-#import "SpCSearchViewController.h"
-#import "SpCResult.h"
+#import "SpCUserViewController.h"
+#import "SpCDatabase.h"
 #import "SpCAppDelegate.h"
+#import "SpCData.h"
 
-@interface SpCSearchViewController ()
-@property UISearchBar* searchBar;
+@interface SpCUserViewController ()
+@property NSArray* elements;
+
 @end
 
-@implementation SpCSearchViewController
+@implementation SpCUserViewController
 
 - (id)initWithStyle:(UITableViewStyle)style
 {
@@ -28,9 +30,7 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-    self.tableView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-    __weak typeof(self) weakSelf = self;
-    [self.search addListener:^(NSString* name, NSObject* object){ [weakSelf resultsChanged: (SpCSearch*)object]; } withId: @"Search"];
+    self.elements = @[@"scid", @"real_name", @"username", @"email", @"message"];
 
     // Uncomment the following line to preserve selection between presentations.
     // self.clearsSelectionOnViewWillAppear = NO;
@@ -47,57 +47,39 @@
 
 #pragma mark - Table view data source
 
-- (NSInteger)numberOfSectionsInTableView:(UITableView *)tv
+- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
 {
-    return 3;
+    return 1;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-    return 0 == section? 1
-         : 1 == section? [self.search.results count]
-         : 2 == section? 1
-         : 0;
+    return 5;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tv cellForRowAtIndexPath:(NSIndexPath *)path
 {
-    if (0 == path.section) {
-        UITableViewCell* cell = [tv dequeueReusableCellWithIdentifier:@"SearchField"];
+    NSString* id = [self.elements objectAtIndex:path.row];
+    SpCDatabase* database = [ SpCDatabase database];
+    NSString* value = [database querySetting: id];
+    UITableViewCell *cell = [tv dequeueReusableCellWithIdentifier:id forIndexPath:path];
+    if (0 == path.row) {
         UIView* view = [cell.contentView viewWithTag:0];
-        if (view && 1 == view.subviews.count) {
-            self.searchBar = [view.subviews objectAtIndex:0];
-            self.searchBar.text = self.search.query;
+        if (view && 2 == view.subviews.count) {
+            UILabel* label = [view.subviews objectAtIndex:1];
+            label.text = value;
         }
-        return cell;
-    }
-    else if (1 == path.section) {
-        UITableViewCell *cell = [tv dequeueReusableCellWithIdentifier:@"Result" forIndexPath:path];
-        SpCResult* result = [self.search.results objectAtIndex:path.row];
-        UIView* view = [cell.contentView viewWithTag:0];
-        if (view && 1 == view.subviews.count) {
-            UILabel* label = [view.subviews objectAtIndex:0];
-            label.text = result.value;
-        }
-        else {
-            cell.textLabel.text = result.value;
-        }
-        return cell;
     }
     else {
-        UITableViewCell *cell = [tv dequeueReusableCellWithIdentifier:@"DeleteSearch"];
-        return cell;
+        UIView* view = [cell.contentView viewWithTag:0];
+        if (view && 2 == view.subviews.count) {
+            UITextField* text = [view.subviews objectAtIndex:1];
+            text.text     = value;
+            text.tag      = path.row;
+            text.delegate = self;
+        }
     }
-    
-    return nil;
-}
-
-- (IBAction)deleteSearch:(id)sender {
-    NSLog(@"Delete Search was clicked: search=%@", self.search.id);
-    UINavigationController *navController = [self navigationController];
-    [navController popViewControllerAnimated: YES];
-    SpCAppDelegate* delegate = (((SpCAppDelegate*) [UIApplication sharedApplication].delegate));
-    [delegate.data deleteSearch:self.search];
+    return cell;
 }
 
 /*
@@ -150,26 +132,21 @@
 }
 
  */
-
-- (void)searchBar:(UISearchBar *)searchBar textDidChange:(NSString *)searchText
+-(void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation
 {
-    //-dk:TODO act upon these events! NSLog(@"search text changed: '%@'", searchText);
+    [self.tableView beginUpdates];
+    [self.tableView endUpdates];
 }
 
-- (void)searchBarSearchButtonClicked:(UISearchBar *)searchBar
+- (void)textFieldDidEndEditing:(UITextField *)textField
 {
-    if (0 < searchBar.text.length) {
-        [self.search updateQueryWith: searchBar.text];
-    }
-    [searchBar resignFirstResponder];
-
+    SpCAppDelegate* delegate = (((SpCAppDelegate*) [UIApplication sharedApplication].delegate));
+    [delegate.data updateSetting:self.elements[textField.tag] with:textField.text];
 }
 
-- (void)resultsChanged:(SpCSearch*)search
-{
-    NSIndexSet* indices = [[NSIndexSet alloc] initWithIndex:1];
-    [self.tableView reloadSections:indices withRowAnimation: UITableViewRowAnimationNone];
-
+- (BOOL)textFieldShouldReturn:(UITextField *)textField {
+    [textField resignFirstResponder];
+    return YES;
 }
 
 @end

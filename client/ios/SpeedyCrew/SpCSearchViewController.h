@@ -7,11 +7,13 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "SpCSearch.h"
 
-@interface SpCSearchViewController : UITableViewController<UISearchBarDelegate>
+@interface SpCSearchViewController : UIViewController<UISearchBarDelegate>
 
-@property SpCSearch* search;
+@property NSString*  side;
 @property (strong, nonatomic) IBOutlet UITableView *tableView;
+
+- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil;
+- (void)viewDidLoad;
 
 @end

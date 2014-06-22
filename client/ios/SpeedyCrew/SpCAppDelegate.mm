@@ -8,7 +8,9 @@
 
 #import "SpCAppDelegate.h"
 
-@implementation SpCAppDelegate
+@implementation SpCAppDelegate {
+    CLLocationManager* locationManager;
+}
 
 + (SpCAppDelegate*)instance
 {
@@ -20,7 +22,25 @@
     NSLog(@"application launched");
     self.data = [[SpCData alloc] init];
     [self.data updateSearches];
+    [self startLocationManager];
     return YES;
+}
+
+- (void)startLocationManager
+{
+    if (locationManager == nil) {
+        locationManager = [[CLLocationManager alloc] init];
+        locationManager.delegate = self;
+        locationManager.desiredAccuracy = kCLLocationAccuracyBest;
+#if 1
+        //-dk:TODO enable location updates
+        [locationManager startUpdatingLocation];
+#else
+        //-dk:TODO use automatic updates
+        self.data.longitude = -0.15001;
+        self.data.latitude  = 51.5;
+#endif
+    }
 }
 							
 - (void)applicationWillResignActive:(UIApplication *)application
@@ -50,4 +70,23 @@
     // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
 }
 
+- (void)locationManager:(CLLocationManager *)manager didFailWithError:(NSError *)error
+{
+    NSLog(@"AppDelegate locationManager didFailWithError: %@", error);
+    UIAlertView *errorAlert = [[UIAlertView alloc]
+                               initWithTitle:@"Error" message:@"Failed to Get Your Location" delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil];
+    [errorAlert show];
+}
+
+- (void)locationManager:(CLLocationManager *)manager didUpdateToLocation:(CLLocation *)newLocation fromLocation:(CLLocation *)oldLocation
+{
+    //-dk:TODO move the location update to the data object itself...?
+    if (newLocation != nil
+        && (newLocation.coordinate.longitude != oldLocation.coordinate.longitude
+            || newLocation.coordinate.latitude != oldLocation.coordinate.latitude)) {
+        self.data.longitude = newLocation.coordinate.longitude;
+        self.data.latitude  = newLocation.coordinate.latitude;
+        NSLog(@"updated location: (%f, %f)", self.data.longitude, self.data.latitude);
+    }
+}
 @end

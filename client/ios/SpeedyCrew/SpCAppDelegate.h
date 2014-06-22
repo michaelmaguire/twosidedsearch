@@ -7,13 +7,15 @@
 //
 
 #import <UIKit/UIKit.h>
+#import <CoreLocation/CoreLocation.h>
 #import "SpCData.h"
 
-@interface SpCAppDelegate : UIResponder <UIApplicationDelegate>
+@interface SpCAppDelegate : UIResponder <UIApplicationDelegate, CLLocationManagerDelegate>
 
 @property (strong, nonatomic) UIWindow *window;
 @property SpCData*                      data;
 
 + (SpCAppDelegate*)instance;
+- (void)startLocationManager;
 
 @end
