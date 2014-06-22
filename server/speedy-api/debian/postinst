@@ -1,0 +1,10 @@
+#!/bin/bash
+
+if ! -e /usr/lib/speedy-api/speedycrew/settings.py ; then
+  ln -s /etc/speedy-api.conf /usr/lib/speedy-api/speedycrew/settings.py
+fi
+
+a2ensite api.speedycrew.com
+a2enmod ssl
+
+#DEBHELPER#

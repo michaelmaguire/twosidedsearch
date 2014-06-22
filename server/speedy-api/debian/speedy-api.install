@@ -1,0 +1,10 @@
+speedycrew/urls.py /usr/lib/speedy-api/speedycrew/
+speedycrew/wsgi.py /usr/lib/speedy-api/speedycrew/
+debian/speedy-api.conf /etc/
+debian/api.speedycrew.com /etc/apache2/sites-available/
+debian/speedy-api.wsgi /usr/lib/speedy-api/
+speedycrew/__init__.py /usr/lib/speedy-api/speedycrew/
+scapi1/__init__.py /usr/lib/speedy-api/scapi1/
+scapi1/views.py /usr/lib/speedy-api/scapi1/
+scapi1/templates/docs.html /usr/lib/speedy-api/scapi1/templates/
+

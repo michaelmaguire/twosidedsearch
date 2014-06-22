@@ -1,0 +1,10 @@
+Source: speedy-api
+Maintainer: Thomas Munro <munro@ip9.org>
+
+Package: speedy-api
+Architecture: all
+Section: unknown
+Depends: python, python-psycopg2, python-m2crypto, python-django, apache2, libapache2-mod-wsgi
+Description: Speedycrew API service
+ JSON-over-HTTPS API serving requests from the Speedycrew mobile
+ phone application.
