@@ -162,7 +162,7 @@ class DbConsumer:
         logger.info("DbConsumer -- connecting to %s...", self.dsn)
         self.conn = psycopg2.connect(self.dsn)
         self.cursor = self.conn.cursor()
-        self.cursor.execute("SET application_name = 'speedy_notifier consumer'")
+        self.cursor.execute("SET application_name = 'speedy-notifier consumer'")
         self.cursor.execute("COMMIT")
         logger.info("DbConsumer -- connected")
 
@@ -251,7 +251,7 @@ class DbListener:
         self.conn = psycopg2.connect(self.dsn)
         self.conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
         cursor = self.conn.cursor()
-        cursor.execute("SET application_name = 'speedy_notifier listener'")
+        cursor.execute("SET application_name = 'speedy-notifier listener'")
         cursor.execute("LISTEN tickle")
         logger.info("DbListener -- connected")
 
