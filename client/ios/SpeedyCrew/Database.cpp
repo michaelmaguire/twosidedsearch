@@ -271,3 +271,28 @@ namespace SpeedyCrew
         return value;
     }
 }
+
+// ----------------------------------------------------------------------------
+
+SpeedyCrew::Database::Transaction::Transaction(SpeedyCrew::Database& db)
+    : m_db(&db) {
+    this->m_db->execute("BEGIN TRANSACTION;");
+}
+
+SpeedyCrew::Database::Transaction::Transaction(SpeedyCrew::Database* db)
+    : m_db(db) {
+    this->m_db->execute("BEGIN TRANSACTION;");
+}
+
+SpeedyCrew::Database::Transaction::~Transaction()
+{
+    if (this->m_db) {
+        this->m_db->execute("ROLLBACK;");
+    }
+}
+
+void SpeedyCrew::Database::Transaction::commit()
+{
+    this->m_db->execute("COMMIT;");
+    this->m_db = 0;
+}

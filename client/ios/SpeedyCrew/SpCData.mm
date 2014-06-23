@@ -30,23 +30,18 @@
     self.listeners = [[NSMutableDictionary alloc] init];
     self.longitude = 0.0; //-dk:TODO use coordinate and deal with no coordinate set!
     self.latitude  = 0.0;
-    [self synchronise];
     
     return self;
 }
 
 - (void)synchronise
 {
-    SpeedyCrew::Database* db = [SpCDatabase getDatabase];
-    std::ostringstream sout;
-    sout << "x-id=" << db->query<std::string>("select value from settings where name='scid'");
-    if (db->query<int>("select count(*) from control") == 1) {
-        sout << "&timeline=" << db->query<std::string>("select timeline from control");
-        sout << "&sequence=" << db->query<std::string>("select sequence from control");
-    } 
+    [self sendHttpRequest:@"synchronise" withBody:@""];
+}
 
-    NSString* query = [NSString stringWithFormat:@"%s", sout.str().c_str()];
-    [self sendHttpRequest:@"synchronise" withBody:query];
+- (void)sendToken:(NSString*)token
+{
+    [self sendHttpRequest:@"set_notification" withBody:[NSString stringWithFormat:@"apple_device_token=%@", token]];
 }
 
 + (NSString*)encodeURL:(NSString*)str
@@ -63,15 +58,14 @@
     SpCDatabase* database = [SpCDatabase database];
     [database updateSetting:name with:value];
     NSString* encoded = [value stringByAddingPercentEscapesUsingEncoding: NSUTF8StringEncoding];
-    NSString* query = [NSString stringWithFormat:@"x-id=%@&%@=%@", self.identity, name, encoded];
+    NSString* query = [NSString stringWithFormat:@"%@=%@", name, encoded];
     [self sendHttpRequest:@"update_profile" withBody:query];
 }
 
 - (void)addSearchWithText:(NSString*)text forSide:(NSString*)side
 {
     //-dk:TODO get the radius from the configuration
-    NSString* query = [NSString stringWithFormat:@"x-id=%@&side=%@%@&query=%@&longitude=-0.15&latitude=51.5",
-                        self.identity,
+    NSString* query = [NSString stringWithFormat:@"side=%@%@&query=%@&longitude=-0.15&latitude=51.5",
                         side,
                         [side isEqual:@"SEEK"]? @"&radius=5000": @"",
                         [SpCData encodeURL:text]
@@ -82,7 +76,7 @@
 - (void)deleteSearch:(NSString*)id
 {
     NSLog(@"removing search: '%@'", id);
-    NSString* query = [NSString stringWithFormat:@"x-id=%@&search=%@", self.identity, id];
+    NSString* query = [NSString stringWithFormat:@"search=%@", id];
     [self sendHttpRequest:@"delete_search" withBody: query];
 }
 
@@ -93,24 +87,25 @@
     if ([json isKindOfClass: [NSDictionary class]]) {
         NSDictionary* dict = (NSDictionary*)json;
         NSString* type = [dict objectForKey: @"message_type"];
+
         SpeedyCrew::Database* db = [SpCDatabase getDatabase];
+        NSArray* queries = [dict objectForKey: @"sql"];
+        if (queries) {
+            SpeedyCrew::Database::Transaction transaction(db);
+            for (int i = 0, count = [queries count]; i != count; ++i) {
+                db->execute([[queries objectAtIndex: i] UTF8String]);
+            }
+            transaction.commit();
+            [self notify];
+        }
+
         if (type) {
             if ([type isEqual:@"synchronise_response"]) {
-                NSArray* queries = [dict objectForKey: @"sql"];
-                if (queries) {
-                    //-dk:TODO enclose by a transaction!
-                    for (int i = 0, count = [queries count]; i != count; ++i) {
-                        db->execute([[queries objectAtIndex: i] UTF8String]);
-                    }
-                    [self notify];
-                }
-                else {
-                    NSLog(@"ERROR: synchronise_response without 'sql' member");
-                }
             }
             else if ([type isEqual:@"create_search_response"]
-                     || [type isEqual:@"update_profile_response"]) {
-                [self synchronise];
+                     || [type isEqual:@"update_profile_response"]
+                     || [type isEqual:@"set_notification_response"]
+                     || [type isEqual:@"delete_search_response"]) {
             } 
             else {
                 NSLog(@"unprocessed message type='%@'", type);
@@ -125,27 +120,24 @@
     }
 }
 
-- (void)sendHttpRequest:(NSString*)query
-{
-    NSString* str = [NSString stringWithFormat:@"%@%@", self.baseURL, query];
-    NSLog(@"sending HTTP GET: url='%@'", str);
-    NSURL* url = [NSURL URLWithString:str];
-    NSURLRequest* request = [NSURLRequest requestWithURL:url];
-    NSOperationQueue* q = [NSOperationQueue mainQueue];
-    [NSURLConnection sendAsynchronousRequest:request queue:q completionHandler:
-     ^(NSURLResponse* resp, NSData* d, NSError* err) {
-         if (d) {
-             [self receivedResponse:d];
-         }
-         else {
-             NSLog(@"received error: %@", [err localizedDescription]);
-         }
-     }];
-}
-
 - (void)sendHttpRequest:(NSString*)query withBody:(NSString*)body
 {
     NSString* str = [NSString stringWithFormat:@"%@%@", self.baseURL, query];
+
+    SpeedyCrew::Database* db = [SpCDatabase getDatabase];
+    std::ostringstream sout;
+    sout << "x-id=" << db->query<std::string>("select value from settings where name='scid'");
+    if (([query isEqual:@"synchronise"]
+         || [query isEqual:@"create_search"]
+         || [query isEqual:@"update_profile"]
+         )
+        && db->query<int>("select count(*) from control") == 1) {
+        sout << "&timeline=" << db->query<std::string>("select timeline from control");
+        sout << "&sequence=" << db->query<std::string>("select sequence from control");
+    } 
+    sout << ([body isEqual:@""]? "": "&");
+    body = [NSString stringWithFormat:@"%s%@", sout.str().c_str(), body];
+
     NSLog(@"sending HTTP POST: url='%@' body='%@'", str, body);
     NSURL* url = [NSURL URLWithString:str];
     NSMutableURLRequest* request = [NSMutableURLRequest requestWithURL:url];

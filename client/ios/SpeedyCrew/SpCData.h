@@ -19,6 +19,7 @@
 
 - (SpCData*)init;
 - (void)synchronise;
+- (void)sendToken:(NSString*)token;
 - (void)updateSetting:(NSString*)name with:(NSString*)value;
 
 - (void)addSearchWithText:(NSString*)text forSide:(NSString*)side;

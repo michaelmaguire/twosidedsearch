@@ -30,6 +30,18 @@ class SpeedyCrew::Database
     Database(Database&);
     void operator= (Database&);
  public:
+    class Transaction
+    {
+        Transaction(Transaction&);
+        void operator=(Transaction);
+        SpeedyCrew::Database* m_db;
+    public:
+        Transaction(SpeedyCrew::Database& db);
+        Transaction(SpeedyCrew::Database* db);
+        ~Transaction();
+        void commit();
+    };
+
     static std::string escape(std::string const& argument);
     static std::string escape(char const* argument);
 
