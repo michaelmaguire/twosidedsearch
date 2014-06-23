@@ -181,7 +181,7 @@ namespace
     extern "C" int string_callback(void* data, int count, char** rows,char**)
     {
         if (count == 1 && rows) {
-            *static_cast<std::string*>(data) = rows[0];
+            *static_cast<std::string*>(data) = rows[0]? rows[0]: "";
             return 0;
         }
         return 1;

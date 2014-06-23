@@ -96,7 +96,7 @@
 {
     SpeedyCrew::Database* db = [SpCDatabase getDatabase];
     std::string side([self.side UTF8String]);
-    std::vector<std::string> searches(db->queryColumn("select id from searches where side='" + side + "'"));
+    std::vector<std::string> searches(db->queryColumn("select id from search where side='" + side + "'"));
     [self.searches removeAllObjects];
     for (std::vector<std::string>::const_iterator it(searches.begin()), end(searches.end()); it != end; ++it) {
         [self.searches addObject: [SpCSearchView makeWithId:[NSString stringWithFormat:@"%s", it->c_str()] andSide:self.side]];
@@ -126,7 +126,7 @@
     [expand setTitle: (search.expanded? @"-": @"+") forState:UIControlStateNormal];
 
     SpeedyCrew::Database* db = [SpCDatabase getDatabase];
-    std::string text = db->query<std::string>("select search from searches where id='" + db->escape([search.id UTF8String]) + "';");
+    std::string text = db->query<std::string>("select query from search where id='" + db->escape([search.id UTF8String]) + "';");
     UIButton* title = (UIButton*)[header viewWithTag: -1002];
     [title setTitle: [NSString stringWithFormat:@"%s", text.c_str()] forState:UIControlStateNormal];
 

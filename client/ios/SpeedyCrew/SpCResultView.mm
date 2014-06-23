@@ -46,8 +46,8 @@
 
     SpeedyCrew::Database* db = [SpCDatabase getDatabase];
     std::string id = [self.id UTF8String];
-    rc.latitude  = db->query<double>("select latitude from results where id='" + id + "'");
-    rc.longitude = db->query<double>("select longitude from results where id='" + id + "'");
+    rc.latitude  = db->query<double>("select latitude from match where id='" + id + "'");
+    rc.longitude = db->query<double>("select longitude from match where id='" + id + "'");
 
     return rc;
 }
@@ -56,7 +56,7 @@
 {
     SpeedyCrew::Database* db = [SpCDatabase getDatabase];
     std::string id = [self.id UTF8String];
-    std::string value = db->query<std::string>("select name from results where id='" + id + "'");
+    std::string value = db->query<std::string>("select username from match where id='" + id + "'");
     return [NSString stringWithFormat:@"%s", value.c_str()];
 }
 
@@ -64,7 +64,7 @@
 {
     SpeedyCrew::Database* db = [SpCDatabase getDatabase];
     std::string id = [self.id UTF8String];
-    std::string value = db->query<std::string>("select email from results where id='" + id + "'");
+    std::string value = db->query<std::string>("select fingerprint from match where id='" + id + "'");
     return [NSString stringWithFormat:@"%s", value.c_str()];
 }
 

@@ -12,6 +12,7 @@
 #import <Foundation/Foundation.h>
 #import <Foundation/NSJSONSerialization.h>
 #include "Database.h"
+#include <sstream>
  
 @interface SpCData()
 @property NSString* baseURL;
@@ -25,15 +26,27 @@
     SpCDatabase* database = [SpCDatabase database];
     self.baseURL = @"http://captain:cook@dev.speedycrew.com/api/1/";
     self.identity = [database querySetting: @"scid"];
-    NSString* query = [NSString stringWithFormat:@"x-id=%@", self.identity];
-    [self sendHttpRequest:@"profile" withBody:query];
-    
     self.searches = [[NSMutableArray alloc] init]; //-dk:TODO recover stored searches
     self.listeners = [[NSMutableDictionary alloc] init];
-    
     self.longitude = 0.0; //-dk:TODO use coordinate and deal with no coordinate set!
     self.latitude  = 0.0;
+    [self synchronise];
+    
     return self;
+}
+
+- (void)synchronise
+{
+    SpeedyCrew::Database* db = [SpCDatabase getDatabase];
+    std::ostringstream sout;
+    sout << "x-id=" << db->query<std::string>("select value from settings where name='scid'");
+    if (db->query<int>("select count(*) from control") == 1) {
+        sout << "&timeline=" << db->query<std::string>("select timeline from control");
+        sout << "&sequence=" << db->query<std::string>("select sequence from control");
+    } 
+
+    NSString* query = [NSString stringWithFormat:@"%s", sout.str().c_str()];
+    [self sendHttpRequest:@"synchronise" withBody:query];
 }
 
 + (NSString*)encodeURL:(NSString*)str
@@ -52,12 +65,6 @@
     NSString* encoded = [value stringByAddingPercentEscapesUsingEncoding: NSUTF8StringEncoding];
     NSString* query = [NSString stringWithFormat:@"x-id=%@&%@=%@", self.identity, name, encoded];
     [self sendHttpRequest:@"update_profile" withBody:query];
-}
-
-- (void)updateSearches
-{
-    NSString* query = [NSString stringWithFormat:@"x-id=%@", self.identity];
-    [self sendHttpRequest:@"searches" withBody:query];
 }
 
 - (void)addSearchWithText:(NSString*)text forSide:(NSString*)side
@@ -88,67 +95,23 @@
         NSString* type = [dict objectForKey: @"message_type"];
         SpeedyCrew::Database* db = [SpCDatabase getDatabase];
         if (type) {
-            NSArray* array = NULL;
-            if ([type isEqual:@"searches_response"]
-                && (array = [dict objectForKey: @"searches"])) {
-                db->execute("delete from searches");
-                for (long i = 0, count = [array count]; i != count; ++i) {
-                    NSDictionary* dict = [array objectAtIndex: i];
-                    NSNumber* id = [dict objectForKey: @"id"];
-                    NSString* side = [dict objectForKey: @"side"];
-                    NSString* query = [dict objectForKey: @"query"];
-                    if (id && side && query) {
-                        NSString* sid = [NSString stringWithFormat:@"%@", id];
-                        [self sendHttpRequest:@"search_results"
-                                     withBody:[NSString stringWithFormat:@"x-id=%@&search=%@&request_id=%@", self.identity, id, id]];
-                        std::string insert("insert into searches(id, side, search) values("
-                                           "'" + db->escape([sid UTF8String]) + "', "
-                                           "'" + db->escape([side UTF8String]) + "', "
-                                           "'" + db->escape([query UTF8String]) + "');");
-                        db->execute(insert);
-                    }
-                }
-                [self notify];
-            }
-            else if ([type isEqual:@"search_results_response"]) {
-                NSObject* sid = [dict objectForKey: @"request_id"];
-                if (sid && (array = [dict objectForKey: @"results"])) {
-                    std::string search(db->escape([[NSString stringWithFormat:@"%@", sid] UTF8String]));
-                    db->execute("delete from results where search='" + search + "';");
-                    for (long i = 0, count = [array count]; i != count; ++i) {
-                        NSDictionary* dict = [array objectAtIndex: i];
-                        NSObject* id = [dict objectForKey: @"id"];
-                        NSObject* name = [dict objectForKey: @"real_name"];
-                        NSObject* longitude = [dict objectForKey: @"longitude"];
-                        NSObject* latitude = [dict objectForKey: @"latitude"];
-                        NSObject* email = [dict objectForKey: @"email"];
-                        std::string insert("insert into results(id, search, name, email, longitude, latitude) values("
-                                           "'" + search + "-" + db->escape(id? [[NSString stringWithFormat:@"%@", id] UTF8String]: "") + "', "
-                                           "'" + search + "', "
-                                           "'" + db->escape(name? [[NSString stringWithFormat:@"%@", name] UTF8String]: "") + "', "
-                                           "'" + db->escape(email? [[NSString stringWithFormat:@"%@", email] UTF8String]: "") + "', "
-                                           "'" + db->escape(longitude? [[NSString stringWithFormat:@"%@", longitude] UTF8String]: "") + "', "
-                                           "'" + db->escape(latitude? [[NSString stringWithFormat:@"%@", latitude] UTF8String]: "") + "'"
-                                           ");");
-                        try {
-                            db->execute(insert);
-                        }
-                        catch (std::exception const& ex) {
-                            NSLog(@"ERROR inserting result: %s", ex.what());
-                        }
+            if ([type isEqual:@"synchronise_response"]) {
+                NSArray* queries = [dict objectForKey: @"sql"];
+                if (queries) {
+                    //-dk:TODO enclose by a transaction!
+                    for (int i = 0, count = [queries count]; i != count; ++i) {
+                        db->execute([[queries objectAtIndex: i] UTF8String]);
                     }
                     [self notify];
                 }
                 else {
-                    NSLog(@"no request ID in results response!\n");
+                    NSLog(@"ERROR: synchronise_response without 'sql' member");
                 }
             }
-            else if ([type isEqual:@"create_search_response"]) {
-                [self sendHttpRequest: @"searches" withBody:[NSString stringWithFormat:@"x-id=%@", self.identity]];
+            else if ([type isEqual:@"create_search_response"]
+                     || [type isEqual:@"update_profile_response"]) {
+                [self synchronise];
             } 
-            else if ([type isEqual:@"delete_search_response"]) {
-                [self updateSearches];
-            }
             else {
                 NSLog(@"unprocessed message type='%@'", type);
             }

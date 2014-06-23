@@ -10,6 +10,8 @@
 #import "SpCDatabase.h"
 #import "SpCAppDelegate.h"
 #import "SpCData.h"
+#include "Database.h"
+#include <string>
 
 @interface SpCUserViewController ()
 @property NSArray* elements;
@@ -60,10 +62,11 @@
 - (UITableViewCell *)tableView:(UITableView *)tv cellForRowAtIndexPath:(NSIndexPath *)path
 {
     NSString* id = [self.elements objectAtIndex:path.row];
-    SpCDatabase* database = [ SpCDatabase database];
-    NSString* value = [database querySetting: id];
+    SpeedyCrew::Database* db = [SpCDatabase getDatabase];
     UITableViewCell *cell = [tv dequeueReusableCellWithIdentifier:id forIndexPath:path];
     if (0 == path.row) {
+        std::string val(db->query<std::string>("select value from settings where name='scid'"));
+        NSString* value = [NSString stringWithFormat:@"%s", val.c_str()];
         UIView* view = [cell.contentView viewWithTag:0];
         if (view && 2 == view.subviews.count) {
             UILabel* label = [view.subviews objectAtIndex:1];
@@ -73,6 +76,11 @@
     else {
         UIView* view = [cell.contentView viewWithTag:0];
         if (view && 2 == view.subviews.count) {
+            std::string val;
+            if (db->query<int>("select count(*) from profile") == 1) {
+                val = db->query<std::string>("select " + std::string([id UTF8String]) + " from profile");
+            }
+            NSString* value = [NSString stringWithFormat:@"%s", val.c_str()];
             UITextField* text = [view.subviews objectAtIndex:1];
             text.text     = value;
             text.tag      = path.row;

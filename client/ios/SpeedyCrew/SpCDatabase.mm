@@ -44,11 +44,47 @@ namespace
             s_database.initialize(name);
             
             NSLog(@"setting up database tables");
-            s_database.createTable("settings", "name TEXT PRIMARY KEY, value TEXT");
-            s_database.createTable("searches",
-                                   "id TEXT PRIMARY KEY, side TEXT, search TEXT");
-            s_database.createTable("results",
-                                   "id TEXT PRIMARY KEY, search TEXT, name TEXT, email TEXT, longitude TEXT, latitude TEXT");
+            s_database.createTable("control",
+                                   "timeline integer not null,"
+                                   "sequence integer not null");
+            s_database.createTable("settings", "name TEXT PRIMARY KEY, value TEXT"); //-dk:TODO remove
+            s_database.createTable("profile",
+                                   "username text,"
+                                   "real_name text,"
+                                   "email text unique,"
+                                   "password_hash text,"
+                                   "status text not null,"
+                                   "message text,"
+                                   "created timestamptz not null,"
+                                   "modified timestamptz not null");
+            s_database.createTable("search",
+                                   "id text primary key,"
+                                   "query text not null,"
+                                   "side text not null,"
+                                   "address text,"
+                                   "postcode text,"
+                                   "city text,"
+                                   "country text,"
+                                   "radius float,"
+                                   "latitude float not null,"
+                                   "longitude float not null");
+
+            //s_database.createTable("results",
+            //                       "id TEXT PRIMARY KEY, search TEXT, name TEXT, email TEXT, longitude TEXT, latitude TEXT");
+            s_database.createTable("match",
+                                   "id text primary key not null,"
+                                   "search text references search(id),"
+                                   "username text,"
+                                   "fingerprint text,"
+                                   "public_key text,"
+                                   "query text not null,"
+                                   "latitude float,"
+                                   "longitude float,"
+                                   "matches int,"
+                                   "distance float,"
+                                   "score double");
+            s_database.createTable("message",
+                                   "id text primary key not null");
             
             try {
                 std::string uuidstr([[[UIDevice currentDevice].identifierForVendor UUIDString] UTF8String]);

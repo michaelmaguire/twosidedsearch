@@ -18,10 +18,10 @@
 @property float           latitude;
 
 - (SpCData*)init;
+- (void)synchronise;
 - (void)updateSetting:(NSString*)name with:(NSString*)value;
 
 - (void)addSearchWithText:(NSString*)text forSide:(NSString*)side;
-- (void)updateSearches;
 - (void)deleteSearch:(NSString*)id;
 
 @end
