@@ -12,8 +12,13 @@ import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.CursorTreeAdapter;
 import android.widget.EditText;
+import android.widget.ExpandableListView;
+import android.widget.ExpandableListView.OnChildClickListener;
+import android.widget.ExpandableListView.OnGroupClickListener;
 import android.widget.SimpleCursorTreeAdapter;
 import android.widget.Toast;
 
@@ -24,7 +29,7 @@ import com.speedycrew.client.sql.Search;
 import com.speedycrew.client.sql.SyncedContentProvider;
 import com.speedycrew.client.util.RequestHelperServiceConnector;
 
-public class SearchFragment extends Fragment implements View.OnClickListener {
+public class SearchFragment extends Fragment implements View.OnClickListener, OnGroupClickListener, OnChildClickListener, OnItemLongClickListener {
 	private static final String LOGTAG = SearchFragment.class.getName();
 
 	static final String[] SEARCH_PROJECTION = new String[] { Search._ID, Search.ID, Search.QUERY };
@@ -60,6 +65,8 @@ public class SearchFragment extends Fragment implements View.OnClickListener {
 	private RequestHelperServiceConnector mRequestHelperServiceConnector;
 
 	protected QueryHandler mQueryHandler;
+
+	protected ExpandableListView mExpandableListView;
 
 	protected SearchResultsListAdapter mSearchResultsListAdapter;
 
@@ -180,5 +187,44 @@ public class SearchFragment extends Fragment implements View.OnClickListener {
 
 			return null;
 		}
+	}
+
+	@Override
+	public boolean onChildClick(ExpandableListView parent, View v, int groupPosition, int childPosition, long id) {
+		Log.i(LOGTAG, "onChildClick groupPosition[" + groupPosition + "] childPosition[" + childPosition + "] id[" + id + "]");
+
+		return false;
+	}
+
+	@Override
+	public boolean onGroupClick(ExpandableListView parent, View v, int groupPosition, long id) {
+		Log.i(LOGTAG, "onGroupClick groupPosition[" + groupPosition + "] id[" + id + "]");
+
+		return false;
+	}
+
+	@Override
+	public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+		Log.i(LOGTAG, "onItemLongClick position[" + position + "] id[" + id + "]");
+
+		long packedPosition = mExpandableListView.getExpandableListPosition(position);
+		if (ExpandableListView.getPackedPositionType(packedPosition) == ExpandableListView.PACKED_POSITION_TYPE_CHILD) {
+			// get item ID's
+			int groupPosition = ExpandableListView.getPackedPositionGroup(packedPosition);
+			int childPosition = ExpandableListView.getPackedPositionChild(packedPosition);
+			Log.i(LOGTAG, "onItemLongClick CHILD position[" + position + "] id[" + id + "] groupPosition[" + groupPosition + "] childPosition[" + childPosition + "]");
+
+			// handle data
+
+			// return true as we are handling the event.
+			return true;
+		} else if (ExpandableListView.getPackedPositionType(packedPosition) == ExpandableListView.PACKED_POSITION_TYPE_GROUP) {
+			int groupPosition = ExpandableListView.getPackedPositionGroup(packedPosition);
+
+			Log.i(LOGTAG, "onItemLongClick GROUP position[" + position + "] id[" + id + "] groupPosition[" + groupPosition + "]");
+
+			return true;
+		}
+		return false;
 	}
 }
