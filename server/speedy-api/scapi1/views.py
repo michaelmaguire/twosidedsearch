@@ -93,6 +93,193 @@ def param(fmt, values):
     module execute."""
     return fmt % tuple(map(escape, values)) # TODO this is not the modern way, use .format
 
+def do_refresh(cursor, profile_id, timeline, high_sequence, sql, metadata):
+    sql.append("DELETE FROM profile")
+    sql.append("DELETE FROM message")
+    sql.append("DELETE FROM match")
+    sql.append("DELETE FROM search")
+    sql.append("DELETE FROM control")
+
+    # TODO messages etc
+    
+    cursor.execute("""SELECT s.id, 
+                             s.query, 
+                             s.side, 
+                             s.address, 
+                             s.postcode, 
+                             s.city, 
+                             s.country, 
+                             st_x(s.geography::geometry) AS longitude,
+                             st_y(s.geography::geometry) AS latitude,
+                             s.radius
+                        FROM speedycrew.search s
+                       WHERE s.owner = %s
+                         AND s.status = 'ACTIVE'""",
+                   (profile_id, ))
+    for row in cursor:
+        sql.append(param("INSERT INTO search (id, query, side, address, postcode, city, country, longitude, latitude, radius) VALUES (%s, %s, %s, %s, %s ,%s, %s, %s, %s, %s)",
+                         row))                    
+
+    cursor.execute("""SELECT s2.id AS other_search_id,
+                             s1.id AS my_search_id,
+                             p2.username,
+                             d2.id AS fingerprint,
+                             s2.query,
+                             st_x(s2.geography::geometry) AS longitude,
+                             st_y(s2.geography::geometry) AS latitude,
+                             m.matches,
+                             m.distance,
+                             m.score
+                        FROM speedycrew.match m
+                        JOIN speedycrew.search s2 ON m.b = s2.id
+                        JOIN speedycrew.profile p2 ON s2.owner = p2.id
+                        JOIN speedycrew.device d2 ON p2.id = d2.profile
+                        JOIN speedycrew.search s1 ON m.a = s1.id
+                       WHERE s1.owner = %s
+                         AND s1.status = 'ACTIVE'
+                         AND s2.status = 'ACTIVE'""",
+                   (profile_id, ))
+    for row in cursor:
+        sql.append(param("INSERT INTO match (id, search, username, fingerprint, query, longitude, latitude, matches, distance, score) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                         row))    
+
+    cursor.execute("""SELECT username, real_name, email, status, message, created, modified
+                        FROM speedycrew.profile
+                       WHERE id = %s""",
+                   (profile_id, ))
+    username, real_name, email, status, message, created, modified = cursor.fetchone()
+    sql.append(param("INSERT INTO profile (username, real_name, email, status, message, created, modified) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+                     (username, real_name, email, status, message, created, modified)))
+
+    sql.append(param("INSERT INTO control (timeline, sequence) VALUES (%s, %s)",
+                     (timeline, high_sequence,)))
+
+def do_incremental(cursor, profile_id, device_sequence, sql, metadata):
+    # maybe there is a better way to do this... it sure looks
+    # overgrown/ugly... the basic idea here is to read the
+    # appropriate range of events from the event table, LEFT
+    # JOINed against the various things it refers to (messages,
+    # searches, ...), so we can generate the necessary
+    # INSERT/UPDATE/DELETE statements for the denormalised data we
+    # push to the device database
+    #
+    # TODO: assumes one device per profile, need to fix
+    cursor.execute("""SELECT e.seq,
+                             e.type,
+                             e.tab,
+                             message.body,
+                             my_search.id,
+                             my_search.query,
+                             my_search.side,
+                             my_search.address,
+                             my_search.postcode,
+                             my_search.city,
+                             my_search.country,
+                             my_search.radius,
+                             st_x(my_search.geography::geometry) AS my_search_longitude,
+                             st_y(my_search.geography::geometry) AS my_search_latitude,                           
+                             match_search.id,
+                             match_profile.username,
+                             match_device.id AS match_fingerprint,
+                             match_search.query,
+                             st_x(match_search.geography::geometry) AS longitude,
+                             st_y(match_search.geography::geometry) AS latitude,
+                             match.matches,
+                             match.distance,
+                             match.score,
+                             my_profile.username,
+                             my_profile.real_name,
+                             my_profile.email,
+                             my_profile.status,
+                             my_profile.message,
+                             my_profile.created,
+                             my_profile.modified
+                        FROM speedycrew.event e
+                   LEFT JOIN speedycrew.message ON e.message = message.id
+                   LEFT JOIN speedycrew.search my_search ON e.search = my_search.id
+                   LEFT JOIN speedycrew.search match_search ON e.match = match_search.id
+                   LEFT JOIN speedycrew.profile match_profile ON match_search.owner = match_profile.id
+                   LEFT JOIN speedycrew.device match_device ON match_profile.id = match_device.profile
+                   LEFT JOIN speedycrew.match ON e.search = match.a AND e.match = match.b
+                   LEFT JOIN speedycrew.profile my_profile ON e.profile = my_profile.id AND e.tab = 'PROFILE'
+                       WHERE e.profile = %s
+                         AND e.seq > %s
+                       ORDER BY e.seq
+                       LIMIT %s""",
+                   (profile_id, device_sequence, MAX_FETCH_EVENTS))
+    count = 0
+    highest_sequence = None
+    for sequence, type, tab, message_body, my_search_id, my_search_query, my_search_side, my_search_address, my_search_postcode, my_search_city, my_search_country, my_search_radius, my_search_latitude, my_search_longitude, match_search_id, match_username, match_fingerprint, match_query, match_longitude, match_latitude, match_matches, match_distance, match_score, my_username, my_real_name, my_email, my_status, my_message, my_created, my_modified in cursor:
+        count += 1
+        highest_sequence = sequence
+        if match_search_id:
+            print "match thingee"
+            if type == "INSERT":
+                metadata.append({ "INSERT" : "match/%s" % match_search_id })
+                sql.append(param("INSERT INTO match (id, search, username, fingerprint, query, longitude, latitude, distance, matches, score) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                                 (match_search_id, my_search_id, match_username, match_fingerprint, match_query, match_longitude, match_latitude, match_distance, match_matches, match_score)))
+            elif type == "UPDATE":
+                # TODO update for matches
+                pass
+            elif type == "DELETE":
+                header += "-- @DELETE match/%s\n" % match_search_id
+                sql += param("DELETE FROM match WHERE id = %s;\n", (match_search_id,))
+        elif my_search_id:
+            print "search thingee"
+            if type == "INSERT":
+                metadata.append({ "INSERT" : "search/%s" % my_search_id })
+                sql.append(param("INSERT INTO search (id, query, side, address, postcode, city, country, radius, latitude, longitude) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                                 (my_search_id, my_search_query, my_search_side, my_search_address, my_search_postcode, my_search_city, my_search_country, my_search_radius, my_search_latitude, my_search_longitude)))
+            elif type == "UPDATE":
+                metadata.append({ "UPDATE" : "search/%s" % my_search_id })
+                # TODO update for searches
+            elif type == "DELETE":
+                metadata.append({ "DELETE" : "search/%s" % my_search_id })
+        elif tab == "PROFILE":
+            if type == "UPDATE":
+                metadata.append({ "UPDATE" : "profile" })
+                sql.append(param("UPDATE profile SET username = %s, real_name = %s, email = %s, status = %s, message = %s, created = %s, modified = %s",
+                                 (my_username, my_real_name, my_email, my_status, my_message, my_created, my_modified)))
+                
+    if count == MAX_FETCH_EVENTS:
+        # this means please call again immediately as there are
+        # probably more events for you
+        metadata.append({ "more" : True })
+    if highest_sequence:
+        sql.append(param("UPDATE control SET sequence = %s", (highest_sequence,)))
+
+def do_synchronise(profile_id, device_timeline, device_sequence):
+    cursor = connection.cursor()
+    metadata = [] # messages to tell the app which objects changed
+    sql = []      # statements for the device to feed to sqlite
+
+    need_refresh = False
+    cursor.execute("""SELECT low_sequence, high_sequence
+                        FROM speedycrew.profile_sequence
+                       WHERE profile = %s""",
+                   (profile_id, ))
+    low_sequence, high_sequence = cursor.fetchone()
+    if low_sequence > device_sequence:
+        need_refresh = True
+    cursor.execute("""SELECT timeline
+                        FROM speedycrew.control""")
+    timeline = cursor.fetchone()[0]
+    if timeline != device_timeline:
+        # either the device has never been synced or there has been
+        # some kind of server-side problem major enough to require all
+        # clients to resync (example: database restored from backups,
+        # some data lost)
+        need_refresh = True
+    
+    if need_refresh:
+        do_refresh(cursor, profile_id, timeline, high_sequence, sql, metadata)
+        operation = "refresh"
+    else:
+        do_incremental(cursor, profile_id, device_sequence, sql, metadata)
+        operation = "incremental"
+
+    return operation, metadata, sql
+
 def synchronise(request):
     """A view handler for synchronising device data with the server."""
     profile_id = begin(request)
@@ -105,185 +292,11 @@ def synchronise(request):
         device_sequence = int(request.REQUEST["sequence"])
     if "timeline" in request.REQUEST:
         device_timeline = int(request.REQUEST["timeline"])
-    print device_timeline, device_sequence
 
-    cursor = connection.cursor()
-    metadata = [] # messages to tell the app which objects changed
-    sql = []      # statements for the device to feed to sqlite
+    operation, metadata, sql = do_synchronise(profile_id, 
+                                              device_timeline, 
+                                              device_sequence)
 
-    need_full_resync = False
-    cursor.execute("""SELECT low_sequence, high_sequence
-                        FROM speedycrew.profile_sequence
-                       WHERE profile = %s""",
-                   (profile_id, ))
-    low_sequence, high_sequence = cursor.fetchone()
-    if low_sequence > device_sequence:
-        # TODO think about whether we want low_sequence to be the
-        # lowest event we have, or the highest event that we have
-        # deleted (probably need to try implementing the trimming code
-        # to decide which is more convenient)
-        need_full_resync = True
-        print "need full resync because low_sequence > device_sequence"
-    cursor.execute("""SELECT timeline
-                        FROM speedycrew.control""")
-    timeline = cursor.fetchone()[0]
-    if timeline != device_timeline:
-        # either the device has never been synced or there has been
-        # some kind of server-side problem major enough to require all
-        # clients to resync (example: database restored from backups,
-        # some data lost)
-        print "got timeline = ", timeline, " device_timeline = ", device_timeline
-        print "so need full resync"
-        need_full_resync = True
-    
-    if need_full_resync:
-
-        sql.append("DELETE FROM profile")
-        sql.append("DELETE FROM message")
-        sql.append("DELETE FROM match")
-        sql.append("DELETE FROM search")
-        sql.append("DELETE FROM control")
-
-        # TODO messages etc
-
-        cursor.execute("""SELECT s.id, 
-                                 s.query, 
-                                 s.side, 
-                                 s.address, 
-                                 s.postcode, 
-                                 s.city, 
-                                 s.country, 
-                                 st_x(s.geography::geometry) AS longitude,
-                                 st_y(s.geography::geometry) AS latitude,
-                                 s.radius
-                            FROM speedycrew.search s
-                           WHERE s.owner = %s
-                             AND s.status = 'ACTIVE'""",
-                       (profile_id, ))
-        for row in cursor:
-            sql.append(param("INSERT INTO search (id, query, side, address, postcode, city, country, longitude, latitude, radius) VALUES (%s, %s, %s, %s, %s ,%s, %s, %s, %s, %s)",
-                             row))                    
-
-        cursor.execute("""SELECT s2.id AS other_search_id,
-                                 s1.id AS my_search_id,
-                                 p2.username,
-                                 d2.id AS fingerprint,
-                                 s2.query,
-                                 st_x(s2.geography::geometry) AS longitude,
-                                 st_y(s2.geography::geometry) AS latitude,
-                                 m.matches,
-                                 m.distance,
-                                 m.score
-                            FROM speedycrew.match m
-                            JOIN speedycrew.search s2 ON m.b = s2.id
-                            JOIN speedycrew.profile p2 ON s2.owner = p2.id
-                            JOIN speedycrew.device d2 ON p2.id = d2.profile
-                            JOIN speedycrew.search s1 ON m.a = s1.id
-                           WHERE s1.owner = %s
-                             AND s1.status = 'ACTIVE'
-                             AND s2.status = 'ACTIVE'""",
-                       (profile_id, ))
-        for row in cursor:
-            sql.append(param("INSERT INTO match (id, search, username, fingerprint, query, longitude, latitude, matches, distance, score) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
-                             row))    
-
-        cursor.execute("""SELECT username, real_name, email, status, message, created, modified
-                            FROM speedycrew.profile
-                           WHERE id = %s""",
-                       (profile_id, ))
-        username, real_name, email, status, message, created, modified = cursor.fetchone()
-        sql.append(param("INSERT INTO profile (username, real_name, email, status, message, created, modified) VALUES (%s, %s, %s, %s, %s, %s, %s)",
-                         (username, real_name, email, status, message, created, modified)))
-
-        sql.append(param("INSERT INTO control (timeline, sequence) VALUES (%s, %s)",
-                         (timeline, high_sequence,)))
-
-    else:
-        # build incremental results
-
-        # maybe there is a better way to do this... it sure looks
-        # overgrown/ugly... the basic idea here is to read the
-        # appropriate range of events from the event table, LEFT
-        # JOINed against the various things it refers to (messages,
-        # searches, ...), so we can generate the necessary
-        # INSERT/UPDATE/DELETE statements for the denormalised data we
-        # push to the device database
-        #
-        # TODO: assumes one device per profile, need to fix
-        cursor.execute("""SELECT e.seq,
-                                 e.type,
-                                 message.body,
-                                 my_search.id,
-                                 my_search.query,
-                                 my_search.side,
-                                 my_search.address,
-                                 my_search.postcode,
-                                 my_search.city,
-                                 my_search.country,
-                                 my_search.radius,
-                                 st_x(my_search.geography::geometry) AS my_search_longitude,
-                                 st_y(my_search.geography::geometry) AS my_search_latitude,                           
-                                 match_search.id,
-                                 match_profile.username,
-                                 match_device.id AS match_fingerprint,
-                                 match_search.query,
-                                 st_x(match_search.geography::geometry) AS longitude,
-                                 st_y(match_search.geography::geometry) AS latitude,
-                                 match.matches,
-                                 match.distance,
-                                 match.score
-                            FROM speedycrew.event e
-                       LEFT JOIN speedycrew.message ON e.message = message.id
-                       LEFT JOIN speedycrew.search my_search ON e.search = my_search.id
-                       LEFT JOIN speedycrew.search match_search ON e.match = match_search.id
-                       LEFT JOIN speedycrew.profile match_profile ON match_search.owner = match_profile.id
-                       LEFT JOIN speedycrew.device match_device ON match_profile.id = match_device.profile
-                       LEFT JOIN speedycrew.match ON e.search = match.a AND e.match = match.b
-                           WHERE e.profile = %s
-                             AND e.seq > %s
-                           ORDER BY e.seq
-                           LIMIT %s""",
-                       (profile_id, device_sequence, MAX_FETCH_EVENTS))
-        count = 0
-        highest_sequence = None
-        for sequence, type, message_body, my_search_id, my_search_query, my_search_side, my_search_address, my_search_postcode, my_search_city, my_search_country, my_search_radius, my_search_latitude, my_search_longitude, match_search_id, match_username, match_fingerprint, match_query, match_longitude, match_latitude, match_matches, match_distance, match_score in cursor:
-            count += 1
-            highest_sequence = sequence
-            if match_search_id:
-                print "match thingee"
-                if type == "INSERT":
-                    metadata.append({ "INSERT" : "match/%s" % match_search_id })
-                    sql.append(param("INSERT INTO match (id, search, username, fingerprint, query, latitude, longitude, distance, matches, distance, score) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
-                                     (match_search_id, my_search_id, match_username, match_fingerprint, match_query, match_distance, match_longitude, match_latitude, match_matches, match_distance, match_score)))
-                elif type == "UPDATE":
-                    # TODO update for matches
-                    pass
-                elif type == "DELETE":
-                    header += "-- @DELETE match/%s\n" % match_search_id
-                    sql += param("DELETE FROM match WHERE id = %s;\n", (match_search_id,))
-            elif my_search_id:
-                print "search thingee"
-                if type == "INSERT":
-                    metadata.append({ "INSERT" : "search/%s" % my_search_id })
-                    sql.append(param("INSERT INTO search (id, query, side, address, postcode, city, country, radius, latitude, longitude) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
-                                     (my_search_id, my_search_query, my_search_side, my_search_address, my_search_postcode, my_search_city, my_search_country, my_search_radius, my_search_latitude, my_search_longitude)))
-                elif type == "UPDATE":
-                    metadata.append({ "UPDATE" : "search/%s" % my_search_id })
-                    # TODO update for searches
-                elif type == "DELETE":
-                    metadata.append({ "DELETE" : "search/%s" % my_search_id })
-             
-        if count == MAX_FETCH_EVENTS:
-            # this means please call again immediately as there are
-            # probably more events for you
-            metadata.append({ "more" : True })
-        if highest_sequence:
-            sql.append(param("UPDATE control SET sequence = %s", (highest_sequence,)))
-
-    if need_full_resync:
-        operation = "refresh"
-    else:
-        operation = "incremental"
     return json_response({ "message_type" : "synchronise_response",
                            "status" : "OK",
                            "metadata" : metadata,
@@ -327,6 +340,8 @@ def update_profile(request):
     real_name = param_or_null(request, "real_name")
     email = param_or_null(request, "email")
     message = param_or_null(request, "message")
+    timeline = param_or_null(request, "timeline")
+    sequence = param_or_null(request, "sequence")
 
     # TODO what constraints should we place on the form of email
     # addresses and usernames?
@@ -385,9 +400,21 @@ def update_profile(request):
                            WHERE id = %s""",
                        (message, profile_id))
 
+    cursor.execute("""INSERT INTO speedycrew.event (profile, seq, type, tab)
+                      VALUES (%s, speedycrew.next_sequence(%s), 'UPDATE', 'PROFILE')""",
+                   (profile_id, profile_id))
+
+    if timeline and sequence:
+        operation, metadata, sql = do_synchronise(profile_id, int(timeline), int(sequence))
+    else:
+        operation, metadata, sql = None, None, None
+                      
     return json_response({ "message_type" : "update_profile_response",
                            "request_id" : request_id,
-                           "status" : "OK" })
+                           "status" : "OK",
+                           "operation" : operation,
+                           "metadata" : metadata,
+                           "sql" : sql })
 
 # TODO this will be removed (made obsolete by the new synchronisation
 # system)
@@ -463,6 +490,8 @@ def create_search(request):
     postcode = param_or_null(request, "postcode")
     radius = param_or_null(request, "radius") # required if side = PROVIDE
 
+    timeline = param_or_null(request, "timeline")
+    sequence = param_or_null(request, "sequence")
 
     if id == None:
         # device should supply this, but for a short time only i'll
@@ -508,22 +537,19 @@ def create_search(request):
     for tag_id in tag_ids:
         cursor.execute("""INSERT INTO speedycrew.search_tag VALUES (%s, %s)""",
                        (id, tag_id))
-
         
-    # TODO review lock duration on profile records
-    cursor.execute("""UPDATE speedycrew.profile_sequence
-                         SET high_sequence = high_sequence + 1
-                       WHERE profile = %s
-                   RETURNING high_sequence""",
-                   (profile_id, ))
-    next_sequence, = cursor.fetchone()
-    cursor.execute("""INSERT INTO speedycrew.event (profile, seq, type, search)
-                      VALUES (%s, %s, 'INSERT', %s)""",
-                   (profile_id, next_sequence, id))
+    cursor.execute("""INSERT INTO speedycrew.event (profile, seq, type, search, tab)
+                      VALUES (%s, speedycrew.next_sequence(%s), 'INSERT', %s, 'SEARCH')""",
+                   (profile_id, profile_id, id))
 
     # TODO since the user is waiting, do some kind of limited version
     # of run_search synchronously?
     cursor.execute("""SELECT speedycrew.run_search(%s::uuid)""", (id, ))
+
+    if timeline and sequence:
+        operation, metadata, sql = do_synchronise(profile_id, int(timeline), int(sequence))
+    else:
+        operation, metadata, sql = None, None, None
 
     # TODO feed some actual responses back?  that'd be friendly.  for
     # now, here, take a number, go and get the results with another
@@ -531,7 +557,10 @@ def create_search(request):
     return json_response({ "message_type" : "create_search_response",
                            "request_id" : request_id,
                            "status" : "OK",
-                           "search_id" : id })
+                           "search_id" : id,
+                           "operation" : operation,
+                           "metadata" : metadata,
+                           "sql" : sql })
 
 def delete_search(request):
     """End an existing active search."""

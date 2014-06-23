@@ -51,6 +51,14 @@ def device_timeline_and_sequence(db):
     else:
         return (0, 0)
 
+def post(url, request):
+    try:
+        text = urllib2.urlopen(base_url + url, urllib.urlencode(request)).read()
+        return json.loads(text)
+    except urllib2.HTTPError as e:
+        print e.read()
+        raise e
+
 def synchronise(db):
     timeline, sequence = device_timeline_and_sequence(db)
     text = urllib2.urlopen(base_url + "/api/1/synchronise?x-id=" + x_id + ";timeline=" + str(timeline) + ";sequence=" + str(sequence)).read()
@@ -71,6 +79,18 @@ class Simple(unittest.TestCase):
         self.assertEqual(device_timeline_and_sequence(self.local_db), (1, 0))
         self.assertEqual("incremental", synchronise(self.local_db))
         self.assertEqual(device_timeline_and_sequence(self.local_db), (1, 0))
+
+    def test_update_profile(self):
+        self.assertEqual("refresh", synchronise(self.local_db))
+        self.assertEqual(device_timeline_and_sequence(self.local_db), (1, 0))
+        response = post("/api/1/update_profile",
+                        { "x-id" : x_id,
+                          "email" : "foo@bar.com" })
+        self.assertEqual(response["status"], "OK")
+        self.assertEqual("incremental", synchronise(self.local_db))
+        self.assertEqual(device_timeline_and_sequence(self.local_db), (1, 1))
+        # TODO assert things about the changes!
+        
 
     def test_post_search(self):
         # put a matchable query in first
