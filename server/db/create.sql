@@ -30,6 +30,17 @@ CREATE TYPE availability_status AS ENUM (
 
 
 --
+-- Name: event_table; Type: TYPE; Schema: speedycrew; Owner: -
+--
+
+CREATE TYPE event_table AS ENUM (
+    'PROFILE',
+    'MATCH',
+    'SEARCH'
+);
+
+
+--
 -- Name: event_type; Type: TYPE; Schema: speedycrew; Owner: -
 --
 
@@ -130,8 +141,8 @@ begin
   loop
     delete from speedycrew.match
      where a = v_a and b = v_b;
-    insert into speedycrew.event (profile, seq, type, search, match)
-    values (v_profile_id, next_sequence(v_profile_id), 'DELETE', v_a, v_b);
+    insert into speedycrew.event (profile, seq, type, search, match, tab)
+    values (v_profile_id, next_sequence(v_profile_id), 'DELETE', v_a, v_b, 'MATCH');
   end loop;      
   -- we CAN'T delete the 'search' record yet, because it may be
   -- references by events;
@@ -146,8 +157,8 @@ begin
     into v_profile_id
     from speedycrew.search
    where id = i_search_id;
-  insert into speedycrew.event (profile, seq, type, search)
-  values (v_profile_id, next_sequence(v_profile_id), 'UPDATE', i_search_id);
+  insert into speedycrew.event (profile, seq, type, search, tab)
+  values (v_profile_id, next_sequence(v_profile_id), 'DELETE', i_search_id, 'SEARCH');
 end;
 $$;
 
@@ -334,8 +345,8 @@ begin
   loop
       insert into speedycrew.match (a, b, matches, distance, score, status, created)
       values (v_a, v_b, v_matches, v_distance, v_score, 'ACTIVE', now());
-      insert into speedycrew.event (profile, seq, type, search, match)
-      values (v_profile, next_sequence(v_profile), 'INSERT', v_a, v_b);
+      insert into speedycrew.event (profile, seq, type, search, match, tab)
+      values (v_profile, next_sequence(v_profile), 'INSERT', v_a, v_b, 'MATCH');
       insert into speedycrew.tickle_queue (profile)
       values (v_profile);
   end loop;
@@ -419,7 +430,8 @@ CREATE TABLE event (
     match uuid,
     room uuid,
     other_profile integer,
-    created timestamp with time zone DEFAULT now() NOT NULL
+    created timestamp with time zone DEFAULT now() NOT NULL,
+    tab event_table NOT NULL
 );
 
 
@@ -1144,6 +1156,7 @@ INSERT INTO schema_change (name, created) VALUES ('change_20140612.sql', '2014-0
 INSERT INTO schema_change (name, created) VALUES ('change_20140614.sql', '2014-06-14 22:23:55.748962+00');
 INSERT INTO schema_change (name, created) VALUES ('change_20140619.sql', '2014-06-19 22:51:50.045155+00');
 INSERT INTO schema_change (name, created) VALUES ('change_20140620.sql', '2014-06-22 23:17:09.564901+00');
+INSERT INTO schema_change (name, created) VALUES ('change_20140623.sql', '2014-06-23 22:14:35.625614+00');
 
 
 --

@@ -212,6 +212,7 @@ def synchronise(request):
         # TODO: assumes one device per profile, need to fix
         cursor.execute("""SELECT e.seq,
                                  e.type,
+                                 e.tab,
                                  message.body,
                                  my_search.id,
                                  my_search.query,
@@ -231,7 +232,14 @@ def synchronise(request):
                                  st_y(match_search.geography::geometry) AS latitude,
                                  match.matches,
                                  match.distance,
-                                 match.score
+                                 match.score,
+                                 my_profile.username,
+                                 my_profile.real_name,
+                                 my_profile.email,
+                                 my_profile.status,
+                                 my_profile.message,
+                                 my_profile.created,
+                                 my_profile.modified
                             FROM speedycrew.event e
                        LEFT JOIN speedycrew.message ON e.message = message.id
                        LEFT JOIN speedycrew.search my_search ON e.search = my_search.id
@@ -239,6 +247,7 @@ def synchronise(request):
                        LEFT JOIN speedycrew.profile match_profile ON match_search.owner = match_profile.id
                        LEFT JOIN speedycrew.device match_device ON match_profile.id = match_device.profile
                        LEFT JOIN speedycrew.match ON e.search = match.a AND e.match = match.b
+                       LEFT JOIN speedycrew.profile my_profile ON e.profile = my_profile.id AND e.tab = 'PROFILE'
                            WHERE e.profile = %s
                              AND e.seq > %s
                            ORDER BY e.seq
@@ -246,7 +255,7 @@ def synchronise(request):
                        (profile_id, device_sequence, MAX_FETCH_EVENTS))
         count = 0
         highest_sequence = None
-        for sequence, type, message_body, my_search_id, my_search_query, my_search_side, my_search_address, my_search_postcode, my_search_city, my_search_country, my_search_radius, my_search_latitude, my_search_longitude, match_search_id, match_username, match_fingerprint, match_query, match_longitude, match_latitude, match_matches, match_distance, match_score in cursor:
+        for sequence, type, tab, message_body, my_search_id, my_search_query, my_search_side, my_search_address, my_search_postcode, my_search_city, my_search_country, my_search_radius, my_search_latitude, my_search_longitude, match_search_id, match_username, match_fingerprint, match_query, match_longitude, match_latitude, match_matches, match_distance, match_score, my_username, my_real_name, my_email, my_status, my_message, my_created, my_modified in cursor:
             count += 1
             highest_sequence = sequence
             if match_search_id:
@@ -272,6 +281,11 @@ def synchronise(request):
                     # TODO update for searches
                 elif type == "DELETE":
                     metadata.append({ "DELETE" : "search/%s" % my_search_id })
+            elif tab == "PROFILE":
+                if type == "UPDATE":
+                    metadata.append({ "UPDATE" : "profile" })
+                    sql.append(param("UPDATE profile SET username = %s, real_name = %s, email = %s, status = %s, message = %s, created = %s, modified = %s",
+                                     (my_username, my_real_name, my_email, my_status, my_message, my_created, my_modified)))
              
         if count == MAX_FETCH_EVENTS:
             # this means please call again immediately as there are
@@ -385,6 +399,10 @@ def update_profile(request):
                            WHERE id = %s""",
                        (message, profile_id))
 
+    cursor.execute("""INSERT INTO speedycrew.event (profile, seq, type, tab)
+                      VALUES (%s, speedycrew.next_sequence(%s), 'UPDATE', 'PROFILE')""",
+                   (profile_id, profile_id))
+                      
     return json_response({ "message_type" : "update_profile_response",
                            "request_id" : request_id,
                            "status" : "OK" })
@@ -508,18 +526,10 @@ def create_search(request):
     for tag_id in tag_ids:
         cursor.execute("""INSERT INTO speedycrew.search_tag VALUES (%s, %s)""",
                        (id, tag_id))
-
         
-    # TODO review lock duration on profile records
-    cursor.execute("""UPDATE speedycrew.profile_sequence
-                         SET high_sequence = high_sequence + 1
-                       WHERE profile = %s
-                   RETURNING high_sequence""",
-                   (profile_id, ))
-    next_sequence, = cursor.fetchone()
-    cursor.execute("""INSERT INTO speedycrew.event (profile, seq, type, search)
-                      VALUES (%s, %s, 'INSERT', %s)""",
-                   (profile_id, next_sequence, id))
+    cursor.execute("""INSERT INTO speedycrew.event (profile, seq, type, search, tab)
+                      VALUES (%s, speedycrew.next_sequence(%s), 'INSERT', %s, 'SEARCH')""",
+                   (profile_id, profile_id, id))
 
     # TODO since the user is waiting, do some kind of limited version
     # of run_search synchronously?
