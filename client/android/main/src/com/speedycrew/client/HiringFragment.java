@@ -17,8 +17,12 @@ public class HiringFragment extends SearchFragment implements View.OnClickListen
 		View view = inflater.inflate(R.layout.hiring_fragment, container, false);
 
 		mSearchResultsListAdapter = new SearchResultsListAdapter(getActivity());
-		ExpandableListView elv = (ExpandableListView) view.findViewById(R.id.list);
-		elv.setAdapter(mSearchResultsListAdapter);
+		mExpandableListView = (ExpandableListView) view.findViewById(R.id.list);
+		mExpandableListView.setAdapter(mSearchResultsListAdapter);
+		mExpandableListView.setOnGroupClickListener(this);
+		mExpandableListView.setOnChildClickListener(this);
+		mExpandableListView.setLongClickable(true);
+		mExpandableListView.setOnItemLongClickListener(this);
 
 		mQueryHandler = new QueryHandler(getActivity(), mSearchResultsListAdapter);
 
@@ -29,5 +33,4 @@ public class HiringFragment extends SearchFragment implements View.OnClickListen
 		searchButton.setOnClickListener(this);
 		return view;
 	}
-
 }

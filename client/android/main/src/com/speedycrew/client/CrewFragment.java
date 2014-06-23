@@ -17,8 +17,12 @@ public class CrewFragment extends SearchFragment implements View.OnClickListener
 		View view = inflater.inflate(R.layout.crew_fragment, container, false);
 
 		mSearchResultsListAdapter = new SearchResultsListAdapter(getActivity());
-		ExpandableListView elv = (ExpandableListView) view.findViewById(R.id.list);
-		elv.setAdapter(mSearchResultsListAdapter);
+		mExpandableListView = (ExpandableListView) view.findViewById(R.id.list);
+		mExpandableListView.setAdapter(mSearchResultsListAdapter);
+		mExpandableListView.setOnGroupClickListener(this);
+		mExpandableListView.setOnChildClickListener(this);
+		mExpandableListView.setLongClickable(true);
+		mExpandableListView.setOnItemLongClickListener(this);
 
 		mQueryHandler = new QueryHandler(getActivity(), mSearchResultsListAdapter);
 
