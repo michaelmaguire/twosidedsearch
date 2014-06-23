@@ -253,8 +253,8 @@ def synchronise(request):
                 print "match thingee"
                 if type == "INSERT":
                     metadata.append({ "INSERT" : "match/%s" % match_search_id })
-                    sql.append(param("INSERT INTO match (id, search, username, fingerprint, query, latitude, longitude, distance, matches, distance, score) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
-                                     (match_search_id, my_search_id, match_username, match_fingerprint, match_query, match_distance, match_longitude, match_latitude, match_matches, match_distance, match_score)))
+                    sql.append(param("INSERT INTO match (id, search, username, fingerprint, query, longitude, latitude, distance, matches, score) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                                     (match_search_id, my_search_id, match_username, match_fingerprint, match_query, match_longitude, match_latitude, match_distance, match_matches, match_score)))
                 elif type == "UPDATE":
                     # TODO update for matches
                     pass
