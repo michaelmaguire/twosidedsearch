@@ -347,8 +347,8 @@ begin
       values (v_a, v_b, v_matches, v_distance, v_score, 'ACTIVE', now());
       insert into speedycrew.event (profile, seq, type, search, match, tab)
       values (v_profile, next_sequence(v_profile), 'INSERT', v_a, v_b, 'MATCH');
-      insert into speedycrew.tickle_queue (profile)
-      values (v_profile);
+      insert into speedycrew.tickle_queue (profile, message)
+      values (v_profile, 'Hello! A nice message goes here, perhaps with some details about a match.');
   end loop;
   notify tickle;
 end;
@@ -755,7 +755,8 @@ ALTER SEQUENCE tag_id_seq OWNED BY tag.id;
 
 CREATE UNLOGGED TABLE tickle_queue (
     profile integer NOT NULL,
-    created timestamp with time zone DEFAULT now()
+    created timestamp with time zone DEFAULT now(),
+    message text
 );
 
 
@@ -1156,7 +1157,8 @@ INSERT INTO schema_change (name, created) VALUES ('change_20140612.sql', '2014-0
 INSERT INTO schema_change (name, created) VALUES ('change_20140614.sql', '2014-06-14 22:23:55.748962+00');
 INSERT INTO schema_change (name, created) VALUES ('change_20140619.sql', '2014-06-19 22:51:50.045155+00');
 INSERT INTO schema_change (name, created) VALUES ('change_20140620.sql', '2014-06-22 23:17:09.564901+00');
-INSERT INTO schema_change (name, created) VALUES ('change_20140623.sql', '2014-06-23 22:14:35.625614+00');
+INSERT INTO schema_change (name, created) VALUES ('change_20140623.sql', '2014-06-23 22:21:11.747446+00');
+INSERT INTO schema_change (name, created) VALUES ('change_20140624.sql', '2014-06-24 20:48:45.548335+00');
 
 
 --
