@@ -43,11 +43,11 @@ public class RequestHelperServiceConnector extends ServiceConnector {
 		}
 	}
 
-	public void updateProfile(String displayName, String blurbMessage, String contactEmail, Handler.Callback handlerCallback) throws Exception {
+	public void updateProfile(String username, String displayName, String blurbMessage, String contactEmail, Handler.Callback handlerCallback) throws Exception {
 		try {
 			Message msg = Message.obtain();
 			msg.obj = new String("1/update_profile");
-			msg.setData(produceProfileUpdateBundle(displayName, blurbMessage, contactEmail));
+			msg.setData(produceProfileUpdateBundle(username, displayName, blurbMessage, contactEmail));
 			msg.what = ConnectionService.MSG_MAKE_ENRICHED_REQUEST_WITH_PARAMETERS;
 			super.send(msg, new Messenger(new Handler(handlerCallback)));
 		} catch (Exception e) {
@@ -88,9 +88,10 @@ public class RequestHelperServiceConnector extends ServiceConnector {
 		}
 	}
 
-	private static Bundle produceProfileUpdateBundle(String real_name, String message, String email) {
+	private static Bundle produceProfileUpdateBundle(String username, String real_name, String message, String email) {
 		Bundle bundle = new Bundle();
 
+		bundle.putString(ConnectionService.Key.USERNAME, username);
 		bundle.putString(ConnectionService.Key.REAL_NAME, real_name);
 		bundle.putString(ConnectionService.Key.MESSAGE, message);
 		bundle.putString(ConnectionService.Key.EMAIL, email);

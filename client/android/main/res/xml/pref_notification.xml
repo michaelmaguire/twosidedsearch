@@ -3,7 +3,7 @@
         <EditTextPreference
         android:capitalize="words"
         android:defaultValue="@string/pref_default_contact_email"
-        android:inputType="textCapWords"
+        android:inputType="textEmailAddress"
         android:key="contact_email"
         android:maxLines="1"
         android:selectAllOnFocus="true"

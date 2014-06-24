@@ -89,6 +89,7 @@ public class ProfileActivity extends PreferenceActivity {
 		// Bind the summaries of EditText/List/Dialog/Ringtone preferences to
 		// their values. When their values change, their summaries are updated
 		// to reflect the new value, per the Android Design guidelines.
+		bindPreferenceSummaryToValue(findPreference("username"));
 		bindPreferenceSummaryToValue(findPreference("display_name"));
 		bindPreferenceSummaryToValue(findPreference("contact_email"));
 		bindPreferenceSummaryToValue(findPreference("blurb_message"));
@@ -158,12 +159,13 @@ public class ProfileActivity extends PreferenceActivity {
 			}
 
 			if (oldValue != newValue) {
+				String username = preferences.getString("username", "DEFAULTUSERNAME");
 				String displayName = preferences.getString("display_name", "DEFAULTNAME");
 				String blurbMessage = preferences.getString("blurb_message", "DEFAULTBLURB");
 				String contactEmail = preferences.getString("contact_email", "DEFAULTEMAIL");
 
 				try {
-					mRequestHelperServiceConnector.updateProfile(displayName, blurbMessage, contactEmail, new Handler.Callback() {
+					mRequestHelperServiceConnector.updateProfile(username, displayName, blurbMessage, contactEmail, new Handler.Callback() {
 
 						@Override
 						public boolean handleMessage(Message msg) {

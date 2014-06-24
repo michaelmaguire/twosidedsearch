@@ -7,15 +7,17 @@
 
     <!-- General -->
     <string name="pref_header_general">General</string>
+    <string name="pref_title_username">Username</string>
+    <string name="pref_default_username">janedoe1</string>
     <string name="pref_title_display_name">Display name</string>
-    <string name="pref_default_display_name">john/jane doe</string>
+    <string name="pref_default_display_name">Jane Doe</string>
     <string name="pref_title_blurb_message">Your blurb</string>
     <string name="pref_description_blurb_message">Describe yourself</string>
 
     <!-- Notifications -->
     <string name="pref_header_notifications">Notifications</string>
     <string name="pref_title_contact_email">Contact email</string>
-    <string name="pref_default_contact_email">john@nowhere.com</string>
+    <string name="pref_default_contact_email"></string>
     
     <string name="pref_title_show_contact_email">Show email</string>
     <string-array name="pref_show_contact_email_titles">

@@ -5,11 +5,20 @@
     android:padding="10dp" >
 
     <TextView
-        android:id="@+id/fingerprint"
+        android:id="@+id/username"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
         android:layout_centerVertical="true"
+        android:paddingLeft="25dp" />
+
+    <TextView
+        android:id="@+id/distance"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/username"
+        android:layout_alignBottom="@+id/username"
+        android:layout_alignParentRight="true"
         android:paddingLeft="25dp" />
 
 </RelativeLayout>
