@@ -94,11 +94,16 @@ def param(fmt, values):
     return fmt % tuple(map(escape, values)) # TODO this is not the modern way, use .format
 
 def do_refresh(cursor, profile_id, timeline, high_sequence, sql, metadata):
-    sql.append("DELETE FROM profile")
-    sql.append("DELETE FROM message")
-    sql.append("DELETE FROM match")
-    sql.append("DELETE FROM search")
-    sql.append("DELETE FROM control")
+    sql.append("DROP TABLE IF EXISTS profile")
+    sql.append("DROP TABLE IF EXISTS message")
+    sql.append("DROP TABLE IF EXISTS match")
+    sql.append("DROP TABLE IF EXISTS search")
+    sql.append("DROP TABLE IF EXISTS control")
+    sql.append("create table control (timeline integer not null, sequence integer not null)")
+    sql.append("create table profile (username text, real_name text, email text unique, password_hash text, status text not null, message text, created timestamptz not null, modified timestamptz not null)")
+    sql.append("create table search (id text primary key, query text not null, side text not null, address text, postcode text, city text, country text, radius float, latitude float not null, longitude float not null)")
+    sql.append("create table match (id text primary key not null, search text references search(id), username text, fingerprint text, public_key text, query text not null, latitude float, longitude float, matches int, distance float, score double)")
+    sql.append("create table message (id text primary key not null)")
 
     # TODO messages etc
     
