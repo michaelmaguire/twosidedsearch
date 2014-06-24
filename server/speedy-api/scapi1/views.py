@@ -209,7 +209,7 @@ def do_incremental(cursor, profile_id, device_sequence, sql, metadata):
                    (profile_id, device_sequence, MAX_FETCH_EVENTS))
     count = 0
     highest_sequence = None
-    for sequence, type, tab, message_body, my_search_id, my_search_query, my_search_side, my_search_address, my_search_postcode, my_search_city, my_search_country, my_search_radius, my_search_latitude, my_search_longitude, match_search_id, match_username, match_fingerprint, match_query, match_longitude, match_latitude, match_matches, match_distance, match_score, my_username, my_real_name, my_email, my_status, my_message, my_created, my_modified in cursor:
+    for sequence, type, tab, message_body, my_search_id, my_search_query, my_search_side, my_search_address, my_search_postcode, my_search_city, my_search_country, my_search_radius, my_search_longitude, my_search_latitude, match_search_id, match_username, match_fingerprint, match_query, match_longitude, match_latitude, match_matches, match_distance, match_score, my_username, my_real_name, my_email, my_status, my_message, my_created, my_modified in cursor:
         count += 1
         highest_sequence = sequence
         if match_search_id:
@@ -228,8 +228,8 @@ def do_incremental(cursor, profile_id, device_sequence, sql, metadata):
             print "search thingee"
             if type == "INSERT":
                 metadata.append({ "INSERT" : "search/%s" % my_search_id })
-                sql.append(param("INSERT INTO search (id, query, side, address, postcode, city, country, radius, latitude, longitude) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
-                                 (my_search_id, my_search_query, my_search_side, my_search_address, my_search_postcode, my_search_city, my_search_country, my_search_radius, my_search_latitude, my_search_longitude)))
+                sql.append(param("INSERT INTO search (id, query, side, address, postcode, city, country, radius, longitude, latitude) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                                 (my_search_id, my_search_query, my_search_side, my_search_address, my_search_postcode, my_search_city, my_search_country, my_search_radius, my_search_longitude, my_search_latitude)))
             elif type == "UPDATE":
                 metadata.append({ "UPDATE" : "search/%s" % my_search_id })
                 # TODO update for searches
