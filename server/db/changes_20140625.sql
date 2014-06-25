@@ -43,6 +43,7 @@ begin
      where st_dwithin(s.geography, v_geography, v_radius)
        and st.tag = any (v_tag_ids)
        and s.side = 'PROVIDE'
+       and s.status = 'ACTIVE'
      group by s.id;
   else
     -- v_side = 'PROVIDE'
@@ -57,6 +58,7 @@ begin
      where st_dwithin(s.geography, v_geography, s.radius)
        and st.tag = any (v_tag_ids)                  
        and s.side = 'SEEK'
+       and s.status = 'ACTIVE'
      group by s.id;
   end if;
 end;
@@ -84,22 +86,22 @@ begin
     select t.search_id, t.matches, t.distance, t.score, t.query
       from speedycrew.find_matches(i_search_id) t
   loop
-    -- this is the passive search
+    -- this is the aggressive search
     a := i_search_id;
     b := v_search_id;
     matches = v_matches;
     distance = v_distance;
     score := v_score;
+    message := null;
+    return next;
+    -- the is the passive search
+    a := v_search_id;
+    b := i_search_id;
     if v_my_side = 'PROVIDE' then
         message := 'Captain sighted: ' || v_query;
     else
 	message := 'Crew sighted: ' || v_query;
     end if;
-    return next;
-    -- the is the aggressive search
-    a := v_search_id;
-    b := i_search_id;
-    message := null;
     return next;
   end loop;
 end;
