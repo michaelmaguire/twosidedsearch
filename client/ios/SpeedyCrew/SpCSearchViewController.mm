@@ -174,6 +174,15 @@
         tapped.numberOfTapsRequired = 1;
         [cell.imageView addGestureRecognizer:tapped];
         cell.imageView.image = [UIImage imageNamed:(search.expanded? @"Minus": @"Plus")];
+
+        cell.tag = path.section;
+        UISwipeGestureRecognizer *swipe = [[UISwipeGestureRecognizer alloc]
+                                              initWithTarget:self
+                                                      action:@selector(onRemove:)];
+        swipe.direction               = UISwipeGestureRecognizerDirectionLeft;
+        swipe.numberOfTouchesRequired = 1;
+        [cell addGestureRecognizer:swipe];
+
     }
     else {
         cell = [tv dequeueReusableCellWithIdentifier:@"Search Result"];
@@ -222,7 +231,7 @@
 {
     UIView* view = (UIView*)recognizer.view;
     //-dk:TODO this should really display a delete button...
-    SpCSearchView* search = [self.searches objectAtIndex:view.tag - 1];
+    SpCSearchView* search = [self.searches objectAtIndex:view.tag];
     SpCData* data = [SpCAppDelegate instance].data;
     [data deleteSearch:search.id];
 }
