@@ -157,14 +157,13 @@ class AppleSender:
             ssl_sock.connect(host_addr)
             for token, message in batch:
                 payload = { "aps" : { "alert" : message,
-                                      "sound" : "k1DiveAlarm.caf" },
-                            "test_data" : { "foo" : "bar" } }
+                                      "sound" : "k1DiveAlarm.caf" } }
                 payload_json = json.dumps(payload)
                 struct_format = "!BH32sH%ds" % len(payload_json)
                 token = token.replace(" ", "").replace("<", "").replace(">", "")
                 byte_token = token.decode("hex")
                 message = struct.pack(struct_format, 0, 32, byte_token, len(payload_json), payload_json)
-                logger.info("sending to token %s, message %s", token, message)
+                logger.info("sending to token %s, payload %s", token, payload_json)
                 ssl_sock.write(message)
         except Exception as e:
             print str(e)
