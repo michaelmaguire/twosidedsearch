@@ -18,10 +18,12 @@
 @property float           latitude;
 
 - (SpCData*)init;
+- (void)synchronise;
+- (void)sendToken:(NSString*)token;
 - (void)updateSetting:(NSString*)name with:(NSString*)value;
 
 - (void)addSearchWithText:(NSString*)text forSide:(NSString*)side;
-- (void)updateSearches;
 - (void)deleteSearch:(NSString*)id;
+- (void)loadImageFor:(UIImageView*)image from:(NSString*)url withPlaceholder:(NSString*)name;
 
 @end

@@ -96,7 +96,7 @@
 {
     SpeedyCrew::Database* db = [SpCDatabase getDatabase];
     std::string side([self.side UTF8String]);
-    std::vector<std::string> searches(db->queryColumn("select id from searches where side='" + side + "'"));
+    std::vector<std::string> searches(db->queryColumn("select id from search where side='" + side + "'"));
     [self.searches removeAllObjects];
     for (std::vector<std::string>::const_iterator it(searches.begin()), end(searches.end()); it != end; ++it) {
         [self.searches addObject: [SpCSearchView makeWithId:[NSString stringWithFormat:@"%s", it->c_str()] andSide:self.side]];
@@ -126,7 +126,7 @@
     [expand setTitle: (search.expanded? @"-": @"+") forState:UIControlStateNormal];
 
     SpeedyCrew::Database* db = [SpCDatabase getDatabase];
-    std::string text = db->query<std::string>("select search from searches where id='" + db->escape([search.id UTF8String]) + "';");
+    std::string text = db->query<std::string>("select query from search where id='" + db->escape([search.id UTF8String]) + "';");
     UIButton* title = (UIButton*)[header viewWithTag: -1002];
     [title setTitle: [NSString stringWithFormat:@"%s", text.c_str()] forState:UIControlStateNormal];
 
@@ -155,10 +155,22 @@
 - (UITableViewCell *)tableView:(UITableView *)tv cellForRowAtIndexPath:(NSIndexPath *)path
 {
     UITableViewCell* cell = [tv dequeueReusableCellWithIdentifier:@"Search Result"];
-    UILabel* label = (UILabel*)[cell viewWithTag: -1004];
     SpCSearchView* search = [self.searches objectAtIndex: path.section];
     SpCResultView* result = [search.results objectAtIndex: path.row];
-    [label setText:result.title];
+
+    UILabel* identity = (UILabel*)[cell viewWithTag: -1004];
+    if (identity) {
+        [identity setText:result.identity];
+    }
+    UILabel* query = (UILabel*)[cell viewWithTag: -1006];
+    if (query) {
+        [query setText:result.query];
+    }
+    UIImageView* image = (UIImageView*)[cell viewWithTag: -1005];
+    if (image) {
+        SpCData* data = [SpCAppDelegate instance].data;
+        [data loadImageFor:image from:@"http://gravatar.com/avatar/4cbcb185abce0204cf5ac705ba32d53a" withPlaceholder:@"unkonwn"];
+    }
     return cell;
 }
 

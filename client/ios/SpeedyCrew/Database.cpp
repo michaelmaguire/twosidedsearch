@@ -181,7 +181,7 @@ namespace
     extern "C" int string_callback(void* data, int count, char** rows,char**)
     {
         if (count == 1 && rows) {
-            *static_cast<std::string*>(data) = rows[0];
+            *static_cast<std::string*>(data) = rows[0]? rows[0]: "";
             return 0;
         }
         return 1;
@@ -270,4 +270,29 @@ namespace SpeedyCrew
         }
         return value;
     }
+}
+
+// ----------------------------------------------------------------------------
+
+SpeedyCrew::Database::Transaction::Transaction(SpeedyCrew::Database& db)
+    : m_db(&db) {
+    this->m_db->execute("BEGIN TRANSACTION;");
+}
+
+SpeedyCrew::Database::Transaction::Transaction(SpeedyCrew::Database* db)
+    : m_db(db) {
+    this->m_db->execute("BEGIN TRANSACTION;");
+}
+
+SpeedyCrew::Database::Transaction::~Transaction()
+{
+    if (this->m_db) {
+        this->m_db->execute("ROLLBACK;");
+    }
+}
+
+void SpeedyCrew::Database::Transaction::commit()
+{
+    this->m_db->execute("COMMIT;");
+    this->m_db = 0;
 }

@@ -21,8 +21,10 @@
 {
     NSLog(@"application launched");
     self.data = [[SpCData alloc] init];
-    [self.data updateSearches];
     [self startLocationManager];
+
+    [[UIApplication sharedApplication] registerForRemoteNotificationTypes:
+                                          (UIRemoteNotificationTypeBadge | UIRemoteNotificationTypeSound | UIRemoteNotificationTypeAlert)];
     return YES;
 }
 
@@ -88,5 +90,18 @@
         self.data.latitude  = newLocation.coordinate.latitude;
         NSLog(@"updated location: (%f, %f)", self.data.longitude, self.data.latitude);
     }
+}
+
+- (void)application:(UIApplication*)application didRegisterForRemoteNotificationsWithDeviceToken:(NSData*)token
+{
+    NSLog(@"The token is: %@", token);
+    [self.data sendToken:[NSString stringWithFormat:@"%@", token]];
+    [self.data synchronise];
+}
+
+- (void)application:(UIApplication*)application didFailToRegisterForRemoteNotificationsWithError:(NSError*)error
+{
+    NSLog(@"ERROR: failed to get a token: %@", error);
+    [self.data synchronise];
 }
 @end
