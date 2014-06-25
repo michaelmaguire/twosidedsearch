@@ -40,7 +40,7 @@
     //-dk:TODO splice the current and the new objects together to retain
     //   state and possibly position
     [self.results removeAllObjects];
-    std::vector<std::string> names = db->queryColumn("select id from results where search='" + db->escape([self.id UTF8String]) + "';");
+    std::vector<std::string> names = db->queryColumn("select id from match where search='" + db->escape([self.id UTF8String]) + "';");
     for (std::vector<std::string>::const_iterator it(names.begin()), end(names.end()); it != end; ++it) {
         [self.results addObject: [SpCResultView makeWithId:[NSString stringWithFormat:@"%s", it->c_str()]]];
     }
@@ -52,17 +52,10 @@
 - (CLLocationCoordinate2D)getPosition
 {
     CLLocationCoordinate2D rc = {};
-#if 0
-    //-dk:TODO the data should really come from the search.
     SpeedyCrew::Database* db = [SpCDatabase getDatabase];
     std::string id = [self.id UTF8String];
-    rc.latitude  = db->query<double>("select latitude from searches where id='" + id + "'");
-    rc.longitude = db->query<double>("select longitude from searches where id='" + id + "'");
-#else
-    SpCData* data = [SpCAppDelegate instance].data;
-    rc.latitude  = data.latitude;
-    rc.longitude = data.longitude;
-#endif
+    rc.latitude  = db->query<double>("select latitude from search where id='" + id + "'");
+    rc.longitude = db->query<double>("select longitude from search where id='" + id + "'");
     return rc;
 }
 
@@ -89,8 +82,8 @@
 {
     SpeedyCrew::Database* db = [SpCDatabase getDatabase];
     std::string id = [self.id UTF8String];
-    std::string search = db->query<std::string>("select search from searches where id='" + id + "'");
-    return [NSString stringWithFormat:@"%s", search.c_str()];
+    std::string search = db->query<std::string>("select query from search where id='" + id + "'");
+    return [NSString stringWithFormat:@"title: %s", search.c_str()];
 }
 
 - (NSString*)subtitle
