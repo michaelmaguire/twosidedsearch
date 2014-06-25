@@ -40,9 +40,14 @@
     //-dk:TODO splice the current and the new objects together to retain
     //   state and possibly position
     [self.results removeAllObjects];
-    std::vector<std::string> names = db->queryColumn("select id from match where search='" + db->escape([self.id UTF8String]) + "';");
+    std::vector<std::string> names = db->queryColumn("select "
+                                                     "search || ':' || other_search "
+                                                     "from match where search='" + db->escape([self.id UTF8String]) + "';");
     for (std::vector<std::string>::const_iterator it(names.begin()), end(names.end()); it != end; ++it) {
-        [self.results addObject: [SpCResultView makeWithId:[NSString stringWithFormat:@"%s", it->c_str()]]];
+        std::string::size_type colon(it->find(':'));
+        [self.results addObject: [SpCResultView makeWithKey:[NSString stringWithFormat:@"search='%s' and other_search='%s'",
+                                                                      it->substr(0, colon).c_str(),
+                                                                      it->substr(colon + 1).c_str()]]];
     }
     return int([self.results count]);
 }

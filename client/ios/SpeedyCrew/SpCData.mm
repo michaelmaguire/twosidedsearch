@@ -97,6 +97,7 @@
                 SpeedyCrew::Database::Transaction transaction(db);
                 for (int i = 0, count = [queries count]; i != count; ++i) {
                     db->execute([[queries objectAtIndex: i] UTF8String]);
+                    // try { db->execute([[queries objectAtIndex: i] UTF8String]); } catch(...) {}
                 }
                 transaction.commit();
                 [self notify];

@@ -11,7 +11,7 @@
 #include "Database.h"
 
 @interface SpCResultView()
-@property NSString* id;
+@property NSString* key;
 @end
 
 @implementation SpCResultView
@@ -20,21 +20,21 @@
 @property (nonatomic, readonly)       CLLocationCoordinate2D coordinate;
 @property (nonatomic, readonly, copy) NSString*              title;
 @property (nonatomic, readonly, copy) NSString*              subtitle;
-@property (readonly)                  NSString*              id;
+@property (readonly)                  NSString*              key;
 
 #endif
 
 // ----------------------------------------------------------------------------
 
-+ (SpCResultView*)makeWithId:(NSString*)id
++ (SpCResultView*)makeWithKey:(NSString*)key
 {
-    return [[SpCResultView alloc] initWithId:id];
+    return [[SpCResultView alloc] initWithKey:key];
 }
 
-- (SpCResultView*)initWithId:(NSString*)id
+- (SpCResultView*)initWithKey:(NSString*)key
 {
     self = [super init];
-    self.id = id;
+    self.key = key;
     return self;
 }
 
@@ -45,9 +45,9 @@
     CLLocationCoordinate2D rc = {};
 
     SpeedyCrew::Database* db = [SpCDatabase getDatabase];
-    std::string id = [self.id UTF8String];
-    rc.latitude  = db->query<double>("select latitude from match where id='" + id + "'");
-    rc.longitude = db->query<double>("select longitude from match where id='" + id + "'");
+    std::string key = [self.key UTF8String];
+    rc.latitude  = db->query<double>("select latitude from match where " + key);
+    rc.longitude = db->query<double>("select longitude from match where " + key);
 
     return rc;
 }
@@ -55,16 +55,16 @@
 - (NSString*)title
 {
     SpeedyCrew::Database* db = [SpCDatabase getDatabase];
-    std::string id = [self.id UTF8String];
-    std::string value = db->query<std::string>("select username from match where id='" + id + "'");
+    std::string key = [self.key UTF8String];
+    std::string value = db->query<std::string>("select username from match where " + key);
     return [NSString stringWithFormat:@"%s", value.c_str()];
 }
 
 - (NSString*)subtitle
 {
     SpeedyCrew::Database* db = [SpCDatabase getDatabase];
-    std::string id = [self.id UTF8String];
-    std::string value = db->query<std::string>("select fingerprint from match where id='" + id + "'");
+    std::string key = [self.key UTF8String];
+    std::string value = db->query<std::string>("select fingerprint from match where " + key);
     return [NSString stringWithFormat:@"%s", value.c_str()];
 }
 
@@ -73,8 +73,8 @@
 - (NSString*)identity
 {
     SpeedyCrew::Database* db = [SpCDatabase getDatabase];
-    std::string id = [self.id UTF8String];
-    std::string value = db->query<std::string>("select username from match where id='" + id + "'");
+    std::string key = [self.key UTF8String];
+    std::string value = db->query<std::string>("select username from match where " + key);
     if (value.empty()) {
         value = "<anonymous>";
     }
@@ -86,8 +86,8 @@
 - (NSString*)query
 {
     SpeedyCrew::Database* db = [SpCDatabase getDatabase];
-    std::string id = [self.id UTF8String];
-    std::string value = db->query<std::string>("select query from match where id='" + id + "'");
+    std::string key = [self.key UTF8String];
+    std::string value = db->query<std::string>("select query from match where " + key);
     if (value.empty()) {
         value = "<unknown>";
     }

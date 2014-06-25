@@ -117,6 +117,7 @@
     return [self.searches count];
 }
 
+#if 0
 - (UIView*)tableView:(UITableView*)tv viewForHeaderInSection:(NSInteger)section
 {
     UITableViewCell* header = [tv dequeueReusableCellWithIdentifier:@"Header"];
@@ -139,37 +140,47 @@
 
     return header;
 }
-
-- (CGFloat)tableView:(UITableView *)tv heightForHeaderInSection:(NSInteger)section
-{
-    return 30.0f; //-dk:TODO should probably determine the height of the label
-}
+#endif
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
     SpCSearchView* search = [self.searches objectAtIndex: section];
     int result = [search updateResults];
-    return search.expanded? result: 0;
+    return 1 + (search.expanded? result: 0);
+}
+
+- (void)onExpand: (id)sender
+{
+    UITapGestureRecognizer* gesture = (UITapGestureRecognizer*)sender;
+    int section = gesture.view.tag;
+    if (section < [self.searches count]) {
+        SpCSearchView* search = [self.searches objectAtIndex: section];
+        search.expanded = !search.expanded;
+        [self.tableView reloadData];
+    }
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tv cellForRowAtIndexPath:(NSIndexPath *)path
 {
-    UITableViewCell* cell = [tv dequeueReusableCellWithIdentifier:@"Search Result"];
     SpCSearchView* search = [self.searches objectAtIndex: path.section];
-    SpCResultView* result = [search.results objectAtIndex: path.row];
+    UITableViewCell* cell = nil;
+    if (path.row == 0) {
+        cell = [tv dequeueReusableCellWithIdentifier:@"Search"];
+        cell.textLabel.text = search.title;
 
-    UILabel* identity = (UILabel*)[cell viewWithTag: -1004];
-    if (identity) {
-        [identity setText:result.identity];
+        cell.imageView.userInteractionEnabled = YES;
+        cell.imageView.tag = path.section;
+        UITapGestureRecognizer* tapped = [[UITapGestureRecognizer alloc] initWithTarget: self action: @selector(onExpand:)];
+        tapped.numberOfTapsRequired = 1;
+        [cell.imageView addGestureRecognizer:tapped];
+        cell.imageView.image = [UIImage imageNamed:(search.expanded? @"Minus": @"Plus")];
     }
-    UILabel* query = (UILabel*)[cell viewWithTag: -1006];
-    if (query) {
-        [query setText:result.query];
-    }
-    UIImageView* image = (UIImageView*)[cell viewWithTag: -1005];
-    if (image) {
-        SpCData* data = [SpCAppDelegate instance].data;
-        [data loadImageFor:image from:@"http://gravatar.com/avatar/4cbcb185abce0204cf5ac705ba32d53a" withPlaceholder:@"unkonwn"];
+    else {
+        cell = [tv dequeueReusableCellWithIdentifier:@"Search Result"];
+        SpCResultView* result = [search.results objectAtIndex: path.row - 1];
+
+        cell.textLabel.text = result.identity;
+        cell.detailTextLabel.text = result.query;
     }
     return cell;
 }
