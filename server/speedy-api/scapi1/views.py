@@ -228,7 +228,7 @@ def do_incremental(cursor, profile_id, device_sequence, sql, metadata):
                 pass
             elif type == "DELETE":
                 metadata.append({ "DELETE" : "match/%s" % match_search_id })
-                sql += param("DELETE FROM match WHERE id = %s;\n", (match_search_id,))
+                sql.append(param("DELETE FROM match WHERE id = %s;\n", (match_search_id,)))
         elif my_search_id:
             print "search thingee"
             if type == "INSERT":

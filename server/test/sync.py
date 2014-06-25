@@ -122,6 +122,14 @@ class Simple(unittest.TestCase):
         self.assertEqual(("00000000-0000-0000-0000-000000000001", "test2 #tag1 #tag2", "SEEK", 0, 50), self.cursor.fetchone())
         self.cursor.execute("""SELECT id, query FROM match""")
         self.assertEqual(("00000000-0000-0000-0000-000000000000", "test1 #tag1 #tag2"), self.cursor.fetchone())
+
+        response = post("/api/1/delete_search",
+                        { "x-id" : x_id,
+                          "search" : "00000000-0000-0000-0000-000000000001" })
+        self.assertEqual(response["status"], "OK")
+        self.assertEqual("incremental", synchronise(self.local_db))
+        self.assertEqual(device_timeline_and_sequence(self.local_db), (1, 5))
+
         # TODO test delete in here too
 
 if __name__ == "__main__":
