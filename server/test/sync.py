@@ -103,9 +103,20 @@ class Simple(unittest.TestCase):
                           "longitude" : "0.01",
                           "latitude" : "50" })
         self.assertEqual(response["status"], "OK")
-
         self.assertEqual("refresh", synchronise(self.local_db))
         self.assertEqual(device_timeline_and_sequence(self.local_db), (1, 0))
+
+
+        # give that other guy some details so that we can assert that
+        # they show up in the client match table
+        response = post("/api/1/update_profile",
+                        { "x-id" : "other-guy",
+                          "username" : "Mr Other Guy",
+                          "email" : "other@guy.com",
+                          "message" : "foo'bar" })
+        self.assertEqual(response["status"], "OK")
+        self.assertEqual("incremental", synchronise(self.local_db))
+        self.assertEqual(device_timeline_and_sequence(self.local_db), (1, 0)) # no change for mr x_id
 
         response = post("/api/1/create_search",                        
                         { "x-id" : x_id,
@@ -120,8 +131,8 @@ class Simple(unittest.TestCase):
         self.assertEqual(device_timeline_and_sequence(self.local_db), (1, 2))
         self.cursor.execute("""SELECT id, query, side, longitude, latitude FROM search""")
         self.assertEqual(("00000000-0000-0000-0000-000000000001", "test2 #tag1 #tag2", "SEEK", 0, 50), self.cursor.fetchone())
-        self.cursor.execute("""SELECT id, query FROM match""")
-        self.assertEqual(("00000000-0000-0000-0000-000000000000", "test1 #tag1 #tag2"), self.cursor.fetchone())
+        self.cursor.execute("""SELECT id, query, email, username FROM match""")
+        self.assertEqual(("00000000-0000-0000-0000-000000000000", "test1 #tag1 #tag2", "other@guy.com", "Mr Other Guy"), self.cursor.fetchone())
 
         response = post("/api/1/delete_search",
                         { "x-id" : x_id,
@@ -129,6 +140,8 @@ class Simple(unittest.TestCase):
         self.assertEqual(response["status"], "OK")
         self.assertEqual("incremental", synchronise(self.local_db))
         self.assertEqual(device_timeline_and_sequence(self.local_db), (1, 5))
+        self.cursor.execute("""SELECT id, query, email, username FROM match""")
+        self.assertEqual(None, self.cursor.fetchone())
 
         # TODO test delete in here too
 
