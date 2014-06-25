@@ -69,4 +69,30 @@
 }
 
 // ----------------------------------------------------------------------------
+
+- (NSString*)identity
+{
+    SpeedyCrew::Database* db = [SpCDatabase getDatabase];
+    std::string id = [self.id UTF8String];
+    std::string value = db->query<std::string>("select username from match where id='" + id + "'");
+    if (value.empty()) {
+        value = "<anonymous>";
+    }
+    return [NSString stringWithFormat:@"%s", value.c_str()];
+}
+
+// ----------------------------------------------------------------------------
+
+- (NSString*)query
+{
+    SpeedyCrew::Database* db = [SpCDatabase getDatabase];
+    std::string id = [self.id UTF8String];
+    std::string value = db->query<std::string>("select query from match where id='" + id + "'");
+    if (value.empty()) {
+        value = "<unknown>";
+    }
+    return [NSString stringWithFormat:@"%s", value.c_str()];
+}
+
+// ----------------------------------------------------------------------------
 @end

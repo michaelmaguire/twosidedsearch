@@ -155,10 +155,22 @@
 - (UITableViewCell *)tableView:(UITableView *)tv cellForRowAtIndexPath:(NSIndexPath *)path
 {
     UITableViewCell* cell = [tv dequeueReusableCellWithIdentifier:@"Search Result"];
-    UILabel* label = (UILabel*)[cell viewWithTag: -1004];
     SpCSearchView* search = [self.searches objectAtIndex: path.section];
     SpCResultView* result = [search.results objectAtIndex: path.row];
-    [label setText:result.title];
+
+    UILabel* identity = (UILabel*)[cell viewWithTag: -1004];
+    if (identity) {
+        [identity setText:result.identity];
+    }
+    UILabel* query = (UILabel*)[cell viewWithTag: -1006];
+    if (query) {
+        [query setText:result.query];
+    }
+    UIImageView* image = (UIImageView*)[cell viewWithTag: -1005];
+    if (image) {
+        SpCData* data = [SpCAppDelegate instance].data;
+        [data loadImageFor:image from:@"http://gravatar.com/avatar/4cbcb185abce0204cf5ac705ba32d53a" withPlaceholder:@"unkonwn"];
+    }
     return cell;
 }
 

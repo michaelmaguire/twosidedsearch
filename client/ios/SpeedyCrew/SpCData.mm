@@ -15,8 +15,9 @@
 #include <sstream>
  
 @interface SpCData()
-@property NSString* baseURL;
+@property NSString*            baseURL;
 @property NSMutableDictionary* listeners;
+@property NSCache*             cache;
 @end
 
 @implementation SpCData
@@ -28,6 +29,7 @@
     self.identity = [database querySetting: @"scid"];
     self.searches = [[NSMutableArray alloc] init]; //-dk:TODO recover stored searches
     self.listeners = [[NSMutableDictionary alloc] init];
+    self.cache = [[NSCache alloc] init];
     self.longitude = 0.0; //-dk:TODO use coordinate and deal with no coordinate set!
     self.latitude  = 0.0;
     
@@ -91,12 +93,17 @@
         SpeedyCrew::Database* db = [SpCDatabase getDatabase];
         NSArray* queries = [dict objectForKey: @"sql"];
         if (queries) {
-            SpeedyCrew::Database::Transaction transaction(db);
-            for (int i = 0, count = [queries count]; i != count; ++i) {
-                db->execute([[queries objectAtIndex: i] UTF8String]);
+            try {
+                SpeedyCrew::Database::Transaction transaction(db);
+                for (int i = 0, count = [queries count]; i != count; ++i) {
+                    db->execute([[queries objectAtIndex: i] UTF8String]);
+                }
+                transaction.commit();
+                [self notify];
             }
-            transaction.commit();
-            [self notify];
+            catch (std::exception const& ex) {
+                NSLog(@"ERROR: caught an exception while while executing SQL statements: %s", ex.what());
+            }
         }
 
         if (type) {
@@ -154,6 +161,33 @@
              NSLog(@"received error: %@", [err localizedDescription]);
          }
      }];
+}
+
+- (void)loadImageFor:(UIImageView*)imageView from:(NSString*)urlstr withPlaceholder:(NSString*)name
+{
+    NSLog(@"loading image: url='%@'", urlstr);
+    UIImage* image = [self.cache objectForKey: urlstr];
+    if (image) {
+        NSLog(@"setting image data from cache");
+        imageView.image = image;
+    }
+    else {
+        NSURL* url = [NSURL URLWithString:urlstr];
+        NSMutableURLRequest* request = [NSMutableURLRequest requestWithURL:url];
+        NSOperationQueue* queue = [NSOperationQueue mainQueue];
+        [NSURLConnection sendAsynchronousRequest:request queue:queue completionHandler:
+                             ^(NSURLResponse* resp, NSData* data, NSError* err) {
+                if (data) {
+                    NSLog(@"setting image data from url=%@", urlstr);
+                    UIImage* image = [UIImage imageWithData:data];
+                    [self.cache setObject: image forKey: urlstr];
+                    imageView.image = image;
+                }
+                else {
+                    NSLog(@"received error: %@", [err localizedDescription]);
+                }
+            }];
+    }
 }
 
 @end

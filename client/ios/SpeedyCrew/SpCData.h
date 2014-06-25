@@ -24,5 +24,6 @@
 
 - (void)addSearchWithText:(NSString*)text forSide:(NSString*)side;
 - (void)deleteSearch:(NSString*)id;
+- (void)loadImageFor:(UIImageView*)image from:(NSString*)url withPlaceholder:(NSString*)name;
 
 @end
