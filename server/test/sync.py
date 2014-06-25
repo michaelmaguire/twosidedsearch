@@ -144,6 +144,8 @@ class Simple(unittest.TestCase):
         self.assertEqual(device_timeline_and_sequence(self.local_db), (1, 5))
         self.cursor.execute("""SELECT search, other_search, query, email, username FROM match""")
         self.assertEqual(None, self.cursor.fetchone())
+        self.cursor.execute("""SELECT 1 FROM search""")
+        self.assertEqual(None, self.cursor.fetchone())
 
         # TODO test delete in here too
 

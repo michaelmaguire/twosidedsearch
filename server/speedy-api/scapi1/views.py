@@ -240,6 +240,8 @@ def do_incremental(cursor, profile_id, device_sequence, sql, metadata):
                 # TODO update for searches
             elif type == "DELETE":
                 metadata.append({ "DELETE" : "search/%s" % my_search_id })
+                sql.append(param("DELETE FROM search WHERE id = %s",
+                                 (my_search_id,)))
         elif tab == "PROFILE":
             if type == "UPDATE":
                 metadata.append({ "UPDATE" : "profile" })
