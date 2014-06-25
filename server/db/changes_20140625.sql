@@ -98,9 +98,9 @@ begin
     a := v_search_id;
     b := i_search_id;
     if v_my_side = 'PROVIDE' then
-        message := 'Captain sighted: ' || v_query;
+        message := 'Captain sighted: ' || v_my_query;
     else
-	message := 'Crew sighted: ' || v_query;
+        message := 'Crew sighted: ' || v_my_query;
     end if;
     return next;
   end loop;
