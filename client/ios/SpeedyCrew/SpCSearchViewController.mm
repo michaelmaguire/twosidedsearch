@@ -160,6 +160,27 @@
     }
 }
 
+// ----------------------------------------------------------------------------
+
+- (BOOL)tableView:(UITableView *)tableView canEditRowAtIndexPath:(NSIndexPath *)path {
+    return path.row? NO: YES;
+}
+
+- (void)tableView:(UITableView *)tableView
+        commitEditingStyle:(UITableViewCellEditingStyle)editingStyle
+        forRowAtIndexPath:(NSIndexPath *)path {
+    if (editingStyle == UITableViewCellEditingStyleDelete) {
+        NSLog(@"deleting the search of section %d", path.section);
+        if (path.section < [self.searches count]) {
+            SpCSearchView* search = [self.searches objectAtIndex:path.section];
+            SpCData* data = [SpCAppDelegate instance].data;
+            [data deleteSearch:search.id];
+        }    
+    }
+}
+
+// ----------------------------------------------------------------------------
+
 - (UITableViewCell *)tableView:(UITableView *)tv cellForRowAtIndexPath:(NSIndexPath *)path
 {
     SpCSearchView* search = [self.searches objectAtIndex: path.section];
@@ -174,15 +195,6 @@
         tapped.numberOfTapsRequired = 1;
         [cell.imageView addGestureRecognizer:tapped];
         cell.imageView.image = [UIImage imageNamed:(search.expanded? @"Minus": @"Plus")];
-
-        cell.tag = path.section;
-        UISwipeGestureRecognizer *swipe = [[UISwipeGestureRecognizer alloc]
-                                              initWithTarget:self
-                                                      action:@selector(onRemove:)];
-        swipe.direction               = UISwipeGestureRecognizerDirectionLeft;
-        swipe.numberOfTouchesRequired = 1;
-        [cell addGestureRecognizer:swipe];
-
     }
     else {
         cell = [tv dequeueReusableCellWithIdentifier:@"Search Result"];
