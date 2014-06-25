@@ -85,7 +85,8 @@ class Simple(unittest.TestCase):
         self.assertEqual(device_timeline_and_sequence(self.local_db), (1, 0))
         response = post("/api/1/update_profile",
                         { "x-id" : x_id,
-                          "email" : "foo@bar.com" })
+                          "email" : "foo@bar.com",
+                          "message" : "foo'bar" })
         self.assertEqual(response["status"], "OK")
         self.assertEqual("incremental", synchronise(self.local_db))
         self.assertEqual(device_timeline_and_sequence(self.local_db), (1, 1))
