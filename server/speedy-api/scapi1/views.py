@@ -83,7 +83,7 @@ def escape(s):
     # TODO this is probably insecure/broken/whatever
     if s == None:
         return "NULL"
-    elif s is str:    
+    elif isinstance(s, basestring):    
         return "'" + s.replace("'", "''") + "'"
     else:
         return "'" + str(s) + "'"
