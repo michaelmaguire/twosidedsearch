@@ -11,6 +11,7 @@
 
 
 #include <string>
+#include <utility>
 #include <vector>
 #include <sqlite3.h>
 

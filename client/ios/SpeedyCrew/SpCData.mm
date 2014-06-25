@@ -97,6 +97,7 @@
                 SpeedyCrew::Database::Transaction transaction(db);
                 for (int i = 0, count = [queries count]; i != count; ++i) {
                     db->execute([[queries objectAtIndex: i] UTF8String]);
+                    // try { db->execute([[queries objectAtIndex: i] UTF8String]); } catch(...) {}
                 }
                 transaction.commit();
                 [self notify];
@@ -107,12 +108,13 @@
         }
 
         if (type) {
-            if ([type isEqual:@"synchronise_response"]) {
+            if ([type isEqual:@"synchronise_response"]
+                || [type isEqual:@"create_search_response"]
+                || [type isEqual:@"update_profile_response"]
+                || [type isEqual:@"set_notification_response"]) {
             }
-            else if ([type isEqual:@"create_search_response"]
-                     || [type isEqual:@"update_profile_response"]
-                     || [type isEqual:@"set_notification_response"]
-                     || [type isEqual:@"delete_search_response"]) {
+            else if ([type isEqual:@"delete_search_response"]) {
+                [self synchronise];
             } 
             else {
                 NSLog(@"unprocessed message type='%@'", type);

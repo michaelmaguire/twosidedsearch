@@ -18,9 +18,9 @@
 @property (nonatomic, readonly, copy) NSString*              identity;
 @property (nonatomic, readonly, copy) NSString*              query;
 // @property (nonatomic, readonly, copy) NSString*              email;
-@property (readonly)                  NSString*              id;
+@property (readonly)                  NSString*              key;
 
-+ (SpCResultView*)makeWithId:(NSString*)id;
-- (SpCResultView*)initWithId:(NSString*)id;
++ (SpCResultView*)makeWithKey:(NSString*)key;
+- (SpCResultView*)initWithKey:(NSString*)key;
 
 @end
