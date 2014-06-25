@@ -7,6 +7,9 @@ import os
 import psycopg2
 import psycopg2.extensions
 import select
+import socket
+import ssl
+import struct
 import sys
 import time
 import urllib2
@@ -113,7 +116,7 @@ class GoogleSender:
         url = "https://android.googleapis.com/gcm/send"
         headers = { "Content-type": "application/json",
                     "Authorization": "key=" + self.api_key }
-        data = { "registration_ids": batch,
+        data = { "registration_ids": [ token for token, message in batch ],
                  "collapse_key": "tickle" }
         # TODO try to use http-keepalive to reuse socket between
         # requests?
@@ -145,9 +148,31 @@ class AppleSender:
         self.cert_path = cert_path
 
     def __call__(self, batch):
-        # TODO http://www.raywenderlich.com/32960/apple-push-notification-services-in-ios-6-tutorial-part-1
-        logger.error("AppleSender needs to learn how to send")
-        return False, []
+        # http://stackoverflow.com/questions/1052645/apple-pns-push-notification-services-sample-code
+        host_addr = ("gateway.sandbox.push.apple.com", 2195)
+        logger.info("connecting to apple...")
+        ssl_sock = None
+        try:
+            ssl_sock = ssl.wrap_socket(socket.socket(socket.AF_INET, socket.SOCK_STREAM), certfile = self.cert_path)
+            ssl_sock.connect(host_addr)
+            for token, message in batch:
+                payload = { "aps" : { "alert" : message,
+                                      "sound" : "k1DiveAlarm.caf" },
+                            "test_data" : { "foo" : "bar" } }
+                payload_json = json.dumps(payload)
+                struct_format = "!BH32sH%ds" % len(payload_json)
+                token = token.replace(" ", "").replace("<", "").replace(">", "")
+                byte_token = token.decode("hex")
+                message = struct.pack(struct_format, 0, 32, byte_token, len(payload_json), payload_json)
+                logger.info("sending to token %s, message %s", token, message)
+                ssl_sock.write(message)
+        except Exception as e:
+            print str(e)
+        try:
+            ssl_sock.close()               
+        except:
+            pass
+        return True, []
 
 class DbConsumer:
     """A mechanism for pulling profile IDs from "tickle_queue", with
@@ -212,18 +237,21 @@ class DbConsumer:
                     logger.debug("Ignoring because I am not the leader")
                     return apple_device_tokens, google_registration_ids
             self.cursor.execute("""BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ""")
-            self.cursor.execute("""SELECT DISTINCT d.google_registration_id, d.apple_device_token
+            # for now, we only send payload messages to Apple devices;
+            # for Google devices, we send tickle messages and expect them
+            # to sync up to get data (TODO... review)
+            self.cursor.execute("""SELECT DISTINCT d.google_registration_id, d.apple_device_token, q.message
                                      FROM speedycrew.device d
                                      JOIN speedycrew.tickle_queue q ON d.profile = q.profile
                                     WHERE d.google_registration_id IS NOT NULL
-                                       OR d.apple_device_token IS NOT NULL""")
-            for google_registration_id, apple_device_token in self.cursor:
+                                       OR (d.apple_device_token IS NOT NULL AND q.message IS NOT NULL)""")
+            for google_registration_id, apple_device_token, message in self.cursor:
                 if google_registration_id:
                     logger.debug("DbConsumer.pull got google_registration_id = %s", google_registration_id)
-                    google_registration_ids.append(google_registration_id)
+                    google_registration_ids.append((google_registration_id, message))
                 elif apple_device_token:
                     logger.debug("DbConsumer.pull got apple_device_token = %s", apple_device_token)
-                    apple_device_tokens.append(apple_device_token)
+                    apple_device_tokens.append((apple_device_token, message))
             # REPEATABLE READ says we can't delete anything here that
             # we didn't see above
             self.cursor.execute("""DELETE FROM speedycrew.tickle_queue""")
