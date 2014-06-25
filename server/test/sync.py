@@ -13,7 +13,6 @@ import sqlite3
 
 base_url = "http://localhost:8888"
 client_db = "test_db.sqlite3"
-client_create_dml = "../../client/db/create.sql"
 server_drop_dml = "../db/drop.sql"
 server_create_dml = "../db/create.sql"
 server_init_sql = "../db/test_data.sql"
@@ -34,12 +33,15 @@ def reset_server_db():
     cursor.execute(read_all(server_init_sql))
 
 def make_fresh_db():
-    """Blow away the client database if it already exists, then create
-    it, then run the create statements to create the schema."""
+    """Blow away the client database if it already exists, then
+    (re)create it with nothing but a 'control' table."""
     if os.path.isfile(client_db):
         os.unlink(client_db)
     db = sqlite3.connect(client_db)
-    db.executescript(read_all(client_create_dml))
+    cursor = db.cursor()
+    cursor.execute("create table control (timeline, sequence)")
+    cursor.execute("insert into control (timeline, sequence) values (0, 0)")
+    db.commit()
     return db
 
 def device_timeline_and_sequence(db):
@@ -131,8 +133,8 @@ class Simple(unittest.TestCase):
         self.assertEqual(device_timeline_and_sequence(self.local_db), (1, 2))
         self.cursor.execute("""SELECT id, query, side, longitude, latitude FROM search""")
         self.assertEqual(("00000000-0000-0000-0000-000000000001", "test2 #tag1 #tag2", "SEEK", 0, 50), self.cursor.fetchone())
-        self.cursor.execute("""SELECT id, query, email, username FROM match""")
-        self.assertEqual(("00000000-0000-0000-0000-000000000000", "test1 #tag1 #tag2", "other@guy.com", "Mr Other Guy"), self.cursor.fetchone())
+        self.cursor.execute("""SELECT search, other_search, query, email, username FROM match""")
+        self.assertEqual(("00000000-0000-0000-0000-000000000001", "00000000-0000-0000-0000-000000000000", "test1 #tag1 #tag2", "other@guy.com", "Mr Other Guy"), self.cursor.fetchone())
 
         response = post("/api/1/delete_search",
                         { "x-id" : x_id,
@@ -140,7 +142,7 @@ class Simple(unittest.TestCase):
         self.assertEqual(response["status"], "OK")
         self.assertEqual("incremental", synchronise(self.local_db))
         self.assertEqual(device_timeline_and_sequence(self.local_db), (1, 5))
-        self.cursor.execute("""SELECT id, query, email, username FROM match""")
+        self.cursor.execute("""SELECT search, other_search, query, email, username FROM match""")
         self.assertEqual(None, self.cursor.fetchone())
 
         # TODO test delete in here too

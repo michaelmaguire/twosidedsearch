@@ -102,7 +102,7 @@ def do_refresh(cursor, profile_id, timeline, high_sequence, sql, metadata):
     sql.append("create table control (timeline integer not null, sequence integer not null)")
     sql.append("create table profile (username text, real_name text, email text unique, password_hash text, status text not null, message text, created timestamptz not null, modified timestamptz not null)")
     sql.append("create table search (id text primary key, query text not null, side text not null, address text, postcode text, city text, country text, radius float, latitude float not null, longitude float not null)")
-    sql.append("create table match (id text primary key not null, search text references search(id), username text, fingerprint text, public_key text, query text not null, latitude float, longitude float, matches int, distance float, score double)")
+    sql.append("create table match (search text references search(id), other_search text, username text, email text, fingerprint text, public_key text, query text not null, latitude float, longitude float, matches int, distance float, score double, primary key (search, other_search))")
     sql.append("create table message (id text primary key not null)")
 
     # TODO messages etc
@@ -125,9 +125,10 @@ def do_refresh(cursor, profile_id, timeline, high_sequence, sql, metadata):
         sql.append(param("INSERT INTO search (id, query, side, address, postcode, city, country, longitude, latitude, radius) VALUES (%s, %s, %s, %s, %s ,%s, %s, %s, %s, %s)",
                          row))                    
 
-    cursor.execute("""SELECT s2.id AS other_search_id,
-                             s1.id AS my_search_id,
+    cursor.execute("""SELECT s1.id AS my_search_id,
+                             s2.id AS other_search_id,
                              p2.username,
+                             p2.email,
                              d2.id AS fingerprint,
                              s2.query,
                              st_x(s2.geography::geometry) AS longitude,
@@ -145,7 +146,7 @@ def do_refresh(cursor, profile_id, timeline, high_sequence, sql, metadata):
                          AND s2.status = 'ACTIVE'""",
                    (profile_id, ))
     for row in cursor:
-        sql.append(param("INSERT INTO match (id, search, username, fingerprint, query, longitude, latitude, matches, distance, score) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+        sql.append(param("INSERT INTO match (search, other_search, username, email, fingerprint, query, longitude, latitude, matches, distance, score) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
                          row))    
 
     cursor.execute("""SELECT username, real_name, email, status, message, created, modified
@@ -185,6 +186,7 @@ def do_incremental(cursor, profile_id, device_sequence, sql, metadata):
                              st_y(my_search.geography::geometry) AS my_search_latitude,                           
                              match_search.id,
                              match_profile.username,
+                             match_profile.email,
                              match_device.id AS match_fingerprint,
                              match_search.query,
                              st_x(match_search.geography::geometry) AS longitude,
@@ -214,23 +216,21 @@ def do_incremental(cursor, profile_id, device_sequence, sql, metadata):
                    (profile_id, device_sequence, MAX_FETCH_EVENTS))
     count = 0
     highest_sequence = None
-    for sequence, type, tab, message_body, my_search_id, my_search_query, my_search_side, my_search_address, my_search_postcode, my_search_city, my_search_country, my_search_radius, my_search_longitude, my_search_latitude, match_search_id, match_username, match_fingerprint, match_query, match_longitude, match_latitude, match_matches, match_distance, match_score, my_username, my_real_name, my_email, my_status, my_message, my_created, my_modified in cursor:
+    for sequence, type, tab, message_body, my_search_id, my_search_query, my_search_side, my_search_address, my_search_postcode, my_search_city, my_search_country, my_search_radius, my_search_longitude, my_search_latitude, match_search_id, match_username, match_email, match_fingerprint, match_query, match_longitude, match_latitude, match_matches, match_distance, match_score, my_username, my_real_name, my_email, my_status, my_message, my_created, my_modified in cursor:
         count += 1
         highest_sequence = sequence
         if match_search_id:
-            print "match thingee"
             if type == "INSERT":
-                metadata.append({ "INSERT" : "match/%s" % match_search_id })
-                sql.append(param("INSERT INTO match (id, search, username, fingerprint, query, longitude, latitude, distance, matches, score) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
-                                 (match_search_id, my_search_id, match_username, match_fingerprint, match_query, match_longitude, match_latitude, match_distance, match_matches, match_score)))
+                metadata.append({ "INSERT" : "match/%s/%s" % (my_search_id, match_search_id) })
+                sql.append(param("INSERT INTO match (search, other_search, username, email, fingerprint, query, longitude, latitude, distance, matches, score) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                                 (my_search_id, match_search_id, match_username, match_email, match_fingerprint, match_query, match_longitude, match_latitude, match_distance, match_matches, match_score)))
             elif type == "UPDATE":
                 # TODO update for matches
                 pass
             elif type == "DELETE":
-                metadata.append({ "DELETE" : "match/%s" % match_search_id })
-                sql.append(param("DELETE FROM match WHERE id = %s;\n", (match_search_id,)))
+                metadata.append({ "DELETE" : "match/%s/%s" % (my_search_id, match_search_id) })
+                sql.append(param("DELETE FROM match WHERE search = %s AND other_search = %s;\n", (my_search_id, match_search_id)))
         elif my_search_id:
-            print "search thingee"
             if type == "INSERT":
                 metadata.append({ "INSERT" : "search/%s" % my_search_id })
                 sql.append(param("INSERT INTO search (id, query, side, address, postcode, city, country, radius, longitude, latitude) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
