@@ -7,8 +7,6 @@ import uuid
 import re
 from M2Crypto import X509
 
-MAX_FETCH_EVENTS = 100
-
 def json_response(object):
     """A convenience function for generating a JSON HTTP response."""
     return HttpResponse(json.dumps(object, indent=4),
@@ -161,6 +159,18 @@ def do_refresh(cursor, profile_id, timeline, high_sequence, sql, metadata):
                      (timeline, high_sequence,)))
 
 def do_incremental(cursor, profile_id, device_sequence, sql, metadata):
+
+    # find the configured maximum number of events to send
+    cursor.execute("""SELECT int_value
+                        FROM speedycrew.system_setting
+                       WHERE name = 'synchronise.max_fetch_events'
+                         AND int_value IS NOT NULL""")
+    row = cursor.fetchone()
+    if row == None:
+        max_fetch_events = 50
+    else:
+        max_fetch_events = row[0]
+
     # maybe there is a better way to do this... it sure looks
     # overgrown/ugly... the basic idea here is to read the
     # appropriate range of events from the event table, LEFT
@@ -213,7 +223,7 @@ def do_incremental(cursor, profile_id, device_sequence, sql, metadata):
                          AND e.seq > %s
                        ORDER BY e.seq
                        LIMIT %s""",
-                   (profile_id, device_sequence, MAX_FETCH_EVENTS))
+                   (profile_id, device_sequence, max_fetch_events))
     count = 0
     highest_sequence = None
     for sequence, type, tab, message_body, my_search_id, my_search_query, my_search_side, my_search_address, my_search_postcode, my_search_city, my_search_country, my_search_radius, my_search_longitude, my_search_latitude, match_search_id, match_username, match_email, match_fingerprint, match_query, match_longitude, match_latitude, match_matches, match_distance, match_score, my_username, my_real_name, my_email, my_status, my_message, my_created, my_modified in cursor:
@@ -248,7 +258,7 @@ def do_incremental(cursor, profile_id, device_sequence, sql, metadata):
                 sql.append(param("UPDATE profile SET username = %s, real_name = %s, email = %s, status = %s, message = %s, created = %s, modified = %s",
                                  (my_username, my_real_name, my_email, my_status, my_message, my_created, my_modified)))
                 
-    if count == MAX_FETCH_EVENTS:
+    if count == max_fetch_events:
         # this means please call again immediately as there are
         # probably more events for you
         metadata.append({ "more" : True })
