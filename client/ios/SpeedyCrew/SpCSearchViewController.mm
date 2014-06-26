@@ -53,17 +53,11 @@
 
 - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
 {
-    UIButton* button = (UIButton*)sender;
-    int tag = 0;
-    for (UIView* parent = button.superview; parent != Nil; parent = parent.superview) {
-        if (parent.tag != 0) {
-            tag = (int)parent.tag;
-            break;
-        }
-    }
-    if (tag != 0) {
+    UIView* view = (UIButton*)sender;
+    int tag = view.tag;
+    if (tag < [self.searches count]) {
         SpCMapViewController* map = [segue destinationViewController];
-        map.search = [self.searches objectAtIndex: tag - 1];
+        map.search = [self.searches objectAtIndex: tag];
     }
 }
 
@@ -87,6 +81,7 @@
 - (void)searchBarCancelButtonClicked:(UISearchBar *)searchBar
 {
     NSLog(@"search bar cancel button clicked");
+    [searchBar resignFirstResponder];
 }
    
 // ----------------------------------------------------------------------------
@@ -187,6 +182,7 @@
     UITableViewCell* cell = nil;
     if (path.row == 0) {
         cell = [tv dequeueReusableCellWithIdentifier:@"Search"];
+        cell.tag = path.section;
         cell.textLabel.text = search.title;
 
         cell.imageView.userInteractionEnabled = YES;
