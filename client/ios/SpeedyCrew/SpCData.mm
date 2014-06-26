@@ -104,6 +104,7 @@
                 }
                 transaction.commit();
                 [self notify];
+                [[UIApplication sharedApplication] setApplicationIconBadgeNumber: 0];
             }
             catch (std::exception const& ex) {
                 NSLog(@"ERROR: caught an exception while while executing SQL statements: %s", ex.what());
