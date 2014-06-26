@@ -29,7 +29,6 @@
     self = [super init];
     self.id       = id;
     self.side     = side;
-    self.expanded = true;
     self.results  = [[NSMutableArray alloc] init];
     return self;
 }
@@ -59,8 +58,8 @@
     CLLocationCoordinate2D rc = {};
     SpeedyCrew::Database* db = [SpCDatabase getDatabase];
     std::string id = [self.id UTF8String];
-    rc.latitude  = db->query<double>("select latitude from search where id='" + id + "'");
-    rc.longitude = db->query<double>("select longitude from search where id='" + id + "'");
+    rc.latitude  = db->query<double>("select latitude from search where id='" + id + "';");
+    rc.longitude = db->query<double>("select longitude from search where id='" + id + "';");
     return rc;
 }
 
@@ -87,13 +86,28 @@
 {
     SpeedyCrew::Database* db = [SpCDatabase getDatabase];
     std::string id = [self.id UTF8String];
-    std::string search = db->query<std::string>("select query from search where id='" + id + "'");
+    std::string search = db->query<std::string>("select query from search where id='" + id + "';");
     return [NSString stringWithFormat:@"%s", search.c_str()];
 }
 
 - (NSString*)subtitle
 {
     return @"drag to relocate";
+}
+
+// ----------------------------------------------------------------------------
+
+- (bool)expanded
+{
+    SpeedyCrew::Database* db = [SpCDatabase getDatabase];
+    return db->query<int>(std::string("select state from expanded where id='") + [self.id UTF8String] + "';", 1);
+}
+
+- (void)setExpanded:(bool)value
+{
+    SpeedyCrew::Database* db = [SpCDatabase getDatabase];
+    db->execute(std::string("insert or replace into expanded (id, state) values(")
+                            + "'" + [self.id UTF8String] + "', " + std::string(value? "1": "0") + ");");
 }
 
 @end

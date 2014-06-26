@@ -104,4 +104,10 @@
     NSLog(@"ERROR: failed to get a token: %@", error);
     [self.data synchronise];
 }
+
+- (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo
+{
+    [self.data synchronise];
+}
+    
 @end
