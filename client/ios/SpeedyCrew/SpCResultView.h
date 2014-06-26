@@ -17,7 +17,7 @@
 @property (nonatomic, readonly, copy) NSString*              subtitle;
 @property (nonatomic, readonly, copy) NSString*              identity;
 @property (nonatomic, readonly, copy) NSString*              query;
-// @property (nonatomic, readonly, copy) NSString*              email;
+@property (nonatomic, readonly, copy) NSString*              email;
 @property (readonly)                  NSString*              key;
 
 + (SpCResultView*)makeWithKey:(NSString*)key;

@@ -55,6 +55,7 @@ class SpeedyCrew::Database
     bool execute(std::string const& sql, std::string& error);
 
     template <typename T> T  query(std::string const& sql);
+    template <typename T> T  query(std::string const& sql, T const& def);
     std::vector<std::string> queryRow(std::string const& sql);
     std::vector<std::string> queryColumn(std::string const& sql);
 };

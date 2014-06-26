@@ -141,6 +141,15 @@ namespace SpeedyCrew
         }
         return value;
     }
+
+    template <>
+    int Database::query<int>(std::string const& sql, int const& def)
+    {
+        message msg;
+        int value = def;
+        int rc(sqlite3_exec(this->d_database, sql.c_str(), int_callback, &value, &msg));
+        return rc != SQLITE_OK? def: value;
+    }
 }
 
 // ----------------------------------------------------------------------------
