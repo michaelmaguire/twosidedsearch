@@ -67,10 +67,13 @@
 - (void)addSearchWithText:(NSString*)text forSide:(NSString*)side
 {
     //-dk:TODO get the radius from the configuration
-    NSString* query = [NSString stringWithFormat:@"side=%@%@&query=%@&longitude=-0.15&latitude=51.5",
+    // NSString* query = [NSString stringWithFormat:@"side=%@%@&query=%@&longitude=-0.15&latitude=51.5",
+    NSString* query = [NSString stringWithFormat:@"side=%@%@&query=%@&longitude=%f&latitude=%f",
                         side,
                         [side isEqual:@"SEEK"]? @"&radius=5000": @"",
-                        [SpCData encodeURL:text]
+                        [SpCData encodeURL:text],
+                        self.longitude,
+                        self.latitude
                        ];
     [self sendHttpRequest:@"create_search" withBody: query];
 }
