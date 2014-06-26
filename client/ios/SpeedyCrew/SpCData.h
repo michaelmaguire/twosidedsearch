@@ -17,6 +17,7 @@
 @property float           longitude;
 @property float           latitude;
 
++ (NSString*)gravatarURLForEmail:(NSString*)address;
 - (SpCData*)init;
 - (void)synchronise;
 - (void)sendToken:(NSString*)token;

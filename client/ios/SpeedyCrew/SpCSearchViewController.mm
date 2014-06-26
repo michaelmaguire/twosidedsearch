@@ -174,6 +174,8 @@
 
         cell.textLabel.text = result.identity;
         cell.detailTextLabel.text = result.query;
+
+        [SpCData gravatarURLForEmail:result.email];
     }
     return cell;
 }

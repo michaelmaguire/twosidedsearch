@@ -11,8 +11,13 @@
 // #import "SpCSearch.h"
 #import <Foundation/Foundation.h>
 #import <Foundation/NSJSONSerialization.h>
+#import <CommonCrypto/CommonDigest.h>
 #include "Database.h"
+#include <algorithm>
+#include <iterator>
+#include <iomanip>
 #include <sstream>
+#include <string>
  
 @interface SpCData()
 @property NSString*            baseURL;
@@ -207,6 +212,31 @@
                 }
             }];
     }
+}
+
++ (NSString*)gravatarURLForEmail:(NSString*)address
+{
+    std::string mail([address UTF8String]);
+    mail.erase(std::remove(mail.begin(), mail.end(), ' '), mail.end());
+    if (mail == "<unknown>") {
+        NSLog(@"can't get gravator URL for %@", address);
+        return Nil;
+    }
+    std::transform(mail.begin(), mail.end(), mail.begin(),
+                   [](unsigned char c){ return char(std::tolower(c)); });
+
+    unsigned char buffer[CC_MD5_DIGEST_LENGTH];
+    CC_MD5(mail.c_str(), mail.size(), buffer);
+    std::ostringstream out;
+    (out << std::hex).fill('0');
+    for (unsigned char* it(std::begin(buffer)),* end(std::end(buffer));
+         it != end; ++it) {
+        out << std::setw(2) << static_cast<unsigned short>(*it);
+    }
+    NSString* result = [NSString stringWithFormat:@"http://gravatar.com/avatar/%s",
+                                 out.str().c_str()];
+    NSLog(@"gravator URL for %@ is %@", address, result);
+    return result;
 }
 
 @end
