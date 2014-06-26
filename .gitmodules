@@ -1,3 +1,6 @@
 [submodule "client/android/src/org/json"]
 	path = client/android/src/org/json
 	url = https://github.com/douglascrockford/JSON-java.git
+[submodule "client/ios/SpeedyCrew/SDWebImage"]
+	path = client/ios/SpeedyCrew/SDWebImage
+	url = https://github.com/rs/SDWebImage.git

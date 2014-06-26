@@ -11,8 +11,13 @@
 // #import "SpCSearch.h"
 #import <Foundation/Foundation.h>
 #import <Foundation/NSJSONSerialization.h>
+#import <CommonCrypto/CommonDigest.h>
 #include "Database.h"
+#include <algorithm>
+#include <iterator>
+#include <iomanip>
 #include <sstream>
+#include <string>
  
 @interface SpCData()
 @property NSString*            baseURL;
@@ -67,10 +72,13 @@
 - (void)addSearchWithText:(NSString*)text forSide:(NSString*)side
 {
     //-dk:TODO get the radius from the configuration
-    NSString* query = [NSString stringWithFormat:@"side=%@%@&query=%@&longitude=-0.15&latitude=51.5",
+    // NSString* query = [NSString stringWithFormat:@"side=%@%@&query=%@&longitude=-0.15&latitude=51.5",
+    NSString* query = [NSString stringWithFormat:@"side=%@%@&query=%@&longitude=%f&latitude=%f",
                         side,
                         [side isEqual:@"SEEK"]? @"&radius=5000": @"",
-                        [SpCData encodeURL:text]
+                        [SpCData encodeURL:text],
+                        self.longitude,
+                        self.latitude
                        ];
     [self sendHttpRequest:@"create_search" withBody: query];
 }
@@ -101,9 +109,23 @@
                 }
                 transaction.commit();
                 [self notify];
+                [[UIApplication sharedApplication] setApplicationIconBadgeNumber: 0];
             }
             catch (std::exception const& ex) {
                 NSLog(@"ERROR: caught an exception while while executing SQL statements: %s", ex.what());
+            }
+        }
+        NSArray* meta = [dict objectForKey: @"metadata"];
+        if (meta) {
+            for (int i = 0, count = [meta count]; i != count; ++i) {
+                NSString* data = [[meta objectAtIndex:i] objectForKey: @"DELETE"];
+                if (data) {
+                    std::string str([data UTF8String]);
+                    if (str.find("search/") == 0) {
+                        NSLog(@"received a search delete: %s", str.substr(7).c_str());
+                        db->execute("delete from expanded where id='" + str.substr(7) + "'");
+                    }
+                }
             }
         }
 
@@ -190,6 +212,27 @@
                 }
             }];
     }
+}
+
++ (NSString*)gravatarURLForEmail:(NSString*)address
+{
+    std::string mail([address UTF8String]);
+    mail.erase(std::remove(mail.begin(), mail.end(), ' '), mail.end());
+    if (mail == "<unknown>") {
+        return Nil;
+    }
+    std::transform(mail.begin(), mail.end(), mail.begin(),
+                   [](unsigned char c){ return char(std::tolower(c)); });
+
+    unsigned char buffer[CC_MD5_DIGEST_LENGTH];
+    CC_MD5(mail.c_str(), mail.size(), buffer);
+    std::ostringstream out;
+    (out << std::hex).fill('0');
+    for (unsigned char* it(std::begin(buffer)),* end(std::end(buffer));
+         it != end; ++it) {
+        out << std::setw(2) << static_cast<unsigned short>(*it);
+    }
+    return [NSString stringWithFormat:@"http://gravatar.com/avatar/%s", out.str().c_str()];
 }
 
 @end

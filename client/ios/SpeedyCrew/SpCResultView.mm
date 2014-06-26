@@ -95,4 +95,17 @@
 }
 
 // ----------------------------------------------------------------------------
+
+- (NSString*)email
+{
+    SpeedyCrew::Database* db = [SpCDatabase getDatabase];
+    std::string key = [self.key UTF8String];
+    std::string value = db->query<std::string>("select email from match where " + key);
+    if (value.empty()) {
+        value = "<unknown>";
+    }
+    return [NSString stringWithFormat:@"%s", value.c_str()];
+}
+
+// ----------------------------------------------------------------------------
 @end

@@ -13,6 +13,8 @@
 #import "SpCAppDelegate.h"
 #import "SpCDatabase.h"
 #import "SpCData.h"
+#import <SDWebImage/UIImageView+WebCache.h>
+
 #include "Database.h"
 
 @interface SpCSearchViewController ()
@@ -53,17 +55,11 @@
 
 - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
 {
-    UIButton* button = (UIButton*)sender;
-    int tag = 0;
-    for (UIView* parent = button.superview; parent != Nil; parent = parent.superview) {
-        if (parent.tag != 0) {
-            tag = (int)parent.tag;
-            break;
-        }
-    }
-    if (tag != 0) {
+    UIView* view = (UIButton*)sender;
+    int tag = view.tag;
+    if (tag < [self.searches count]) {
         SpCMapViewController* map = [segue destinationViewController];
-        map.search = [self.searches objectAtIndex: tag - 1];
+        map.search = [self.searches objectAtIndex: tag];
     }
 }
 
@@ -87,6 +83,7 @@
 - (void)searchBarCancelButtonClicked:(UISearchBar *)searchBar
 {
     NSLog(@"search bar cancel button clicked");
+    [searchBar resignFirstResponder];
 }
    
 // ----------------------------------------------------------------------------
@@ -117,31 +114,6 @@
     return [self.searches count];
 }
 
-#if 0
-- (UIView*)tableView:(UITableView*)tv viewForHeaderInSection:(NSInteger)section
-{
-    UITableViewCell* header = [tv dequeueReusableCellWithIdentifier:@"Header"];
-    header.tag = section + 1;
-    UIButton* expand = (UIButton*)[header viewWithTag: -1001];
-    SpCSearchView* search = [self.searches objectAtIndex: section];
-    [expand setTitle: (search.expanded? @"-": @"+") forState:UIControlStateNormal];
-
-    SpeedyCrew::Database* db = [SpCDatabase getDatabase];
-    std::string text = db->query<std::string>("select query from search where id='" + db->escape([search.id UTF8String]) + "';");
-    UIButton* title = (UIButton*)[header viewWithTag: -1002];
-    [title setTitle: [NSString stringWithFormat:@"%s", text.c_str()] forState:UIControlStateNormal];
-
-    UISwipeGestureRecognizer *swipe = [[UISwipeGestureRecognizer alloc]
-                                          initWithTarget:self
-                                                  action:@selector(onRemove:)];
-    swipe.direction               = UISwipeGestureRecognizerDirectionLeft;
-    swipe.numberOfTouchesRequired = 1;
-    [header addGestureRecognizer:swipe];
-
-    return header;
-}
-#endif
-
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
     SpCSearchView* search = [self.searches objectAtIndex: section];
@@ -155,7 +127,8 @@
     int section = gesture.view.tag;
     if (section < [self.searches count]) {
         SpCSearchView* search = [self.searches objectAtIndex: section];
-        search.expanded = !search.expanded;
+        bool value = !search.expanded;
+        search.expanded = value;
         [self.tableView reloadData];
     }
 }
@@ -187,6 +160,7 @@
     UITableViewCell* cell = nil;
     if (path.row == 0) {
         cell = [tv dequeueReusableCellWithIdentifier:@"Search"];
+        cell.tag = path.section;
         cell.textLabel.text = search.title;
 
         cell.imageView.userInteractionEnabled = YES;
@@ -202,6 +176,12 @@
 
         cell.textLabel.text = result.identity;
         cell.detailTextLabel.text = result.query;
+
+        NSString* gravatar = [SpCData gravatarURLForEmail:result.email];
+        if (gravatar) {
+            [cell.imageView sd_setImageWithURL:[NSURL URLWithString:gravatar]
+                           placeholderImage:[UIImage imageNamed:@"Unknown"]];
+        }
     }
     return cell;
 }
@@ -215,37 +195,6 @@
         view = [view superview];
     }
     return view == Nil? 0: int(view.tag);
-}
-
-- (IBAction)onHeaderToggleClicked:(id)sender
-{
-    UIButton* button = sender;
-    int section = [self getFirstTagOf: sender] - 1;
-    bool expand = [button.titleLabel.text isEqualToString: @"+"];
-    [button setTitle: (expand? @"-": @"+") forState:UIControlStateNormal];
-    SpCSearchView* search = [self.searches objectAtIndex: section];
-    search.expanded = expand;
-    [self.tableView reloadData];
-}
-
-- (IBAction)onHeaderClicked:(id)sender
-{
-    NSLog(@"header clicked: %ld", long([self getFirstTagOf: sender]));
-}
-
-- (IBAction)onHeaderNavigationClicked:(id)sender
-{
-}
-
-// ----------------------------------------------------------------------------
-
-- (void)onRemove:(UIGestureRecognizer *)recognizer
-{
-    UIView* view = (UIView*)recognizer.view;
-    //-dk:TODO this should really display a delete button...
-    SpCSearchView* search = [self.searches objectAtIndex:view.tag];
-    SpCData* data = [SpCAppDelegate instance].data;
-    [data deleteSearch:search.id];
 }
 
 // ----------------------------------------------------------------------------
