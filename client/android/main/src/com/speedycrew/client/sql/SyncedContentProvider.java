@@ -1,6 +1,7 @@
 package com.speedycrew.client.sql;
 
 import java.util.List;
+import java.util.Vector;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -15,6 +16,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.BaseColumns;
 import android.util.Log;
 
 public class SyncedContentProvider extends ContentProvider {
@@ -29,17 +31,14 @@ public class SyncedContentProvider extends ContentProvider {
 	private static final String AUTHORITY = "com.speedycrew.client.sql.synced.contentprovider";
 	private static final String BASE_PATH = "/";
 	public static final Uri BASE_URI = Uri.parse("content://" + AUTHORITY);
-	public static final Uri SEARCH_URI = Uri.parse("content://" + AUTHORITY
-			+ BASE_PATH + Search.TABLE_NAME);
+	public static final Uri SEARCH_URI = Uri.parse("content://" + AUTHORITY + BASE_PATH + Search.TABLE_NAME);
 
-	private static final UriMatcher sURIMatcher = new UriMatcher(
-			UriMatcher.NO_MATCH);
+	private static final UriMatcher sURIMatcher = new UriMatcher(UriMatcher.NO_MATCH);
 
 	public static final String METHOD_SYNCHRONIZE = "synchronize";
 	static {
 		sURIMatcher.addURI(AUTHORITY, Search.TABLE_NAME, URI_SEARCH_INDEX);
-		sURIMatcher.addURI(AUTHORITY, Search.TABLE_NAME + "/*/"
-				+ Match.TABLE_NAME, URI_MATCH_INDEX);
+		sURIMatcher.addURI(AUTHORITY, Search.TABLE_NAME + "/*/" + Match.TABLE_NAME, URI_MATCH_INDEX);
 	}
 
 	@Override
@@ -50,10 +49,26 @@ public class SyncedContentProvider extends ContentProvider {
 	}
 
 	@Override
-	public Cursor query(Uri uri, String[] projection, String selection,
-			String[] selectionArgs, String sortOrder) {
+	public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
 
 		Log.i(LOGTAG, "query URI[" + uri + "]");
+
+		// For our query below, make sure that we have an '_id' column as
+		// required by Google Adapter classes, even if our table doesn't
+		// really contain one. To do this, use SQLite's _rowid_.
+		//
+		// See: http://www.sqlite.org/lang_createtable.html#rowid
+		// and:
+		// http://stackoverflow.com/questions/11365097/sqlite-create-table-with-an-alias-for-rowid
+		Vector<String> newProjectionVector = new Vector<String>();
+		for (String passedIn : projection) {
+			if (BaseColumns._ID.equalsIgnoreCase(passedIn)) {
+				newProjectionVector.add("_rowid_ as _id");
+			} else {
+				newProjectionVector.add(passedIn);
+			}
+		}
+		String[] newProjection = newProjectionVector.toArray(new String[projection.length]);
 
 		// Using SQLiteQueryBuilder instead of query() method
 		SQLiteQueryBuilder queryBuilder = new SQLiteQueryBuilder();
@@ -66,8 +81,7 @@ public class SyncedContentProvider extends ContentProvider {
 			break;
 		case URI_MATCH_INDEX:
 			queryBuilder.setTables(Match.TABLE_NAME);
-			queryBuilder.appendWhere(Match.SEARCH + "='" + pathSegments.get(1)
-					+ "'");
+			queryBuilder.appendWhere(Match.SEARCH + "='" + pathSegments.get(1) + "'");
 			break;
 		default:
 			Log.e(LOGTAG, "Unhandled URI[" + uri + "]");
@@ -79,8 +93,7 @@ public class SyncedContentProvider extends ContentProvider {
 
 		SQLiteDatabase db = mSyncedSQLiteOpenHelper.getReadableDatabase();
 
-		Cursor cursor = queryBuilder.query(db, projection, selection,
-				selectionArgs, null, null, sortOrder);
+		Cursor cursor = queryBuilder.query(db, newProjection, selection, selectionArgs, null, null, sortOrder);
 
 		// make sure that potential listeners are getting notified
 		cursor.setNotificationUri(getContext().getContentResolver(), uri);
@@ -101,8 +114,7 @@ public class SyncedContentProvider extends ContentProvider {
 
 				JSONArray sqlArray = jsonResponse.getJSONArray("sql");
 				if (sqlArray != null) {
-					SQLiteDatabase db = mSyncedSQLiteOpenHelper
-							.getWritableDatabase();
+					SQLiteDatabase db = mSyncedSQLiteOpenHelper.getWritableDatabase();
 					String sqlStatement = null;
 					try {
 						db.beginTransaction();
@@ -110,22 +122,19 @@ public class SyncedContentProvider extends ContentProvider {
 						final int length = sqlArray.length();
 						for (int i = 0; i < length; ++i) {
 							sqlStatement = sqlArray.getString(i);
-							Log.i(LOGTAG, "call: SQL sqlStatement["
-									+ sqlStatement + "]");
+							Log.i(LOGTAG, "call: SQL sqlStatement[" + sqlStatement + "]");
 							db.execSQL(sqlStatement);
 						}
 						db.setTransactionSuccessful();
 					} catch (SQLException sqle) {
-						Log.e(LOGTAG, "call: SQLException for sqlStatement["
-								+ sqlStatement + "]", sqle);
+						Log.e(LOGTAG, "call: SQLException for sqlStatement[" + sqlStatement + "]", sqle);
 					} finally {
 						db.endTransaction();
 					}
 				}
 
 			} catch (JSONException jsone) {
-				Log.i(LOGTAG,
-						"call: error parsing as JSON" + jsone.getMessage());
+				Log.i(LOGTAG, "call: error parsing as JSON" + jsone.getMessage());
 			}
 
 			// make sure that potential listeners are getting notified
@@ -158,8 +167,7 @@ public class SyncedContentProvider extends ContentProvider {
 	}
 
 	@Override
-	public int update(Uri uri, ContentValues values, String selection,
-			String[] selectionArgs) {
+	public int update(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
 		// TODO Auto-generated method stub
 		return 0;
 	}

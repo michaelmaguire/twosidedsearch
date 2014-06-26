@@ -18,8 +18,8 @@ public class SyncedSQLiteOpenHelper extends SQLiteOpenHelper {
 			+ Search.QUERY + " TEXT NOT NULL, " + Search.SIDE + " TEXT NOT NULL, " + Search.ADDRESS + " TEXT, " + Search.POSTCODE + " TEXT, " + Search.CITY + " TEXT, "
 			+ Search.COUNTRY + " TEXT, " + Search.LONGITUDE + " TEXT NOT NULL, " + Search.LATITUDE + " TEXT NOT NULL, " + Search.RADIUS + " TEXT);";
 
-	private static final String CREATE_MATCH = "CREATE TABLE " + Match.TABLE_NAME + " ( " + Match._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " + Match.ID + " TEXT NOT NULL, "
-			+ Match.SEARCH + " TEXT NOT NULL, " + Match.USERNAME + " TEXT, " + Match.FINGERPRINT + " TEXT NOT NULL, " + Match.QUERY + " TEXT NOT NULL, " + Match.LONGITUDE
+	private static final String CREATE_MATCH = "CREATE TABLE " + Match.TABLE_NAME + " ( " + Match._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " + Match.SEARCH + " TEXT NOT NULL, "
+			+ Match.OTHER_SEARCH + " TEXT NOT NULL, " + Match.USERNAME + " TEXT, " + Match.FINGERPRINT + " TEXT NOT NULL, " + Match.QUERY + " TEXT NOT NULL, " + Match.LONGITUDE
 			+ " TEXT, " + Match.LATITUDE + " TEXT, " + Match.DISTANCE + " TEXT, " + Match.MATCHES + " TEXT, " + Match.SCORE + " TEXT);";
 
 	private static final String CREATE_CONTROL = "CREATE TABLE " + Control.TABLE_NAME + " ( " + Control.TIMELINE + " INTEGER, " + Control.SEQUENCE + " INTEGER);";
