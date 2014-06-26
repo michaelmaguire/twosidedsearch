@@ -219,7 +219,7 @@ def do_incremental(cursor, profile_id, device_sequence, sql, metadata):
     for sequence, type, tab, message_body, my_search_id, my_search_query, my_search_side, my_search_address, my_search_postcode, my_search_city, my_search_country, my_search_radius, my_search_longitude, my_search_latitude, match_search_id, match_username, match_email, match_fingerprint, match_query, match_longitude, match_latitude, match_matches, match_distance, match_score, my_username, my_real_name, my_email, my_status, my_message, my_created, my_modified in cursor:
         count += 1
         highest_sequence = sequence
-        if match_search_id:
+        if tab == "MATCH":
             if type == "INSERT":
                 metadata.append({ "INSERT" : "match/%s/%s" % (my_search_id, match_search_id) })
                 sql.append(param("INSERT INTO match (search, other_search, username, email, fingerprint, query, longitude, latitude, distance, matches, score) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
@@ -230,7 +230,7 @@ def do_incremental(cursor, profile_id, device_sequence, sql, metadata):
             elif type == "DELETE":
                 metadata.append({ "DELETE" : "match/%s/%s" % (my_search_id, match_search_id) })
                 sql.append(param("DELETE FROM match WHERE search = %s AND other_search = %s;\n", (my_search_id, match_search_id)))
-        elif my_search_id:
+        elif tab == "SEARCH":
             if type == "INSERT":
                 metadata.append({ "INSERT" : "search/%s" % my_search_id })
                 sql.append(param("INSERT INTO search (id, query, side, address, postcode, city, country, radius, longitude, latitude) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
