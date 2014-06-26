@@ -7,6 +7,7 @@
 //
 
 #import "SpCAppDelegate.h"
+#import <SDWebImage/UIImageView+WebCache.h>
 
 @implementation SpCAppDelegate {
     CLLocationManager* locationManager;
@@ -25,6 +26,7 @@
 
     [[UIApplication sharedApplication] registerForRemoteNotificationTypes:
                                           (UIRemoteNotificationTypeBadge | UIRemoteNotificationTypeSound | UIRemoteNotificationTypeAlert)];
+    [[[SDWebImageManager sharedManager] imageCache] clearDisk];
     return YES;
 }
 
@@ -88,7 +90,6 @@
             || newLocation.coordinate.latitude != oldLocation.coordinate.latitude)) {
         self.data.longitude = newLocation.coordinate.longitude;
         self.data.latitude  = newLocation.coordinate.latitude;
-        NSLog(@"updated location: (%f, %f)", self.data.longitude, self.data.latitude);
     }
 }
 

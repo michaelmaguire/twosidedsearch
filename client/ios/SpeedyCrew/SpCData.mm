@@ -219,7 +219,6 @@
     std::string mail([address UTF8String]);
     mail.erase(std::remove(mail.begin(), mail.end(), ' '), mail.end());
     if (mail == "<unknown>") {
-        NSLog(@"can't get gravator URL for %@", address);
         return Nil;
     }
     std::transform(mail.begin(), mail.end(), mail.begin(),
@@ -233,10 +232,7 @@
          it != end; ++it) {
         out << std::setw(2) << static_cast<unsigned short>(*it);
     }
-    NSString* result = [NSString stringWithFormat:@"http://gravatar.com/avatar/%s",
-                                 out.str().c_str()];
-    NSLog(@"gravator URL for %@ is %@", address, result);
-    return result;
+    return [NSString stringWithFormat:@"http://gravatar.com/avatar/%s", out.str().c_str()];
 }
 
 @end

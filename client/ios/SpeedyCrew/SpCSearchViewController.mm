@@ -13,6 +13,8 @@
 #import "SpCAppDelegate.h"
 #import "SpCDatabase.h"
 #import "SpCData.h"
+#import <SDWebImage/UIImageView+WebCache.h>
+
 #include "Database.h"
 
 @interface SpCSearchViewController ()
@@ -175,7 +177,11 @@
         cell.textLabel.text = result.identity;
         cell.detailTextLabel.text = result.query;
 
-        [SpCData gravatarURLForEmail:result.email];
+        NSString* gravatar = [SpCData gravatarURLForEmail:result.email];
+        if (gravatar) {
+            [cell.imageView sd_setImageWithURL:[NSURL URLWithString:gravatar]
+                           placeholderImage:[UIImage imageNamed:@"Unknown"]];
+        }
     }
     return cell;
 }
