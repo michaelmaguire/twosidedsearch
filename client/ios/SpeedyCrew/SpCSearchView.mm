@@ -73,13 +73,9 @@
 
 - (void)setCoordinate:(CLLocationCoordinate2D)position
 {
-#if 0
-    //-dk:TODO update the search position rather than just setting data!
-#else
     SpCData* data = [SpCAppDelegate instance].data;
     data.latitude  = position.latitude;
     data.longitude = position.longitude;
-#endif
 }
 
 - (NSString*)title

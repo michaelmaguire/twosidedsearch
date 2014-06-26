@@ -109,6 +109,19 @@
                 NSLog(@"ERROR: caught an exception while while executing SQL statements: %s", ex.what());
             }
         }
+        NSArray* meta = [dict objectForKey: @"metadata"];
+        if (meta) {
+            for (int i = 0, count = [meta count]; i != count; ++i) {
+                NSString* data = [[meta objectAtIndex:i] objectForKey: @"DELETE"];
+                if (data) {
+                    std::string str([data UTF8String]);
+                    if (str.find("search/") == 0) {
+                        NSLog(@"received a search delete: %s", str.substr(7).c_str());
+                        db->execute("delete from expanded where id='" + str.substr(7) + "'");
+                    }
+                }
+            }
+        }
 
         if (type) {
             if ([type isEqual:@"synchronise_response"]
