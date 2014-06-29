@@ -35,7 +35,7 @@ public class SearchFragment extends Fragment implements View.OnClickListener, On
 	static final String[] SEARCH_PROJECTION = new String[] { Search.QUERY, Search.ID, Search._ID };
 	static final int[] SEARCH_VIEWS_FROM_LAYOUT = new int[] { R.id.query };
 
-	static final String[] MATCH_PROJECTION = new String[] { Match.USERNAME, Match.DISTANCE, Match.ID, Match._ID, };
+	static final String[] MATCH_PROJECTION = new String[] { Match.USERNAME, Match.DISTANCE, Match.SEARCH, Match.OTHER_SEARCH, Match._ID, };
 	static final int[] MATCH_VIEWS_FROM_LAYOUT = new int[] { R.id.username, R.id.distance };
 
 	static final int TOKEN_GROUP = 0;
@@ -189,7 +189,7 @@ public class SearchFragment extends Fragment implements View.OnClickListener, On
 	public boolean onChildClick(ExpandableListView parent, View v, int groupPosition, int childPosition, long id) {
 
 		Cursor cursor = mSearchResultsListAdapter.getChild(groupPosition, childPosition);
-		String matchID = cursor.getString(cursor.getColumnIndex(Match.ID));
+		String matchID = cursor.getString(cursor.getColumnIndex(Match.SEARCH)) + '|' + cursor.getString(cursor.getColumnIndex(Match.OTHER_SEARCH));
 
 		Log.i(LOGTAG, "onChildClick groupPosition[" + groupPosition + "] childPosition[" + childPosition + "] id[" + id + "] matchID[" + matchID + "]");
 
@@ -217,7 +217,7 @@ public class SearchFragment extends Fragment implements View.OnClickListener, On
 			int childPosition = ExpandableListView.getPackedPositionChild(packedPosition);
 
 			Cursor cursor = mSearchResultsListAdapter.getChild(groupPosition, childPosition);
-			String matchID = cursor.getString(cursor.getColumnIndex(Match.ID));
+			String matchID = cursor.getString(cursor.getColumnIndex(Match.SEARCH)) + '|' + cursor.getString(cursor.getColumnIndex(Match.OTHER_SEARCH));
 
 			Log.i(LOGTAG, "onItemLongClick CHILD position[" + position + "] id[" + id + "] groupPosition[" + groupPosition + "] childPosition[" + childPosition + "] matchID["
 					+ matchID + "]");
