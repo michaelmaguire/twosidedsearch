@@ -20,13 +20,6 @@ public class MainActivity extends Activity {
 
 		setContentView(R.layout.activity_main);
 
-		// use this to start and trigger a service
-		Intent serviceStartingIntent = new Intent(this, com.speedycrew.client.connection.ConnectionService.class);
-		// potentially add data to the intent
-		// serviceStartingIntent.putExtra("KEY1",
-		// "Value to be used by the service");
-		startService(serviceStartingIntent);
-
 		final ActionBar bar = getActionBar();
 		bar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
 		bar.setDisplayOptions(0, ActionBar.DISPLAY_SHOW_TITLE);

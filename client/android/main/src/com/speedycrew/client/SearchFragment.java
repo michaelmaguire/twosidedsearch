@@ -9,7 +9,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Message;
+import android.os.ResultReceiver;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
@@ -27,7 +27,7 @@ import com.speedycrew.client.connection.ConnectionService.Key;
 import com.speedycrew.client.sql.Match;
 import com.speedycrew.client.sql.Search;
 import com.speedycrew.client.sql.SyncedContentProvider;
-import com.speedycrew.client.util.RequestHelperServiceConnector;
+import com.speedycrew.client.util.RequestHelper;
 
 public class SearchFragment extends Fragment implements View.OnClickListener, OnGroupClickListener, OnChildClickListener, OnItemLongClickListener {
 	private static final String LOGTAG = SearchFragment.class.getName();
@@ -64,8 +64,6 @@ public class SearchFragment extends Fragment implements View.OnClickListener, On
 		}
 	}
 
-	private RequestHelperServiceConnector mRequestHelperServiceConnector;
-
 	protected QueryHandler mQueryHandler;
 
 	protected ExpandableListView mExpandableListView;
@@ -80,8 +78,6 @@ public class SearchFragment extends Fragment implements View.OnClickListener, On
 		}
 		Log.i(LOGTAG, "onCreate");
 
-		mRequestHelperServiceConnector = new RequestHelperServiceConnector(getActivity(), ConnectionService.class);
-
 		// Our adapter and queryHandler is set up in our subclass'
 		// onCreateView() method.
 
@@ -95,42 +91,36 @@ public class SearchFragment extends Fragment implements View.OnClickListener, On
 		Log.i(LOGTAG, "SearchFragment queryString[" + queryString + ']');
 
 		try {
-			mRequestHelperServiceConnector.createSearch(queryString, this instanceof HiringFragment, new Handler.Callback() {
+			RequestHelper.createSearch(getActivity(), queryString, this instanceof HiringFragment, new ResultReceiver(new Handler()) {
+
 				@Override
-				public boolean handleMessage(Message responseMessage) {
-					switch (responseMessage.what) {
-					case ConnectionService.MSG_JSON_RESPONSE:
-						try {
-							final String responseString = responseMessage.obj.toString();
-							Log.i(LOGTAG, "handleMessage create search MSG_JSON_RESPONSE: " + responseString);
+				public void onReceiveResult(int resultCode, Bundle resultData) {
+					Log.i(LOGTAG, "onReceiveResult from createSearch resultCode[" + resultCode + "] resultData[" + resultData + "]");
 
-							JSONObject responseJson = new JSONObject(responseString);
-							String status = responseJson.getString(Key.STATUS);
-							if (!"OK".equalsIgnoreCase(status)) {
-								String errorMessage = responseJson.getString(ConnectionService.Key.MESSAGE);
+					try {
+						String jsonString = resultData.getString(ConnectionService.BUNDLE_KEY_JSON_RESPONSE);
+						JSONObject responseJson = new JSONObject(jsonString);
+						String status = responseJson.getString(Key.STATUS);
+						if (!"OK".equalsIgnoreCase(status)) {
+							String errorMessage = responseJson.getString(ConnectionService.Key.MESSAGE);
 
-								Toast.makeText(getActivity(), errorMessage, Toast.LENGTH_SHORT).show();
+							Toast.makeText(getActivity(), errorMessage, Toast.LENGTH_SHORT).show();
 
-							} else {
+						} else {
 
-								mRequestHelperServiceConnector.sendSynchronize(0, 0, new Handler.Callback() {
+							RequestHelper.sendSynchronize(getActivity(), 0, 0, new ResultReceiver(new Handler()) {
 
-									@Override
-									public boolean handleMessage(Message msg) {
-										Toast.makeText(getActivity(), "Got synchronise results", Toast.LENGTH_SHORT).show();
-										return false;
-									}
-								});
+								@Override
+								public void onReceiveResult(int resultCode, Bundle resultData) {
+									Log.i(LOGTAG, "onReceiveResult from synchronize resultCode[" + resultCode + "] resultData[" + resultData + "]");
+									Toast.makeText(getActivity(), "Got synchronise results", Toast.LENGTH_SHORT).show();
+								}
+							});
 
-							}
-						} catch (Exception e) {
-							Log.e(LOGTAG, "onClick get results error: " + e);
 						}
-
-						return true;
-						// break;
+					} catch (Exception e) {
+						Log.e(LOGTAG, "onClick get results error: " + e);
 					}
-					return false;
 				}
 			});
 		} catch (Exception e) {

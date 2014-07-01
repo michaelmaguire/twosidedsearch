@@ -9,7 +9,7 @@ import android.content.res.Configuration;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Message;
+import android.os.ResultReceiver;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
@@ -18,8 +18,7 @@ import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
-import com.speedycrew.client.connection.ConnectionService;
-import com.speedycrew.client.util.RequestHelperServiceConnector;
+import com.speedycrew.client.util.RequestHelper;
 
 /**
  * A {@link PreferenceActivity} that presents a set of application settings. On
@@ -36,8 +35,6 @@ public class ProfileActivity extends PreferenceActivity {
 
 	private static String LOGTAG = ProfileActivity.class.getName();
 
-	RequestHelperServiceConnector mRequestHelperServiceConnector;
-
 	/**
 	 * Determines whether to always show the simplified settings UI, where
 	 * settings are presented in a single list. When false, settings are shown
@@ -49,11 +46,6 @@ public class ProfileActivity extends PreferenceActivity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-
-		mRequestHelperServiceConnector = new RequestHelperServiceConnector(this, ConnectionService.class);
-
-		mRequestHelperServiceConnector.start();
-
 	}
 
 	@Override
@@ -165,17 +157,11 @@ public class ProfileActivity extends PreferenceActivity {
 				String contactEmail = preferences.getString("contact_email", "DEFAULTEMAIL");
 
 				try {
-					mRequestHelperServiceConnector.updateProfile(username, displayName, blurbMessage, contactEmail, new Handler.Callback() {
+					RequestHelper.updateProfile(ProfileActivity.this, username, displayName, blurbMessage, contactEmail, new ResultReceiver(new Handler()) {
 
 						@Override
-						public boolean handleMessage(Message msg) {
-							switch (msg.what) {
-							case ConnectionService.MSG_JSON_RESPONSE:
-								Log.i(LOGTAG, "handleMessage MSG_JSON_RESPONSE: " + msg.obj);
-								return true;
-								// break;
-							}
-							return false;
+						public void onReceiveResult(int resultCode, Bundle resultData) {
+							Log.i(LOGTAG, "onReceiveResult resultCode[" + resultCode + "] resultData[" + resultData + "]");
 						}
 					});
 				} catch (Exception e) {
@@ -255,10 +241,4 @@ public class ProfileActivity extends PreferenceActivity {
 		}
 	}
 
-	@Override
-	protected void onDestroy() {
-		super.onDestroy();
-
-		this.mRequestHelperServiceConnector.unbind();
-	}
 }
