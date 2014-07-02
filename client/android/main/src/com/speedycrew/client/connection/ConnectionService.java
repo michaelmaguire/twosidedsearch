@@ -39,6 +39,7 @@ import android.util.Log;
 
 import com.google.android.gms.maps.model.LatLng;
 import com.speedycrew.client.SpeedyCrewApplication;
+import com.speedycrew.client.sql.Control;
 import com.speedycrew.client.sql.SyncedContentProvider;
 import com.speedycrew.client.sql.SyncedSQLiteOpenHelper;
 
@@ -249,7 +250,7 @@ public class ConnectionService extends IntentService {
 
 					if (jsonResponse.has("sql")) {
 						ContentResolver contentResolver = getContentResolver();
-						contentResolver.call(SyncedContentProvider.BASE_URI, SyncedContentProvider.METHOD_SYNCHRONIZE, resultString, null);
+						contentResolver.call(SyncedContentProvider.BASE_URI, SyncedContentProvider.METHOD_ON_SYNCHRONIZE_RESPONSE, resultString, null);
 					}
 
 				} catch (Throwable t) {
@@ -303,6 +304,29 @@ public class ConnectionService extends IntentService {
 		Log.i(LOGTAG, "onDestroy - ConnectionService is stopping");
 	}
 
+	private void enrichWithTimelineAndSequence(Bundle bundle) {
+		ContentResolver contentResolver = getContentResolver();
+		Bundle timelineSequenceResponse = contentResolver.call(SyncedContentProvider.BASE_URI, SyncedContentProvider.METHOD_FETCH_TIMELINE_SEQUENCE, null, null);
+
+		// By happy (planned) coincidence, the HTTP parameters and
+		// the column names are the same.
+		bundle.putString(Control.SEQUENCE, Long.toString(timelineSequenceResponse.getLong(Control.SEQUENCE)));
+		bundle.putString(Control.TIMELINE, Long.toString(timelineSequenceResponse.getLong(Control.TIMELINE)));
+	}
+
+	private void enrichWithGeoLocation(Bundle bundle) {
+		// Enrich the bundle with geo location -- probably best not
+		// to try this on the UI thread.
+		LatLng latLng = getLatLng();
+		bundle.putString(ConnectionService.Key.LATITUDE, Double.toString(latLng.latitude));
+		bundle.putString(ConnectionService.Key.LONGITUDE, Double.toString(latLng.longitude));
+
+		if (ConnectionService.Key.VALUE_SIDE_SEEK.equals(bundle.getString(ConnectionService.Key.SIDE))) {
+			// Radius must be present for SEEK, absent for PROVIDE.
+			bundle.putString("radius", "5000");
+		}
+	}
+
 	@Override
 	protected void onHandleIntent(Intent intent) {
 		try {
@@ -314,22 +338,18 @@ public class ConnectionService extends IntentService {
 					final Uri uri = intent.getData();
 					Log.i(LOGTAG, "onHandleIntent uri[" + uri + "]");
 					Bundle bundle = intent.getExtras();
+
+					enrichWithTimelineAndSequence(bundle);
+
 					makeRequestWithParameters(uri, bundle);
 				} else if (ACTION_MAKE_LOCATION_ENRICHED_REQUEST_WITH_PARAMETERS.equals(action)) {
 					final Uri uri = intent.getData();
 					Log.i(LOGTAG, "onHandleIntent uri[" + uri + "]");
 
 					Bundle bundle = intent.getExtras();
-					// Enrich the bundle with geo location -- probably best not
-					// to try this on the UI thread.
-					LatLng latLng = getLatLng();
-					bundle.putString(ConnectionService.Key.LATITUDE, Double.toString(latLng.latitude));
-					bundle.putString(ConnectionService.Key.LONGITUDE, Double.toString(latLng.longitude));
 
-					if (ConnectionService.Key.VALUE_SIDE_SEEK.equals(bundle.getString(ConnectionService.Key.SIDE))) {
-						// Radius must be present for SEEK, absent for PROVIDE.
-						bundle.putString("radius", "5000");
-					}
+					enrichWithTimelineAndSequence(bundle);
+					enrichWithGeoLocation(bundle);
 
 					makeRequestWithParameters(uri, bundle);
 				}

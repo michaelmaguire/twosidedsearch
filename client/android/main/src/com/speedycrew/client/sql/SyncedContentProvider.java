@@ -40,7 +40,8 @@ public class SyncedContentProvider extends ContentProvider {
 	 */
 	public static final String SQLITE_ROWID = "_rowid_";
 
-	public static final String METHOD_SYNCHRONIZE = "synchronize";
+	public static final String METHOD_FETCH_TIMELINE_SEQUENCE = "timeline";
+	public static final String METHOD_ON_SYNCHRONIZE_RESPONSE = "synchronize";
 	static {
 		sURIMatcher.addURI(AUTHORITY, Search.TABLE_NAME, URI_SEARCH_INDEX);
 		sURIMatcher.addURI(AUTHORITY, Search.TABLE_NAME + "/*/" + Match.TABLE_NAME, URI_MATCH_INDEX);
@@ -111,7 +112,9 @@ public class SyncedContentProvider extends ContentProvider {
 	public Bundle call(String method, String arg, Bundle extras) {
 		Log.i(LOGTAG, "call method[" + method + "] arg[" + arg + "]");
 
-		if (METHOD_SYNCHRONIZE.equals(method)) {
+		Bundle bundle = null;
+
+		if (METHOD_ON_SYNCHRONIZE_RESPONSE.equals(method)) {
 			try {
 				JSONObject jsonResponse = new JSONObject(arg);
 
@@ -145,11 +148,30 @@ public class SyncedContentProvider extends ContentProvider {
 			// make sure that potential listeners are getting notified
 			getContext().getContentResolver().notifyChange(BASE_URI, null);
 
+		} else if (METHOD_FETCH_TIMELINE_SEQUENCE.equals(method)) {
+			long timeline = 0;
+			long sequence = 0;
+			try {
+				SQLiteDatabase db = mSyncedSQLiteOpenHelper.getReadableDatabase();
+				Cursor cursor = db.rawQuery("SELECT * FROM " + Control.TABLE_NAME, null);
+				if (cursor.moveToFirst()) {
+					timeline = cursor.getLong(cursor.getColumnIndex(Control.TIMELINE));
+					sequence = cursor.getLong(cursor.getColumnIndex(Control.SEQUENCE));
+				} else {
+					Log.w(LOGTAG, "call: empty cursor, starting sync from 0, 0");
+				}
+			} catch (Exception e) {
+				Log.w(LOGTAG, "call: problem querying timeline and sequence, restarting sync from 0, 0", e);
+			}
+			bundle = new Bundle();
+			// We'll use column names as bundle keys here.
+			bundle.putLong(Control.TIMELINE, timeline);
+			bundle.putLong(Control.SEQUENCE, sequence);
 		} else {
-			Log.i(LOGTAG, "call: unsupported method[" + method + "]");
+			Log.w(LOGTAG, "call: unsupported method[" + method + "]");
 		}
 
-		return null;
+		return bundle;
 
 	}
 

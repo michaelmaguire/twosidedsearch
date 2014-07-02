@@ -110,15 +110,24 @@ public class SearchFragment extends Fragment implements View.OnClickListener, On
 
 						} else {
 
-							RequestHelper.sendSynchronize(getActivity(), 0, 0, new ResultReceiver(new Handler()) {
-
-								@Override
-								public void onReceiveResult(int resultCode, Bundle resultData) {
-									Log.i(LOGTAG, "onReceiveResult from synchronize resultCode[" + resultCode + "] resultData[" + resultData + "]");
-									Toast.makeText(getActivity(), "Got synchronise results", Toast.LENGTH_SHORT).show();
-								}
-							});
-
+							// We no longer do this, since we now get back
+							// synchronize results in every response for which
+							// we send timeline and sequence.
+							// RequestHelper.sendSynchronize(getActivity(), 0,
+							// 0, new ResultReceiver(new Handler()) {
+							//
+							// @Override
+							// public void onReceiveResult(int resultCode,
+							// Bundle resultData) {
+							// Log.i(LOGTAG,
+							// "onReceiveResult from synchronize resultCode[" +
+							// resultCode + "] resultData[" + resultData + "]");
+							// Toast.makeText(getActivity(),
+							// "Got synchronise results",
+							// Toast.LENGTH_SHORT).show();
+							// }
+							// });
+							//
 						}
 					} catch (Exception e) {
 						Log.e(LOGTAG, "onClick get results error: " + e);
