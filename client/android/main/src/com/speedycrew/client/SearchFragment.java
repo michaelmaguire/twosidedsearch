@@ -38,6 +38,8 @@ public class SearchFragment extends Fragment implements View.OnClickListener, On
 	static final String[] MATCH_PROJECTION = new String[] { Match.USERNAME, Match.DISTANCE, Match.SEARCH, Match.OTHER_SEARCH, Match._ID, };
 	static final int[] MATCH_VIEWS_FROM_LAYOUT = new int[] { R.id.username, R.id.distance };
 
+	static final String SORTED_ORDER = SyncedContentProvider.SQLITE_ROWID + " DESC";
+
 	static final int TOKEN_GROUP = 0;
 	static final int TOKEN_CHILD = 1;
 
@@ -169,7 +171,7 @@ public class SearchFragment extends Fragment implements View.OnClickListener, On
 			builder.appendEncodedPath(Match.TABLE_NAME);
 			Uri matchUri = builder.build();
 
-			mQueryHandler.startQuery(SearchFragment.TOKEN_CHILD, groupCursor.getPosition(), matchUri, SearchFragment.MATCH_PROJECTION, null, null, null);
+			mQueryHandler.startQuery(SearchFragment.TOKEN_CHILD, groupCursor.getPosition(), matchUri, SearchFragment.MATCH_PROJECTION, null, null, SORTED_ORDER);
 
 			return null;
 		}

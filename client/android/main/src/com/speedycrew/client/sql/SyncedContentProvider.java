@@ -35,6 +35,11 @@ public class SyncedContentProvider extends ContentProvider {
 
 	private static final UriMatcher sURIMatcher = new UriMatcher(UriMatcher.NO_MATCH);
 
+	/**
+	 * SQLite has a handy hidden _rowid_ columns.
+	 */
+	public static final String SQLITE_ROWID = "_rowid_";
+
 	public static final String METHOD_SYNCHRONIZE = "synchronize";
 	static {
 		sURIMatcher.addURI(AUTHORITY, Search.TABLE_NAME, URI_SEARCH_INDEX);
@@ -63,7 +68,7 @@ public class SyncedContentProvider extends ContentProvider {
 		Vector<String> newProjectionVector = new Vector<String>();
 		for (String passedIn : projection) {
 			if (BaseColumns._ID.equalsIgnoreCase(passedIn)) {
-				newProjectionVector.add("_rowid_ as _id");
+				newProjectionVector.add(SQLITE_ROWID + " as _id");
 			} else {
 				newProjectionVector.add(passedIn);
 			}
