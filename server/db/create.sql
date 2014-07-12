@@ -30,13 +30,27 @@ CREATE TYPE availability_status AS ENUM (
 
 
 --
+-- Name: crew_member_status; Type: TYPE; Schema: speedycrew; Owner: -
+--
+
+CREATE TYPE crew_member_status AS ENUM (
+    'ACTIVE',
+    'LEFT',
+    'KICKED_OUT'
+);
+
+
+--
 -- Name: event_table; Type: TYPE; Schema: speedycrew; Owner: -
 --
 
 CREATE TYPE event_table AS ENUM (
     'PROFILE',
     'MATCH',
-    'SEARCH'
+    'SEARCH',
+    'CREW',
+    'MESSAGE',
+    'CREW_MEMBER'
 );
 
 
@@ -414,6 +428,33 @@ CREATE TABLE country (
 
 
 --
+-- Name: crew; Type: TABLE; Schema: speedycrew; Owner: -
+--
+
+CREATE TABLE crew (
+    id uuid NOT NULL,
+    name text,
+    created timestamp with time zone NOT NULL,
+    creator integer NOT NULL
+);
+
+
+--
+-- Name: crew_member; Type: TABLE; Schema: speedycrew; Owner: -
+--
+
+CREATE TABLE crew_member (
+    crew uuid NOT NULL,
+    profile integer NOT NULL,
+    status crew_member_status NOT NULL,
+    invited_by integer NOT NULL,
+    kicked_out_by integer,
+    created timestamp with time zone NOT NULL,
+    kicked_out_time timestamp with time zone
+);
+
+
+--
 -- Name: device; Type: TABLE; Schema: speedycrew; Owner: -
 --
 
@@ -445,13 +486,13 @@ CREATE TABLE event (
     profile integer NOT NULL,
     seq integer NOT NULL,
     type event_type NOT NULL,
-    message uuid,
     search uuid,
     match uuid,
-    room uuid,
     other_profile integer,
     created timestamp with time zone DEFAULT now() NOT NULL,
-    tab event_table NOT NULL
+    tab event_table NOT NULL,
+    message uuid,
+    crew uuid
 );
 
 
@@ -507,21 +548,22 @@ COMMENT ON TABLE match IS 'A match between two searches';
 
 CREATE TABLE message (
     id uuid NOT NULL,
-    recipient integer NOT NULL,
-    sender integer,
-    room uuid,
+    sender integer NOT NULL,
+    crew uuid NOT NULL,
     body text NOT NULL,
-    is_read boolean NOT NULL,
-    is_starred boolean NOT NULL,
     created timestamp with time zone NOT NULL
 );
 
 
 --
--- Name: TABLE message; Type: COMMENT; Schema: speedycrew; Owner: -
+-- Name: message_key; Type: TABLE; Schema: speedycrew; Owner: -
 --
 
-COMMENT ON TABLE message IS 'A message for delivery to a user.';
+CREATE TABLE message_key (
+    message uuid NOT NULL,
+    recipient integer NOT NULL,
+    key text NOT NULL
+);
 
 
 --
@@ -604,37 +646,6 @@ CREATE TABLE profile_sequence (
 --
 
 COMMENT ON TABLE profile_sequence IS 'Counters to keep track of the window of event sequence numbers we have for each profile.';
-
-
---
--- Name: room; Type: TABLE; Schema: speedycrew; Owner: -
---
-
-CREATE TABLE room (
-    id uuid NOT NULL,
-    name text,
-    creator integer NOT NULL,
-    created timestamp with time zone NOT NULL
-);
-
-
---
--- Name: TABLE room; Type: COMMENT; Schema: speedycrew; Owner: -
---
-
-COMMENT ON TABLE room IS 'A chat room or channel for discussion.';
-
-
---
--- Name: room_member; Type: TABLE; Schema: speedycrew; Owner: -
---
-
-CREATE TABLE room_member (
-    room uuid,
-    profile integer,
-    creator integer NOT NULL,
-    created timestamp with time zone NOT NULL
-);
 
 
 --
@@ -804,6 +815,14 @@ ALTER TABLE ONLY country
 
 
 --
+-- Name: crew_pkey; Type: CONSTRAINT; Schema: speedycrew; Owner: -
+--
+
+ALTER TABLE ONLY crew
+    ADD CONSTRAINT crew_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: device_pkey; Type: CONSTRAINT; Schema: speedycrew; Owner: -
 --
 
@@ -873,14 +892,6 @@ ALTER TABLE ONLY profile_sequence
 
 ALTER TABLE ONLY profile
     ADD CONSTRAINT profile_username_key UNIQUE (username);
-
-
---
--- Name: room_pkey; Type: CONSTRAINT; Schema: speedycrew; Owner: -
---
-
-ALTER TABLE ONLY room
-    ADD CONSTRAINT room_pkey PRIMARY KEY (id);
 
 
 --
@@ -954,11 +965,59 @@ ALTER TABLE ONLY client_certificate
 
 
 --
+-- Name: crew_creator_fkey; Type: FK CONSTRAINT; Schema: speedycrew; Owner: -
+--
+
+ALTER TABLE ONLY crew
+    ADD CONSTRAINT crew_creator_fkey FOREIGN KEY (creator) REFERENCES profile(id);
+
+
+--
+-- Name: crew_member_crew_fkey; Type: FK CONSTRAINT; Schema: speedycrew; Owner: -
+--
+
+ALTER TABLE ONLY crew_member
+    ADD CONSTRAINT crew_member_crew_fkey FOREIGN KEY (crew) REFERENCES crew(id);
+
+
+--
+-- Name: crew_member_invited_by_fkey; Type: FK CONSTRAINT; Schema: speedycrew; Owner: -
+--
+
+ALTER TABLE ONLY crew_member
+    ADD CONSTRAINT crew_member_invited_by_fkey FOREIGN KEY (invited_by) REFERENCES profile(id);
+
+
+--
+-- Name: crew_member_kicked_out_by_fkey; Type: FK CONSTRAINT; Schema: speedycrew; Owner: -
+--
+
+ALTER TABLE ONLY crew_member
+    ADD CONSTRAINT crew_member_kicked_out_by_fkey FOREIGN KEY (kicked_out_by) REFERENCES profile(id);
+
+
+--
+-- Name: crew_member_profile_fkey; Type: FK CONSTRAINT; Schema: speedycrew; Owner: -
+--
+
+ALTER TABLE ONLY crew_member
+    ADD CONSTRAINT crew_member_profile_fkey FOREIGN KEY (profile) REFERENCES profile(id);
+
+
+--
 -- Name: device_profile_fkey; Type: FK CONSTRAINT; Schema: speedycrew; Owner: -
 --
 
 ALTER TABLE ONLY device
     ADD CONSTRAINT device_profile_fkey FOREIGN KEY (profile) REFERENCES profile(id);
+
+
+--
+-- Name: event_crew_fkey; Type: FK CONSTRAINT; Schema: speedycrew; Owner: -
+--
+
+ALTER TABLE ONLY event
+    ADD CONSTRAINT event_crew_fkey FOREIGN KEY (crew) REFERENCES crew(id);
 
 
 --
@@ -994,14 +1053,6 @@ ALTER TABLE ONLY event
 
 
 --
--- Name: event_room_fkey; Type: FK CONSTRAINT; Schema: speedycrew; Owner: -
---
-
-ALTER TABLE ONLY event
-    ADD CONSTRAINT event_room_fkey FOREIGN KEY (room) REFERENCES room(id);
-
-
---
 -- Name: event_search_fkey; Type: FK CONSTRAINT; Schema: speedycrew; Owner: -
 --
 
@@ -1034,19 +1085,27 @@ ALTER TABLE ONLY match
 
 
 --
--- Name: message_recipient_fkey; Type: FK CONSTRAINT; Schema: speedycrew; Owner: -
+-- Name: message_crew_fkey; Type: FK CONSTRAINT; Schema: speedycrew; Owner: -
 --
 
 ALTER TABLE ONLY message
-    ADD CONSTRAINT message_recipient_fkey FOREIGN KEY (recipient) REFERENCES profile(id);
+    ADD CONSTRAINT message_crew_fkey FOREIGN KEY (crew) REFERENCES crew(id);
 
 
 --
--- Name: message_room_fkey; Type: FK CONSTRAINT; Schema: speedycrew; Owner: -
+-- Name: message_key_message_fkey; Type: FK CONSTRAINT; Schema: speedycrew; Owner: -
 --
 
-ALTER TABLE ONLY message
-    ADD CONSTRAINT message_room_fkey FOREIGN KEY (room) REFERENCES room(id);
+ALTER TABLE ONLY message_key
+    ADD CONSTRAINT message_key_message_fkey FOREIGN KEY (message) REFERENCES message(id);
+
+
+--
+-- Name: message_key_recipient_fkey; Type: FK CONSTRAINT; Schema: speedycrew; Owner: -
+--
+
+ALTER TABLE ONLY message_key
+    ADD CONSTRAINT message_key_recipient_fkey FOREIGN KEY (recipient) REFERENCES profile(id);
 
 
 --
@@ -1071,38 +1130,6 @@ ALTER TABLE ONLY profile_availability
 
 ALTER TABLE ONLY profile_sequence
     ADD CONSTRAINT profile_sequence_profile_fkey FOREIGN KEY (profile) REFERENCES profile(id);
-
-
---
--- Name: room_creator_fkey; Type: FK CONSTRAINT; Schema: speedycrew; Owner: -
---
-
-ALTER TABLE ONLY room
-    ADD CONSTRAINT room_creator_fkey FOREIGN KEY (creator) REFERENCES profile(id);
-
-
---
--- Name: room_member_creator_fkey; Type: FK CONSTRAINT; Schema: speedycrew; Owner: -
---
-
-ALTER TABLE ONLY room_member
-    ADD CONSTRAINT room_member_creator_fkey FOREIGN KEY (creator) REFERENCES profile(id);
-
-
---
--- Name: room_member_profile_fkey; Type: FK CONSTRAINT; Schema: speedycrew; Owner: -
---
-
-ALTER TABLE ONLY room_member
-    ADD CONSTRAINT room_member_profile_fkey FOREIGN KEY (profile) REFERENCES profile(id);
-
-
---
--- Name: room_member_room_fkey; Type: FK CONSTRAINT; Schema: speedycrew; Owner: -
---
-
-ALTER TABLE ONLY room_member
-    ADD CONSTRAINT room_member_room_fkey FOREIGN KEY (room) REFERENCES room(id);
 
 
 --
@@ -1182,6 +1209,7 @@ INSERT INTO schema_change (name, created) VALUES ('change_20140623.sql', '2014-0
 INSERT INTO schema_change (name, created) VALUES ('change_20140624.sql', '2014-06-24 20:48:45.548335+00');
 INSERT INTO schema_change (name, created) VALUES ('change_20140625.sql', '2014-06-26 17:27:20.785124+00');
 INSERT INTO schema_change (name, created) VALUES ('change_20140626.sql', '2014-06-26 17:27:33.240717+00');
+INSERT INTO schema_change (name, created) VALUES ('change_20140712.sql', '2014-07-12 21:40:24.190482+00');
 
 
 --

@@ -93,7 +93,21 @@ class Simple(unittest.TestCase):
         self.assertEqual("incremental", synchronise(self.local_db))
         self.assertEqual(device_timeline_and_sequence(self.local_db), (1, 1))
         # TODO assert things about the changes!
-        
+
+    def test_create_crew(self):
+        # create a crew
+        response = post("/api/1/create_crew",
+                        { "x-id" : x_id,
+                          "id" : "00000000-0000-0000-0000-000000000000",
+                          "name" : "My chat room",
+                          "fingerprints" : "a,b" })
+        self.assertEqual(response["status"], "OK")
+
+        # check it shows up when we replicate
+        self.assertEqual("refresh", synchronise(self.local_db))
+        self.assertEqual(device_timeline_and_sequence(self.local_db), (1, 1))
+        self.cursor.execute("SELECT * FROM crew")
+        self.assertEqual(("00000000-0000-0000-0000-000000000000", "My chat room"), self.cursor.fetchone())
 
     def test_post_search(self):
         # put a matchable query in first

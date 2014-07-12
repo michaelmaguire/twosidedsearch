@@ -93,18 +93,27 @@ def param(fmt, values):
 
 def do_refresh(cursor, profile_id, timeline, high_sequence, sql, metadata):
     sql.append("DROP TABLE IF EXISTS profile")
-    sql.append("DROP TABLE IF EXISTS message")
     sql.append("DROP TABLE IF EXISTS match")
     sql.append("DROP TABLE IF EXISTS search")
+    sql.append("DROP TABLE IF EXISTS crew")
     sql.append("DROP TABLE IF EXISTS control")
     sql.append("create table control (timeline integer not null, sequence integer not null)")
     sql.append("create table profile (username text, real_name text, email text unique, password_hash text, status text not null, message text, created timestamptz not null, modified timestamptz not null)")
     sql.append("create table search (id text primary key, query text not null, side text not null, address text, postcode text, city text, country text, radius float, latitude float not null, longitude float not null)")
     sql.append("create table match (search text references search(id), other_search text, username text, email text, fingerprint text, public_key text, query text not null, latitude float, longitude float, matches int, distance float, score double, primary key (search, other_search))")
-    sql.append("create table message (id text primary key not null)")
+    sql.append("create table crew (id text primary key, name text)")
 
-    # TODO messages etc
-    
+    # we only send you the crew records for crews that you're a member
+    # of (which makes synchronisation tricky...)
+    cursor.execute("""SELECT c.id, c.name
+                        FROM speedycrew.crew c
+                        JOIN speedycrew.crew_member cm ON c.id = cm.crew
+                       WHERE cm.profile = %s""",
+                   (profile_id,))
+    for crew_id, crew_name in cursor:
+        sql.append(param("INSERT INTO crew (id, name) VALUES (%s, %s)", (crew_id, crew_name)))
+                          
+
     cursor.execute("""SELECT s.id, 
                              s.query, 
                              s.side, 
@@ -670,6 +679,46 @@ def set_notification(request):
                    (google_registration_id, apple_device_token, device_id))
     return json_response({ "message_type" : "set_notification_response",
                            "status" : "OK" })
+
+def create_crew(request):
+    profile_id = begin(request)
+    id = request.REQUEST["id"]
+    name = request.REQUEST["name"]
+    fingerprints = request.REQUEST["fingerprints"].split(",")
+    cursor = connection.cursor()
+    cursor.execute("""INSERT INTO speedycrew.crew (id, name, created, creator)
+                      VALUES (%s, %s, now(), %s)""",
+                   (id, name, profile_id))
+    # resolve the fingerprints to profile IDs
+    profile_ids = [profile_id] # we invite ourselves!
+    if len(fingerprints) > 0 and fingerprints[0] != "":
+        for fingerprint in fingerprints:
+            cursor.execute("""SELECT d.profile
+                                FROM speedycrew.device d
+                               WHERE d.id = ANY (%s)""",
+                           (fingerprints,))
+            for invited_profile_id, in cursor:
+                profile_ids.append(invited_profile_id)
+    # process them in order (our deadlock avoidance policy (this
+    # includes the requester's)
+    profile_ids.sort()
+    # TODO if len(profile_ids) != len(fingerprints) + 1 then some of
+    # your fingerprints are unrecognised
+    for invited_profile_id in profile_ids:
+        cursor.execute("""INSERT INTO speedycrew.crew_member (crew, profile, status, invited_by, created)
+                          VALUES (%s, %s, 'ACTIVE', %s, now())""",
+                       (id, invited_profile_id, profile_id))
+        cursor.execute("""INSERT INTO speedycrew.event (profile, seq, type, tab)
+                          VALUES (%s, speedycrew.next_sequence(%s), 'INSERT', 'CREW')""",
+                       (invited_profile_id, invited_profile_id))
+    return json_response({ "message_type" : "create_crew_response",
+                           "status" : "OK" })
+
+def send_message(request):
+    profile_id = begin(request)
+    crew_id = request.REQUEST["crew"]
+    body = request.REQUEST["body"]
+    
 
 def trending(request):
     """A dump of popular tags."""
