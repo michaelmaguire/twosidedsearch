@@ -27,7 +27,7 @@ public class CrewFragment extends SearchFragment implements View.OnClickListener
 		mQueryHandler = new QueryHandler(getActivity(), mSearchResultsListAdapter);
 
 		// Query for crew searches.
-		mQueryHandler.startQuery(TOKEN_GROUP, null, SyncedContentProvider.SEARCH_URI, SEARCH_PROJECTION, Search.SIDE + "=" + Search.VALUE_SEEK, null, null);
+		mQueryHandler.startQuery(TOKEN_GROUP, null, SyncedContentProvider.SEARCH_URI, SEARCH_PROJECTION, Search.SIDE + "=" + Search.VALUE_SEEK, null, SORTED_ORDER);
 
 		Button searchButton = (Button) view.findViewById(R.id.searchButton);
 		searchButton.setOnClickListener(this);
