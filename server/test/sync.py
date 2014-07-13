@@ -105,9 +105,119 @@ class Simple(unittest.TestCase):
 
         # check it shows up when we replicate
         self.assertEqual("refresh", synchronise(self.local_db))
-        self.assertEqual(device_timeline_and_sequence(self.local_db), (1, 1))
+        self.assertEqual(device_timeline_and_sequence(self.local_db), (1, 2))
         self.cursor.execute("SELECT * FROM crew")
         self.assertEqual(("00000000-0000-0000-0000-000000000000", "My chat room"), self.cursor.fetchone())
+
+        # invite someone else
+        response = post("/api/1/invite_crew",
+                        { "x-id" : x_id,
+                          "crew" : "00000000-0000-0000-0000-000000000000",
+                          "fingerprints" : "1111" })
+        self.assertEqual(response["status"], "OK")
+        self.assertEqual("incremental", synchronise(self.local_db))
+        self.cursor.execute("SELECT crew, fingerprint, status FROM crew_member ORDER BY crew, fingerprint")
+        self.assertEqual(("00000000-0000-0000-0000-000000000000", "1111", "ACTIVE"), self.cursor.fetchone())
+        self.assertEqual(("00000000-0000-0000-0000-000000000000", x_id, "ACTIVE"), self.cursor.fetchone())
+        self.assertEqual(None, self.cursor.fetchone())
+
+        # leave the crew
+        response = post("/api/1/leave_crew",
+                        { "x-id" : x_id,
+                          "crew" : "00000000-0000-0000-0000-000000000000" })
+        self.assertEqual(response["status"], "OK")
+        self.assertEqual("incremental", synchronise(self.local_db))
+        self.cursor.execute("SELECT crew, fingerprint, status FROM crew_member ORDER BY crew, fingerprint")
+        self.assertEqual(("00000000-0000-0000-0000-000000000000", "1111", "ACTIVE"), self.cursor.fetchone())
+        self.assertEqual(("00000000-0000-0000-0000-000000000000", x_id, "LEFT"), self.cursor.fetchone())
+        self.assertEqual(None, self.cursor.fetchone())
+
+        # now that we're out, we can't invite people anymore...
+        response = post("/api/1/invite_crew",
+                        { "x-id" : x_id,
+                          "crew" : "00000000-0000-0000-0000-000000000000",
+                          "fingerprints" : "2222" })
+        self.assertEqual(response["status"], "ERROR")
+
+        # that other guy is going to invite us back...
+        response = post("/api/1/invite_crew",
+                        { "x-id" : "1111",
+                          "crew" : "00000000-0000-0000-0000-000000000000",
+                          "fingerprints" : x_id })
+        self.assertEqual(response["status"], "OK")
+        self.assertEqual("incremental", synchronise(self.local_db))
+        self.cursor.execute("SELECT crew, fingerprint, status FROM crew_member ORDER BY crew, fingerprint")
+        self.assertEqual(("00000000-0000-0000-0000-000000000000", "1111", "ACTIVE"), self.cursor.fetchone())
+        self.assertEqual(("00000000-0000-0000-0000-000000000000", x_id, "ACTIVE"), self.cursor.fetchone())
+        self.assertEqual(None, self.cursor.fetchone())
+
+        # now that we're back in, we can invite people again...
+        response = post("/api/1/invite_crew",
+                        { "x-id" : x_id,
+                          "crew" : "00000000-0000-0000-0000-000000000000",
+                          "fingerprints" : "2222" })
+        self.assertEqual(response["status"], "OK")
+        self.assertEqual("incremental", synchronise(self.local_db))
+        self.cursor.execute("SELECT crew, fingerprint, status FROM crew_member ORDER BY crew, fingerprint")
+        self.assertEqual(("00000000-0000-0000-0000-000000000000", "1111", "ACTIVE"), self.cursor.fetchone())
+        self.assertEqual(("00000000-0000-0000-0000-000000000000", x_id, "ACTIVE"), self.cursor.fetchone())
+        self.assertEqual(("00000000-0000-0000-0000-000000000000", "2222", "ACTIVE"), self.cursor.fetchone())
+        self.assertEqual(None, self.cursor.fetchone())
+
+        # that other guy is going to invite us to another crew...
+        response = post("/api/1/create_crew",
+                        { "x-id" : "1111",
+                          "id" : "00000000-0000-0000-0000-000000000042",
+                          "name" : "My other chat room",
+                          "fingerprints" : "" })
+        self.assertEqual(response["status"], "OK")
+        response = post("/api/1/invite_crew",
+                        { "x-id" : "1111",
+                          "crew" : "00000000-0000-0000-0000-000000000042",
+                          "fingerprints" : x_id })
+        self.assertEqual(response["status"], "OK")
+        self.assertEqual("incremental", synchronise(self.local_db))
+        self.cursor.execute("SELECT crew, fingerprint, status FROM crew_member ORDER BY crew, fingerprint")
+        self.assertEqual(("00000000-0000-0000-0000-000000000000", "1111", "ACTIVE"), self.cursor.fetchone())
+        self.assertEqual(("00000000-0000-0000-0000-000000000000", x_id, "ACTIVE"), self.cursor.fetchone())
+        self.assertEqual(("00000000-0000-0000-0000-000000000000", "2222", "ACTIVE"), self.cursor.fetchone())
+        self.assertEqual(("00000000-0000-0000-0000-000000000042", "1111", "ACTIVE"), self.cursor.fetchone())
+        self.assertEqual(("00000000-0000-0000-0000-000000000042", x_id, "ACTIVE"), self.cursor.fetchone())
+        self.assertEqual(None, self.cursor.fetchone())
+
+    def test_send_message(self):
+        # create a crew
+        response = post("/api/1/create_crew",
+                        { "x-id" : x_id,
+                          "id" : "00000000-0000-0000-0000-000000000000",
+                          "name" : "My chat room",
+                          "fingerprints" : "1111,2222" })
+        self.assertEqual(response["status"], "OK")
+        # that 1111 guy sends me a message
+        response = post("/api/1/send_message",
+                        { "x-id" : "1111",
+                          "crew" : "00000000-0000-0000-0000-000000000000",
+                          "id" : "00000000-0000-0000-0000-000000000009",
+                          "body" : "This is the body of a message" })
+        self.assertEqual(response["status"], "OK")
+        # I receive it, via refresh...
+        self.assertEqual("refresh", synchronise(self.local_db))
+        self.cursor.execute("SELECT id, sender, crew, body FROM message ORDER BY id")
+        self.assertEqual(("00000000-0000-0000-0000-000000000009", "1111", "00000000-0000-0000-0000-000000000000", "This is the body of a message"), self.cursor.fetchone())
+        self.assertEqual(None, self.cursor.fetchone())
+        # one from 2222 so we can test incremental sync...
+        response = post("/api/1/send_message",
+                        { "x-id" : "2222",
+                          "crew" : "00000000-0000-0000-0000-000000000000",
+                          "id" : "00000000-0000-0000-0000-00000000000a",
+                          "body" : "Foo bar" })
+        self.assertEqual(response["status"], "OK")
+        # I receive it, via incremental...
+        self.assertEqual("incremental", synchronise(self.local_db))
+        self.cursor.execute("SELECT id, sender, crew, body FROM message ORDER BY id")
+        self.assertEqual(("00000000-0000-0000-0000-000000000009", "1111", "00000000-0000-0000-0000-000000000000", "This is the body of a message"), self.cursor.fetchone())
+        self.assertEqual(("00000000-0000-0000-0000-00000000000a", "2222", "00000000-0000-0000-0000-000000000000", "Foo bar"), self.cursor.fetchone())
+        self.assertEqual(None, self.cursor.fetchone())
 
     def test_post_search(self):
         # put a matchable query in first

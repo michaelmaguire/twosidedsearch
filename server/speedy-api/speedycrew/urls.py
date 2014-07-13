@@ -18,6 +18,11 @@ urlpatterns = patterns('',
     url(r'^api/1/delete_search$', 'scapi1.views.delete_search', name='delete_search'),
 
     url(r'^api/1/create_crew$', 'scapi1.views.create_crew', name='create_crew'),
+    url(r'^api/1/invite_crew$', 'scapi1.views.invite_crew', name='invite_crew'),
+    url(r'^api/1/kick_crew$', 'scapi1.views.kick_crew', name='kick_crew'),
+    url(r'^api/1/leave_crew$', 'scapi1.views.leave_crew', name='leave_crew'),
+
+    url(r'^api/1/send_message$', 'scapi1.views.send_message', name='send_message'),
 
     url(r'^api/1/media/([0-9a-zA-Z:]+)$', 'scapi1.views.media_list', name='media_list'),
     url(r'^api/1/media/([0-9a-zA-Z:]+)/([^/?]+)$', 'scapi1.views.media', name='media'),

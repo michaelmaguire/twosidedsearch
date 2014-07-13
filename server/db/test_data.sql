@@ -11,10 +11,10 @@ values (default, 'chef', 'Trained chef', 'ACTIVE'),
        (default, 'bottle-washer', 'Master dish washer', 'ACTIVE'),
        (default, 'waiter', 'I know how to wait', 'ACTIVE');
 
-insert into profile (id, username, email, status, message, created)
-values (default, 'maguire_the_knife', 'mm@chef.com', 'ACTIVE', 'Looking to deploy my Ginsu', now()),
-       (default, 'coulis', 'dk@chef.com', 'ACTIVE', 'You kill it, I''ll grill it', now()),
-       (default, 'spudpeeler', 'tm@chef.com', 'ACTIVE', 'Will supply own potato peeler and proprietary bottle scrubbing device', now());
+insert into profile (id, fingerprint, username, email, status, message, created)
+values (default, '1111', 'maguire_the_knife', 'mm@chef.com', 'ACTIVE', 'Looking to deploy my Ginsu', now()),
+       (default, '2222', 'coulis', 'dk@chef.com', 'ACTIVE', 'You kill it, I''ll grill it', now()),
+       (default, '3333', 'spudpeeler', 'tm@chef.com', 'ACTIVE', 'Will supply own potato peeler and proprietary bottle scrubbing device', now());
 
 insert into device (profile, id, created)
 values (1, '1111', now()),

@@ -52,14 +52,20 @@ def begin(request):
         profile_id = cursor.fetchone()[0]
     else:
         # new device ID, so we create a new profile
-        cursor.execute("""INSERT INTO speedycrew.profile (id, status, created) 
-                          VALUES (DEFAULT, 'ACTIVE', now())
+        cursor.execute("""INSERT INTO speedycrew.profile (id, status, fingerprint, created) 
+                          VALUES (DEFAULT, 'ACTIVE', %s, now())
                        RETURNING id""",
                        (device_id, ))
         profile_id = cursor.fetchone()[0]
+        # every profile needs a sequence number range tracking record
         cursor.execute("""INSERT INTO speedycrew.profile_sequence (profile, low_sequence, high_sequence)
                           VALUES (%s, 0, 0)""",
                        (profile_id,))
+        # every profile 'subscribes' to itself, so that devices receive
+        # notifications of changes to their own profile
+        cursor.execute("""INSERT INTO speedycrew.profile_subscription (profile, subscribed_to, created)
+                          VALUES (%s, %s, CURRENT_TIMESTAMP)""",
+                       (profile_id, profile_id))
         # TODO the following statement can produce an error if an
         # unknown device makes two simultaneous queries, since only
         # once of them can succeed (and there is a race above);
@@ -95,13 +101,17 @@ def do_refresh(cursor, profile_id, timeline, high_sequence, sql, metadata):
     sql.append("DROP TABLE IF EXISTS profile")
     sql.append("DROP TABLE IF EXISTS match")
     sql.append("DROP TABLE IF EXISTS search")
+    sql.append("DROP TABLE IF EXISTS crew_member")
+    sql.append("DROP TABLE IF EXISTS message")
     sql.append("DROP TABLE IF EXISTS crew")
     sql.append("DROP TABLE IF EXISTS control")
     sql.append("create table control (timeline integer not null, sequence integer not null)")
-    sql.append("create table profile (username text, real_name text, email text unique, password_hash text, status text not null, message text, created timestamptz not null, modified timestamptz not null)")
+    sql.append("create table profile (fingerprint text primary key, username text, real_name text, email text unique, password_hash text, status text not null, message text, created timestamptz not null, modified timestamptz not null)")
     sql.append("create table search (id text primary key, query text not null, side text not null, address text, postcode text, city text, country text, radius float, latitude float not null, longitude float not null)")
     sql.append("create table match (search text references search(id), other_search text, username text, email text, fingerprint text, public_key text, query text not null, latitude float, longitude float, matches int, distance float, score double, primary key (search, other_search))")
     sql.append("create table crew (id text primary key, name text)")
+    sql.append("create table crew_member (crew text not null references crew(id), fingerprint text not null references profile(fingerprint), status text not null, primary key (crew, fingerprint))")
+    sql.append("create table message (id text not null primary key, sender text not null references profile(fingerprint), crew text not null references crew(id), body text not null, created timestamptz not null)")
 
     # we only send you the crew records for crews that you're a member
     # of (which makes synchronisation tricky...)
@@ -113,7 +123,40 @@ def do_refresh(cursor, profile_id, timeline, high_sequence, sql, metadata):
     for crew_id, crew_name in cursor:
         sql.append(param("INSERT INTO crew (id, name) VALUES (%s, %s)", (crew_id, crew_name)))
                           
+    # we send you the profiles that you're "subscribed" to (which includes your own)
+    cursor.execute("""SELECT p.fingerprint, p.username, p.real_name, p.email, p.status, p.message, p.created, p.modified
+                        FROM speedycrew.profile p
+                        JOIN speedycrew.profile_subscription ps ON p.id = ps.subscribed_to
+                       WHERE ps.profile = %s""",
+                   (profile_id,))
+    fingerprint, username, real_name, email, status, message, created, modified = cursor.fetchone()
+    sql.append(param("INSERT INTO profile (fingerprint, username, real_name, email, status, message, created, modified) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
+                     (fingerprint, username, real_name, email, status, message, created, modified)))
 
+    # it is now safe to send you crew_member records, for all crews
+    # you're a member of, because all crews and potentially relevant
+    # profiles have been inserted
+    cursor.execute("""SELECT cm.crew, p.fingerprint, cm.status
+                        FROM speedycrew.crew_member cm
+                        JOIN speedycrew.profile p ON cm.profile = p.id
+                        JOIN speedycrew.crew_member cm2 ON cm.crew = cm2.crew
+                       WHERE cm2.profile = %s""",
+                   (profile_id,))
+    for crew_id, fingerprint, status in cursor:
+        sql.append(param("INSERT INTO crew_member (crew, fingerprint, status) VALUES (%s, %s, %s)", (crew_id, fingerprint, status)))
+
+    # insert messages (TODO: exclude messages from crews we've left)        
+    cursor.execute("""SELECT m.id, p.fingerprint, m.crew, m.body, m.created
+                        FROM speedycrew.message m
+                        JOIN speedycrew.profile p ON m.sender = p.id
+                       WHERE m.crew IN (SELECT cm.crew
+                                          FROM speedycrew.crew_member cm
+                                         WHERE cm.profile = %s)""",
+                   (profile_id,))
+    for row in cursor:
+        sql.append(param("INSERT INTO message (id, sender, crew, body, created) VALUES (%s, %s, %s, %s, %s)", row))
+
+    # insert searches
     cursor.execute("""SELECT s.id, 
                              s.query, 
                              s.side, 
@@ -155,14 +198,6 @@ def do_refresh(cursor, profile_id, timeline, high_sequence, sql, metadata):
     for row in cursor:
         sql.append(param("INSERT INTO match (search, other_search, username, email, fingerprint, query, longitude, latitude, matches, distance, score) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
                          row))    
-
-    cursor.execute("""SELECT username, real_name, email, status, message, created, modified
-                        FROM speedycrew.profile
-                       WHERE id = %s""",
-                   (profile_id, ))
-    username, real_name, email, status, message, created, modified = cursor.fetchone()
-    sql.append(param("INSERT INTO profile (username, real_name, email, status, message, created, modified) VALUES (%s, %s, %s, %s, %s, %s, %s)",
-                     (username, real_name, email, status, message, created, modified)))
 
     sql.append(param("INSERT INTO control (timeline, sequence) VALUES (%s, %s)",
                      (timeline, high_sequence,)))
@@ -206,28 +241,36 @@ def do_incremental(cursor, profile_id, device_sequence, sql, metadata):
                              match_search.id,
                              match_profile.username,
                              match_profile.email,
-                             match_device.id AS match_fingerprint,
+                             match_profile.fingerprint AS match_fingerprint,
                              match_search.query,
                              st_x(match_search.geography::geometry) AS longitude,
                              st_y(match_search.geography::geometry) AS latitude,
                              match.matches,
                              match.distance,
                              match.score,
+                             my_profile.fingerprint,
                              my_profile.username,
                              my_profile.real_name,
                              my_profile.email,
                              my_profile.status,
                              my_profile.message,
                              my_profile.created,
-                             my_profile.modified
+                             my_profile.modified,
+                             crew.id, crew.name,
+                             crew_member.status,
+                             message.id, sender_profile.fingerprint, message.crew, message.body, message.created
+                            
+                             
                         FROM speedycrew.event e
                    LEFT JOIN speedycrew.message ON e.message = message.id
+                   LEFT JOIN speedycrew.profile sender_profile ON message.sender = sender_profile.id
                    LEFT JOIN speedycrew.search my_search ON e.search = my_search.id
                    LEFT JOIN speedycrew.search match_search ON e.match = match_search.id
                    LEFT JOIN speedycrew.profile match_profile ON match_search.owner = match_profile.id
-                   LEFT JOIN speedycrew.device match_device ON match_profile.id = match_device.profile
                    LEFT JOIN speedycrew.match ON e.search = match.a AND e.match = match.b
-                   LEFT JOIN speedycrew.profile my_profile ON e.profile = my_profile.id AND e.tab = 'PROFILE'
+                   LEFT JOIN speedycrew.profile my_profile ON e.other_profile = my_profile.id
+                   LEFT JOIN speedycrew.crew ON e.crew = crew.id
+                   LEFT JOIN speedycrew.crew_member ON e.crew = crew_member.crew AND e.other_profile = crew_member.profile
                        WHERE e.profile = %s
                          AND e.seq > %s
                        ORDER BY e.seq
@@ -235,7 +278,7 @@ def do_incremental(cursor, profile_id, device_sequence, sql, metadata):
                    (profile_id, device_sequence, max_fetch_events))
     count = 0
     highest_sequence = None
-    for sequence, type, tab, message_body, my_search_id, my_search_query, my_search_side, my_search_address, my_search_postcode, my_search_city, my_search_country, my_search_radius, my_search_longitude, my_search_latitude, match_search_id, match_username, match_email, match_fingerprint, match_query, match_longitude, match_latitude, match_matches, match_distance, match_score, my_username, my_real_name, my_email, my_status, my_message, my_created, my_modified in cursor:
+    for sequence, type, tab, message_body, my_search_id, my_search_query, my_search_side, my_search_address, my_search_postcode, my_search_city, my_search_country, my_search_radius, my_search_longitude, my_search_latitude, match_search_id, match_username, match_email, match_fingerprint, match_query, match_longitude, match_latitude, match_matches, match_distance, match_score, my_fingerprint, my_username, my_real_name, my_email, my_status, my_message, my_created, my_modified, crew_id, crew_name, member_status, message_id, message_sender_fingerprint, message_crew, message_body, message_created in cursor:
         count += 1
         highest_sequence = sequence
         if tab == "MATCH":
@@ -263,9 +306,32 @@ def do_incremental(cursor, profile_id, device_sequence, sql, metadata):
                                  (my_search_id,)))
         elif tab == "PROFILE":
             if type == "UPDATE":
-                metadata.append({ "UPDATE" : "profile" })
-                sql.append(param("UPDATE profile SET username = %s, real_name = %s, email = %s, status = %s, message = %s, created = %s, modified = %s",
-                                 (my_username, my_real_name, my_email, my_status, my_message, my_created, my_modified)))
+                metadata.append({ "UPDATE" : "profile/%s" % my_fingerprint })
+                sql.append(param("UPDATE profile SET username = %s, real_name = %s, email = %s, status = %s, message = %s, created = %s, modified = %s WHERE fingerprint = %s",
+                                 (my_username, my_real_name, my_email, my_status, my_message, my_created, my_modified, my_fingerprint)))
+            elif type == "INSERT":
+                metadata.append({ "INSERT" : "profile/%s" % my_fingerprint })
+                sql.append(param("INSERT INTO profile (fingerprint, username, real_name, email, status, message, created, modified) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
+                                 (my_fingerprint, my_username, my_real_name, my_email, my_status, my_message, my_created, my_modified)))
+        elif tab == "CREW":
+            if type == "INSERT":
+                metadata.append({ "INSERT" : "crew/%s" % crew_id })
+                sql.append(param("INSERT INTO crew (id, name) VALUES (%s, %s)", (crew_id, crew_name)))
+            elif type == "UPDATE":
+                metadata.append({ "UPDATE" : "crew/%s" % crew_id })
+                sql.append(param("UPDATE crew SET name = %s WHERE id = %s", (crew_name, crew_id)))
+        elif tab == "CREW_MEMBER":
+            if type == "INSERT":
+                metadata.append({ "INSERT" : "crew_member/%s/%s" % (crew_id, my_fingerprint) })
+                sql.append(param("INSERT INTO crew_member (crew, fingerprint, status) VALUES (%s, %s, %s)", (crew_id, my_fingerprint, member_status)))
+            elif type == "UPDATE":
+                metadata.append({ "UPDATE" : "crew_member/%s/%s" % (crew_id, my_fingerprint) })
+                sql.append(param("UPDATE crew_member SET status = %s WHERE crew = %s AND fingerprint = %s", (member_status, crew_id, my_fingerprint)))
+        elif tab == "MESSAGE":
+            if type == "INSERT":
+                metadata.append({ "INSERT" : "message/%s" % message_id })
+                sql.append(param("INSERT INTO message (id, sender, crew, body, created) VALUES (%s, %s, %s, %s, %s)", (message_id, message_sender_fingerprint, message_crew, message_body, message_created)))
+            # TODO DELETE?  is UPDATE needed?
                 
     if count == max_fetch_events:
         # this means please call again immediately as there are
@@ -426,9 +492,18 @@ def update_profile(request):
                            WHERE id = %s""",
                        (message, profile_id))
 
-    cursor.execute("""INSERT INTO speedycrew.event (profile, seq, type, tab)
-                      VALUES (%s, speedycrew.next_sequence(%s), 'UPDATE', 'PROFILE')""",
-                   (profile_id, profile_id))
+    # replicate this profile change to everyone who is 'subscribed'
+    # (this includes ourselves, as we must be treated the same way for
+    # deadlock avoidance reasons)
+    cursor.execute("""SELECT profile
+                        FROM speedycrew.profile_subscription
+                       WHERE subscribed_to = %s
+                       ORDER BY profile""",
+                   (profile_id,))
+    for subscriber, in cursor.fetchall():
+        cursor.execute("""INSERT INTO speedycrew.event (profile, seq, type, other_profile, tab)
+                          VALUES (%s, speedycrew.next_sequence(%s), 'UPDATE', %s, 'PROFILE')""",
+                       (subscriber, subscriber, profile_id))
 
     if timeline and sequence:
         operation, metadata, sql = do_synchronise(profile_id, int(timeline), int(sequence))
@@ -690,35 +765,206 @@ def create_crew(request):
                       VALUES (%s, %s, now(), %s)""",
                    (id, name, profile_id))
     # resolve the fingerprints to profile IDs
-    profile_ids = [profile_id] # we invite ourselves!
+    member_profile_ids = [profile_id] # we invite ourselves!
     if len(fingerprints) > 0 and fingerprints[0] != "":
-        for fingerprint in fingerprints:
-            cursor.execute("""SELECT d.profile
-                                FROM speedycrew.device d
-                               WHERE d.id = ANY (%s)""",
-                           (fingerprints,))
-            for invited_profile_id, in cursor:
-                profile_ids.append(invited_profile_id)
-    # process them in order (our deadlock avoidance policy (this
-    # includes the requester's)
-    profile_ids.sort()
+        cursor.execute("""SELECT p.id
+                            FROM speedycrew.profile p
+                           WHERE p.fingerprint = ANY (%s)""",
+                       (fingerprints,))
+        for member_profile_id, in cursor:
+            member_profile_ids.append(member_profile_id)
     # TODO if len(profile_ids) != len(fingerprints) + 1 then some of
     # your fingerprints are unrecognised
-    for invited_profile_id in profile_ids:
+    for member_profile_id in member_profile_ids:
         cursor.execute("""INSERT INTO speedycrew.crew_member (crew, profile, status, invited_by, created)
                           VALUES (%s, %s, 'ACTIVE', %s, now())""",
-                       (id, invited_profile_id, profile_id))
+                       (id, member_profile_id, profile_id))
+    # now we need to replicate the information to each profile, in
+    # sort order (deadlock avoidance), and for each, we must replicate
+    # details of all the others, so this is a nested loop
+    member_profile_ids.sort()
+    for member_profile_id in member_profile_ids:
+        # replicate the crew creation
         cursor.execute("""INSERT INTO speedycrew.event (profile, seq, type, tab)
                           VALUES (%s, speedycrew.next_sequence(%s), 'INSERT', 'CREW')""",
-                       (invited_profile_id, invited_profile_id))
+                       (member_profile_id, member_profile_id))
+        for other_member_profile_id in member_profile_ids:
+            # make sure that this profile is subscribed to every other
+            # (no-op if already so), because devices must know about
+            # profiles before they are referenced by crew_member
+            cursor.execute("""SELECT speedycrew.profile_subscribe(%s, %s)""",
+                           (member_profile_id, other_member_profile_id))
+            # replicate crew membership
+            cursor.execute("""INSERT INTO speedycrew.event (profile, seq, type, crew, other_profile, tab)
+                              VALUES (%s, next_sequence(%s), 'INSERT', %s, %s, 'CREW_MEMBER')""",
+                           (member_profile_id, member_profile_id, id, other_member_profile_id))
     return json_response({ "message_type" : "create_crew_response",
+                           "status" : "OK" })
+
+def invite_crew(request):
+    profile_id = begin(request)
+    crew_id = request.REQUEST["crew"]
+    fingerprints = request.REQUEST["fingerprints"].split(",")
+    # resolve the fingerprints to profile IDs
+    profile_ids = []
+    cursor = connection.cursor()
+    if len(fingerprints) > 0 and fingerprints[0] != "":
+        cursor.execute("""SELECT p.id
+                            FROM speedycrew.profile p
+                           WHERE p.fingerprint = ANY (%s)""",
+                       (fingerprints,))
+        for invited_profile_id, in cursor:
+            profile_ids.append(invited_profile_id)
+    # this is somewhat lame but I am going to lock the crew record
+    # while processing this request to avoid having to think about
+    # concurrency/skew problems; also a chance to check that the crew
+    # ID is valid and return a friendlier error if not
+    cursor.execute("""SELECT 1 FROM speedycrew.crew WHERE id = %s FOR UPDATE""",
+                   (crew_id,))
+    if cursor.fetchone() == None:
+        return json_response({ "message_type", "invite_crew_response",
+                               "status", "ERROR",
+                               "message", "unknown crew" })
+    # check that you're actually a member and ACTIVE...
+    cursor.execute("""SELECT 1
+                        FROM speedycrew.crew_member
+                       WHERE crew = %s
+                         AND profile = %s
+                         AND status = 'ACTIVE'""",
+                   (crew_id, profile_id))
+    if cursor.fetchone() == None:
+        return json_response({ "message_type": "invite_crew_response",
+                               "status": "ERROR",
+                               "message": "cannot invite" })        
+    # the order of operations in delicate here: first, we will create
+    # all the crew_member records (it doesn't matter in which order
+    # this is done)
+    profiles_needing_crew_insert = set()
+    crew_member_inserts = []
+    crew_member_updates = []
+    for invited_profile_id in profile_ids:
+        cursor.execute("""SELECT status
+                            FROM speedycrew.crew_member
+                           WHERE crew = %s
+                             AND profile = %s""",
+                       (crew_id, invited_profile_id))
+        row = cursor.fetchone()
+        if row == None:
+            # not already a member, so we need to create the crew on
+            # that profile's device(s), and then add the profile as a
+            # member
+            profiles_needing_crew_insert.add(invited_profile_id)
+            crew_member_inserts.append(invited_profile_id)
+            cursor.execute("""INSERT INTO speedycrew.crew_member (crew, profile, status, invited_by, created)
+                              VALUES (%s, %s, 'ACTIVE', %s, CURRENT_TIMESTAMP)""",
+                           (crew_id, invited_profile_id, profile_id))
+        elif row[0] == "ACTIVE":
+            # already a member, nothing to do
+            pass
+        else:
+            # was a member, but had left or been kicked out; reactivate
+            crew_member_updates.append(invited_profile_id)
+            cursor.execute("""UPDATE speedycrew.crew_member
+                                 SET status = 'ACTIVE',
+                                     invited_by = %s
+                               WHERE crew = %s
+                                 AND profile = %s""",
+                           (profile_id, crew_id, invited_profile_id))
+
+    # now, in profile ID order (deadlock avoidance), feed replication
+    # data out to all profiles in the crew (including our newly added
+    # ones)
+    cursor.execute("""SELECT profile
+                        FROM speedycrew.crew_member
+                       WHERE crew = %s
+                       ORDER BY profile""",
+                   (crew_id,))
+    for member_profile_id, in cursor.fetchall():
+        if member_profile_id in profiles_needing_crew_insert:
+            cursor.execute("""INSERT INTO speedycrew.event (profile, seq, type, tab, crew)
+                              VALUES (%s, next_sequence(%s), 'INSERT', 'CREW', %s)""",
+                           (member_profile_id, member_profile_id, crew_id))
+            # write out the full set of members
+            cursor.execute("""SELECT profile
+                                FROM speedycrew.crew_member
+                               WHERE crew = %s
+                               ORDER BY profile""",
+                           (crew_id,))
+            for other_member_profile_id, in cursor.fetchall():
+                cursor.execute("""SELECT speedycrew.profile_subscribe(%s, %s)""",
+                               (member_profile_id, other_member_profile_id))
+                cursor.execute("""INSERT INTO speedycrew.event (profile, seq, type, tab, crew, other_profile)
+                                  VALUES (%s, next_sequence(%s), 'INSERT', 'CREW_MEMBER', %s, %s)""",
+                               (member_profile_id, member_profile_id, crew_id, other_member_profile_id))
+        else:
+            for crew_member_insert in crew_member_inserts:
+                cursor.execute("""SELECT speedycrew.profile_subscribe(%s, %s)""",
+                               (member_profile_id, crew_member_insert))
+                cursor.execute("""INSERT INTO speedycrew.event (profile, seq, type, tab, crew, other_profile)
+                              VALUES (%s, next_sequence(%s), 'INSERT', 'CREW_MEMBER', %s, %s)""",
+                               (member_profile_id, member_profile_id, crew_id, crew_member_insert))
+            for crew_member_update in crew_member_updates:
+                cursor.execute("""SELECT speedycrew.profile_subscribe(%s, %s)""", # in theory not necessary...?
+                               (member_profile_id, crew_member_update))
+                cursor.execute("""INSERT INTO speedycrew.event (profile, seq, type, tab, crew, other_profile)
+                              VALUES (%s, next_sequence(%s), 'UPDATE', 'CREW_MEMBER', %s, %s)""",
+                               (member_profile_id, member_profile_id, crew_id, crew_member_update))
+
+    return json_response({ "message_type" : "invite_crew_response",
+                           "status" : "OK" })
+
+def leave_crew(request):
+    profile_id = begin(request)
+    crew_id = request.REQUEST["crew"]
+    cursor = connection.cursor()
+    # lock crew row so membership doesn't change...
+    cursor.execute("""SELECT 1 FROM speedycrew.crew WHERE id = %s FOR UPDATE""",
+                   (crew_id,))
+    if cursor.fetchone() == None:
+        return json_response({ "message_type", "leave_crew_response",
+                               "status", "ERROR",
+                               "message", "unknown crew" })
+    # mark ours as LEFT (TODO: check it was ACTIVE...)
+    cursor.execute("""UPDATE speedycrew.crew_member
+                         SET status = 'LEFT'
+                       WHERE crew = %s AND profile = %s""",
+                   (crew_id, profile_id))
+    # in profile_id order, tell everyone (including ourselves!) to
+    # update our crew_member record
+    cursor.execute("""SELECT profile
+                        FROM speedycrew.crew_member
+                       WHERE crew = %s
+                       ORDER BY profile""",
+                   (crew_id,))
+    for member_profile_id, in cursor.fetchall():
+        cursor.execute("""INSERT INTO speedycrew.event (profile, seq, type, tab, crew, other_profile)
+                          VALUES (%s, next_sequence(%s), 'UPDATE', 'CREW_MEMBER', %s, %s)""",
+                       (member_profile_id, member_profile_id, crew_id, profile_id))
+
+    return json_response({ "message_type" : "leave_crew_response",
                            "status" : "OK" })
 
 def send_message(request):
     profile_id = begin(request)
     crew_id = request.REQUEST["crew"]
+    id = request.REQUEST["id"]
     body = request.REQUEST["body"]
-    
+    cursor = connection.cursor()
+    cursor.execute("""INSERT INTO speedycrew.message (id, sender, crew, body, created)
+                      VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP)""",
+                   (id, profile_id, crew_id, body))
+    cursor.execute("""SELECT profile
+                        FROM speedycrew.crew_member
+                       WHERE crew = %s
+                       ORDER BY profile""",
+                   (crew_id,))
+    for member_profile_id, in cursor.fetchall():
+        cursor.execute("""INSERT INTO speedycrew.event (profile, seq, type, tab, message)
+                          VALUES (%s, next_sequence(%s), 'INSERT', 'MESSAGE', %s)""",
+                       (member_profile_id, member_profile_id, id))
+
+    return json_response({ "message_type" : "send_message_response",
+                           "status" : "OK" })
 
 def trending(request):
     """A dump of popular tags."""

@@ -329,6 +329,28 @@ $$;
 
 
 --
+-- Name: profile_subscribe(integer, integer); Type: FUNCTION; Schema: speedycrew; Owner: -
+--
+
+CREATE FUNCTION profile_subscribe(i_profile_id integer, i_subscribed_to_profile_id integer) RETURNS void
+    LANGUAGE plpgsql
+    AS $$
+begin
+  begin
+    insert into profile_subscription (profile, subscribed_to, created)
+    values (i_profile_id, i_subscribed_to_profile_id, current_timestamp);
+    -- if we get here, it didn't exist already, so we replicate the
+    -- insertion (this triggers the creation fo a profile on 
+    insert into event (profile, seq, type, other_profile, tab)
+    values (i_profile_id, next_sequence(i_profile_id), 'INSERT', i_subscribed_to_profile_id, 'PROFILE');
+  exception when unique_violation then
+    -- do nothing, we were already subscribed
+  end;
+end;
+$$;
+
+
+--
 -- Name: provide_change(text); Type: FUNCTION; Schema: speedycrew; Owner: -
 --
 
@@ -579,7 +601,8 @@ CREATE TABLE profile (
     status profile_status NOT NULL,
     message text,
     created timestamp with time zone DEFAULT now() NOT NULL,
-    modified timestamp with time zone DEFAULT now() NOT NULL
+    modified timestamp with time zone DEFAULT now() NOT NULL,
+    fingerprint text NOT NULL
 );
 
 
@@ -646,6 +669,24 @@ CREATE TABLE profile_sequence (
 --
 
 COMMENT ON TABLE profile_sequence IS 'Counters to keep track of the window of event sequence numbers we have for each profile.';
+
+
+--
+-- Name: profile_subscription; Type: TABLE; Schema: speedycrew; Owner: -
+--
+
+CREATE TABLE profile_subscription (
+    profile integer NOT NULL,
+    subscribed_to integer NOT NULL,
+    created timestamp with time zone NOT NULL
+);
+
+
+--
+-- Name: TABLE profile_subscription; Type: COMMENT; Schema: speedycrew; Owner: -
+--
+
+COMMENT ON TABLE profile_subscription IS 'Records the subset of profiles that are replicated to each device';
 
 
 --
@@ -887,6 +928,14 @@ ALTER TABLE ONLY profile_sequence
 
 
 --
+-- Name: profile_subscription_pkey; Type: CONSTRAINT; Schema: speedycrew; Owner: -
+--
+
+ALTER TABLE ONLY profile_subscription
+    ADD CONSTRAINT profile_subscription_pkey PRIMARY KEY (profile, subscribed_to);
+
+
+--
 -- Name: profile_username_key; Type: CONSTRAINT; Schema: speedycrew; Owner: -
 --
 
@@ -947,6 +996,13 @@ ALTER TABLE ONLY tag
 --
 
 CREATE UNIQUE INDEX control_one_row ON control USING btree (((timeline IS NOT NULL)));
+
+
+--
+-- Name: profile_subscription_reverse_idx; Type: INDEX; Schema: speedycrew; Owner: -
+--
+
+CREATE INDEX profile_subscription_reverse_idx ON profile_subscription USING btree (subscribed_to, profile);
 
 
 --
@@ -1130,6 +1186,22 @@ ALTER TABLE ONLY profile_availability
 
 ALTER TABLE ONLY profile_sequence
     ADD CONSTRAINT profile_sequence_profile_fkey FOREIGN KEY (profile) REFERENCES profile(id);
+
+
+--
+-- Name: profile_subscription_profile_fkey; Type: FK CONSTRAINT; Schema: speedycrew; Owner: -
+--
+
+ALTER TABLE ONLY profile_subscription
+    ADD CONSTRAINT profile_subscription_profile_fkey FOREIGN KEY (profile) REFERENCES profile(id);
+
+
+--
+-- Name: profile_subscription_subscribed_to_fkey; Type: FK CONSTRAINT; Schema: speedycrew; Owner: -
+--
+
+ALTER TABLE ONLY profile_subscription
+    ADD CONSTRAINT profile_subscription_subscribed_to_fkey FOREIGN KEY (subscribed_to) REFERENCES profile(id);
 
 
 --
