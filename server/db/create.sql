@@ -49,8 +49,8 @@ CREATE TYPE event_table AS ENUM (
     'MATCH',
     'SEARCH',
     'CREW',
-    'MESSAGE',
-    'CREW_MEMBER'
+    'CREW_MEMBER',
+    'MESSAGE'
 );
 
 
@@ -191,7 +191,7 @@ declare
   v_radius float;
   v_tag_ids integer[];
 begin
-  -- load some data from this search into local variables
+  -- load some data from this search into local variables                                                                                                                                                                                                                                        
   select s.side, s.geography, s.radius, s.owner
     into v_side, v_geography, v_radius, v_profile
     from speedycrew.search s
@@ -203,14 +203,14 @@ begin
     into v_tag_ids
     from speedycrew.search_tag st
    where st.search = i_search_id;
-   -- SEEK has a radius (SEEKers are mobile)
+   -- SEEK has a radius (SEEKers are mobile)                                                                                                                                                                                                                                                     
   if v_side = 'SEEK' then
     return query
     select s.id,
            count(*)::int as matches,
            st_distance(s.geography, v_geography)::float as distance,
            (count(*) + 1 / greatest(1, st_distance(s.geography, v_geography)))::float as score,
-	   s.query
+           s.query
       from speedycrew.search s
       join speedycrew.search_tag st on st.search = s.id
      where st_dwithin(s.geography, v_geography, v_radius)
@@ -219,17 +219,17 @@ begin
        and s.status = 'ACTIVE'
      group by s.id;
   else
-    -- v_side = 'PROVIDE'
+    -- v_side = 'PROVIDE'                                                                                                                                                                                                                                                                        
     return query
     select s.id,
            count(*)::int as matches,
            st_distance(s.geography, v_geography)::float as distance,
            (count(*) + 1 / greatest(1, st_distance(s.geography, v_geography)))::float as score,
-	   s.query
+           s.query
       from speedycrew.search s
       join speedycrew.search_tag st on st.search = s.id
      where st_dwithin(s.geography, v_geography, s.radius)
-       and st.tag = any (v_tag_ids)                  
+       and st.tag = any (v_tag_ids)
        and s.side = 'SEEK'
        and s.status = 'ACTIVE'
      group by s.id;
@@ -262,7 +262,7 @@ begin
     select t.search_id, t.matches, t.distance, t.score, t.query
       from speedycrew.find_matches(i_search_id) t
   loop
-    -- this is the aggressive search
+    -- this is the aggressive search                                                                                                                                                                                                                                                             
     a := i_search_id;
     b := v_search_id;
     matches = v_matches;
@@ -270,7 +270,7 @@ begin
     score := v_score;
     message := null;
     return next;
-    -- the is the passive search
+    -- the is the passive search                                                                                                                                                                                                                                                                 
     a := v_search_id;
     b := i_search_id;
     if v_my_side = 'PROVIDE' then
@@ -513,8 +513,8 @@ CREATE TABLE event (
     other_profile integer,
     created timestamp with time zone DEFAULT now() NOT NULL,
     tab event_table NOT NULL,
-    message uuid,
-    crew uuid
+    crew uuid,
+    message uuid
 );
 
 
@@ -1279,9 +1279,10 @@ INSERT INTO schema_change (name, created) VALUES ('change_20140619.sql', '2014-0
 INSERT INTO schema_change (name, created) VALUES ('change_20140620.sql', '2014-06-22 23:17:09.564901+00');
 INSERT INTO schema_change (name, created) VALUES ('change_20140623.sql', '2014-06-23 22:21:11.747446+00');
 INSERT INTO schema_change (name, created) VALUES ('change_20140624.sql', '2014-06-24 20:48:45.548335+00');
-INSERT INTO schema_change (name, created) VALUES ('change_20140625.sql', '2014-06-26 17:27:20.785124+00');
-INSERT INTO schema_change (name, created) VALUES ('change_20140626.sql', '2014-06-26 17:27:33.240717+00');
-INSERT INTO schema_change (name, created) VALUES ('change_20140712.sql', '2014-07-12 21:40:24.190482+00');
+INSERT INTO schema_change (name, created) VALUES ('change_20140625.sql', '2014-06-25 23:02:37.99071+00');
+INSERT INTO schema_change (name, created) VALUES ('change_20140626.sql', '2014-07-13 23:39:26.646524+00');
+INSERT INTO schema_change (name, created) VALUES ('change_20140712.sql', '2014-07-13 23:42:09.354976+00');
+INSERT INTO schema_change (name, created) VALUES ('change_20140713.sql', '2014-07-13 23:42:12.004697+00');
 
 
 --
