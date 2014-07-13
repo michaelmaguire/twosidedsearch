@@ -517,36 +517,6 @@ def update_profile(request):
                            "metadata" : metadata,
                            "sql" : sql })
 
-# TODO this will be removed (made obsolete by the new synchronisation
-# system)
-def searches(request):
-    """A view handler that returns a summary of the user's currently
-    active searches."""
-    profile_id = begin(request)
-    request_id = param_or_null(request, "request_id")
-    cursor = connection.cursor()
-    cursor.execute("""SELECT s.id, s.query, s.side, s.created, array_agg(t.name) AS tags, s.status
-                        FROM speedycrew.search s
-                        JOIN speedycrew.search_tag st ON st.search = s.id
-                        JOIN speedycrew.tag t ON st.tag = t.id
-                       WHERE s.owner = %s
-                         AND s.status = 'ACTIVE'
-                       GROUP BY s.id
-                       ORDER BY s.created DESC""",
-                   (profile_id, ))
-    searches = []
-    for id, query, side, created, tags, status in cursor:
-        searches.append({ "id" : id,
-                          "query" : query,
-                          "side" : side,
-                          "created" : created.isoformat(),
-                          "tags" : tags,
-                          "status" : status })
-    return json_response({ "message_type" : "searches_response",
-                           "request_id" : request_id,
-                           "status" : "OK",
-                           "searches" : searches })
-
 def tags(request):
     """A view handler for retrieving tag names, suitable for
     auto-completion."""
@@ -688,57 +658,6 @@ def delete_search(request):
         return json_response({ "message_type" : "delete_search_response",
                                "request_id" : request_id,
                                "status" : "ERROR" })
-
-# TODO this will be removed (made obsolete by the new synchronisation
-# system)
-def search_results(request):
-    """A dumb request for all results for a given search ID."""
-    profile_id = begin(request)
-    search_id = request.REQUEST["search"]
-    request_id = param_or_null(request, "request_id")
-    cursor = connection.cursor()
-    cursor.execute("""SELECT s2.id, 
-                             p.username, 
-                             p.real_name,
-                             d.id,
-                             p.email, 
-                             s2.address, 
-                             s2.postcode, 
-                             s2.city, 
-                             s2.country, 
-                             st_distance(s1.geography, s2.geography) AS distance,
-                             st_x(s2.geography::geometry) AS longitude,
-                             st_y(s2.geography::geometry) AS latitude
-                        FROM speedycrew.match m
-                        JOIN speedycrew.search s1 ON m.a = s1.id
-                        JOIN speedycrew.search s2 ON m.b = s2.id
-                        JOIN speedycrew.profile p ON s2.owner = p.id
-                        JOIN speedycrew.device d ON p.id = d.profile -- TODO!
-                       WHERE s1.id = %s
-                         AND s1.owner = %s
-                         AND s2.status = 'ACTIVE'""",
-                   (search_id, profile_id))
-    # TODO -- this will return a row for each device the user has
-    # since each has its own fingerprint; I need to invent the concept
-    # of a primary/per profile fingerprint
-    results = []
-    for id, username, real_name, fingerprint, email, address, postcode, city, country, distance, longitude, latitude in cursor:
-        results.append({ "id" : id,
-                         "fingerprint" : fingerprint,
-                         "username" : username,
-                         "real_name" : real_name,
-                         "email" : email,
-                         "address" : address,
-                         "postcode" : postcode,
-                         "city" : city,
-                         "country" : country,
-                         "distance" : distance,
-                         "longitude" : longitude,
-                         "latitude" : latitude })
-    return json_response({ "message_type" : "search_results_response",
-                           "request_id" : request_id,
-                           "status" : "OK",
-                           "results" : results })
 
 def set_notification(request):
     """Update the notification tokens for devices."""
