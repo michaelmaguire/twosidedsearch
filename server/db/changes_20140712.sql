@@ -54,14 +54,14 @@ create table message_key (
   key text not null
 );
 
-alter type event_table add value 'CREW';
-
-alter type event_table add value 'CREW_MEMBER';
-
-alter type event_table add value 'MESSAGE';
-
 alter table event add column crew uuid references crew(id);
 
 alter table event add column message uuid references message(id);
 
 commit;
+
+alter type event_table add value if not exists 'CREW';
+
+alter type event_table add value if not exists 'CREW_MEMBER';
+
+alter type event_table add value if not exists 'MESSAGE';
