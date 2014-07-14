@@ -106,8 +106,22 @@ class Simple(unittest.TestCase):
         # check it shows up when we replicate
         self.assertEqual("refresh", synchronise(self.local_db))
         self.assertEqual(device_timeline_and_sequence(self.local_db), (1, 2))
-        self.cursor.execute("SELECT * FROM crew")
+        self.cursor.execute("SELECT * FROM crew ORDER BY id")
         self.assertEqual(("00000000-0000-0000-0000-000000000000", "My chat room"), self.cursor.fetchone())
+        self.assertEqual(None, self.cursor.fetchone())
+
+        # create another one just to check it works also via incremental
+        response = post("/api/1/create_crew",
+                        { "x-id" : x_id,
+                          "id" : "00000000-0000-0000-0000-00000000000f",
+                          "name" : "zoo",
+                          "fingerprints" : "a,b" })
+        self.assertEqual(response["status"], "OK")
+        self.assertEqual("incremental", synchronise(self.local_db))
+        self.cursor.execute("SELECT * FROM crew ORDER BY id")
+        self.assertEqual(("00000000-0000-0000-0000-000000000000", "My chat room"), self.cursor.fetchone())
+        self.assertEqual(("00000000-0000-0000-0000-00000000000f", "zoo"), self.cursor.fetchone())
+        self.assertEqual(None, self.cursor.fetchone())
 
         # invite someone else
         response = post("/api/1/invite_crew",
@@ -116,7 +130,7 @@ class Simple(unittest.TestCase):
                           "fingerprints" : "1111" })
         self.assertEqual(response["status"], "OK")
         self.assertEqual("incremental", synchronise(self.local_db))
-        self.cursor.execute("SELECT crew, fingerprint, status FROM crew_member ORDER BY crew, fingerprint")
+        self.cursor.execute("SELECT crew, fingerprint, status FROM crew_member WHERE crew = '00000000-0000-0000-0000-000000000000' ORDER BY crew, fingerprint")
         self.assertEqual(("00000000-0000-0000-0000-000000000000", "1111", "ACTIVE"), self.cursor.fetchone())
         self.assertEqual(("00000000-0000-0000-0000-000000000000", x_id, "ACTIVE"), self.cursor.fetchone())
         self.assertEqual(None, self.cursor.fetchone())
@@ -127,7 +141,7 @@ class Simple(unittest.TestCase):
                           "crew" : "00000000-0000-0000-0000-000000000000" })
         self.assertEqual(response["status"], "OK")
         self.assertEqual("incremental", synchronise(self.local_db))
-        self.cursor.execute("SELECT crew, fingerprint, status FROM crew_member ORDER BY crew, fingerprint")
+        self.cursor.execute("SELECT crew, fingerprint, status FROM crew_member WHERE crew = '00000000-0000-0000-0000-000000000000' ORDER BY crew, fingerprint")
         self.assertEqual(("00000000-0000-0000-0000-000000000000", "1111", "ACTIVE"), self.cursor.fetchone())
         self.assertEqual(("00000000-0000-0000-0000-000000000000", x_id, "LEFT"), self.cursor.fetchone())
         self.assertEqual(None, self.cursor.fetchone())
@@ -146,7 +160,7 @@ class Simple(unittest.TestCase):
                           "fingerprints" : x_id })
         self.assertEqual(response["status"], "OK")
         self.assertEqual("incremental", synchronise(self.local_db))
-        self.cursor.execute("SELECT crew, fingerprint, status FROM crew_member ORDER BY crew, fingerprint")
+        self.cursor.execute("SELECT crew, fingerprint, status FROM crew_member WHERE crew = '00000000-0000-0000-0000-000000000000' ORDER BY crew, fingerprint")
         self.assertEqual(("00000000-0000-0000-0000-000000000000", "1111", "ACTIVE"), self.cursor.fetchone())
         self.assertEqual(("00000000-0000-0000-0000-000000000000", x_id, "ACTIVE"), self.cursor.fetchone())
         self.assertEqual(None, self.cursor.fetchone())
@@ -158,7 +172,7 @@ class Simple(unittest.TestCase):
                           "fingerprints" : "2222" })
         self.assertEqual(response["status"], "OK")
         self.assertEqual("incremental", synchronise(self.local_db))
-        self.cursor.execute("SELECT crew, fingerprint, status FROM crew_member ORDER BY crew, fingerprint")
+        self.cursor.execute("SELECT crew, fingerprint, status FROM crew_member WHERE crew = '00000000-0000-0000-0000-000000000000' ORDER BY crew, fingerprint")
         self.assertEqual(("00000000-0000-0000-0000-000000000000", "1111", "ACTIVE"), self.cursor.fetchone())
         self.assertEqual(("00000000-0000-0000-0000-000000000000", x_id, "ACTIVE"), self.cursor.fetchone())
         self.assertEqual(("00000000-0000-0000-0000-000000000000", "2222", "ACTIVE"), self.cursor.fetchone())
@@ -181,6 +195,7 @@ class Simple(unittest.TestCase):
         self.assertEqual(("00000000-0000-0000-0000-000000000000", "1111", "ACTIVE"), self.cursor.fetchone())
         self.assertEqual(("00000000-0000-0000-0000-000000000000", x_id, "ACTIVE"), self.cursor.fetchone())
         self.assertEqual(("00000000-0000-0000-0000-000000000000", "2222", "ACTIVE"), self.cursor.fetchone())
+        self.assertEqual(("00000000-0000-0000-0000-00000000000f", x_id, "ACTIVE"), self.cursor.fetchone())
         self.assertEqual(("00000000-0000-0000-0000-000000000042", "1111", "ACTIVE"), self.cursor.fetchone())
         self.assertEqual(("00000000-0000-0000-0000-000000000042", x_id, "ACTIVE"), self.cursor.fetchone())
         self.assertEqual(None, self.cursor.fetchone())

@@ -704,9 +704,9 @@ def create_crew(request):
     member_profile_ids.sort()
     for member_profile_id in member_profile_ids:
         # replicate the crew creation
-        cursor.execute("""INSERT INTO speedycrew.event (profile, seq, type, tab)
-                          VALUES (%s, speedycrew.next_sequence(%s), 'INSERT', 'CREW')""",
-                       (member_profile_id, member_profile_id))
+        cursor.execute("""INSERT INTO speedycrew.event (profile, seq, type, tab, crew)
+                          VALUES (%s, speedycrew.next_sequence(%s), 'INSERT', 'CREW', %s)""",
+                       (member_profile_id, member_profile_id, id))
         for other_member_profile_id in member_profile_ids:
             # make sure that this profile is subscribed to every other
             # (no-op if already so), because devices must know about
