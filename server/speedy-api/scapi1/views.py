@@ -569,16 +569,17 @@ def create_search(request):
         # make one up if none was included in the request
         id = str(uuid.uuid4())
 
-    tags = re.findall(r"#(\w+)", query)    
+    tags = re.findall(r"(\w+)", query)    
     if not tags:
         return json_response({ "message_type" : "create_search_response",
                                "request_id" : request_id,
                                "status" : "ERROR",
-                               "message" : "query contains no tags" })
+                               "message" : "query contains no words" })
 
     # resolve tags to tag IDs, creating them if necessary
     tag_ids = []
-    for tag in tags:
+    for tag in tags:        
+        tag = tag.lower() # TODO what does this really do?
         cursor.execute("""SELECT id, status
                             FROM speedycrew.tag
                            WHERE name = %s""",
@@ -593,13 +594,23 @@ def create_search(request):
             tag_ids.append(tag_id)
         else:
             tag_id, tag_status = row
-            if tag_status != "ACTIVE":
+            if tag_status == "BANNED":
                 return json_response({ "message_type" : "create_search_response",
                                        "request_id" : request_id,
                                        "status" : "TAG_BLOCKED",
                                        "blocked_tag" : tag,
                                        "message" : "tag is not allowed" })
-            tag_ids.append(tag_id)
+            elif tag_status == "ACTIVE":
+                tag_ids.append(tag_id)
+            else:
+                # DELETED or IGNORED
+                pass
+
+    if len(tag_ids) == 0:
+        return json_response({ "message_type" : "create_search_response",
+                               "request_id" : request_id,
+                               "status" : "ERROR",
+                               "message" : "query contains no indexable words" })
 
     cursor.execute("""INSERT INTO speedycrew.search (id, owner, query, side, address, postcode, city, country, geography, radius, status, created)
                       VALUES (%s, %s, %s, %s, %s, %s, %s, %s, speedycrew.make_geo(%s, %s), %s, 'ACTIVE', now())""",
