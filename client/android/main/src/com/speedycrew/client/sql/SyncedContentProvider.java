@@ -124,18 +124,19 @@ public class SyncedContentProvider extends ContentProvider {
 				if (sqlArray != null) {
 					SQLiteDatabase db = mSyncedSQLiteOpenHelper.getWritableDatabase();
 					String sqlStatement = null;
+					int i = 0;
 					try {
 						db.beginTransaction();
 
 						final int length = sqlArray.length();
-						for (int i = 0; i < length; ++i) {
+						for (i = 0; i < length; ++i) {
 							sqlStatement = sqlArray.getString(i);
 							Log.i(LOGTAG, "call: SQL sqlStatement[" + sqlStatement + "]");
 							db.execSQL(sqlStatement);
 						}
 						db.setTransactionSuccessful();
 					} catch (SQLException sqle) {
-						Log.e(LOGTAG, "call: SQLException for sqlStatement[" + sqlStatement + "]", sqle);
+						Log.e(LOGTAG, "call: SQLException for sqlStatement(" + i + ")[" + sqlStatement + "]", sqle);
 					} finally {
 						db.endTransaction();
 					}
