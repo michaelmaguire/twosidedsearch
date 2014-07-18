@@ -63,8 +63,7 @@ def begin(request):
                        (profile_id,))
         # every profile 'subscribes' to itself, so that devices receive
         # notifications of changes to their own profile
-        cursor.execute("""INSERT INTO speedycrew.profile_subscription (profile, subscribed_to, created)
-                          VALUES (%s, %s, CURRENT_TIMESTAMP)""",
+        cursor.execute("""SELECT speedycrew.profile_subscription_inc(%s, %s)""",
                        (profile_id, profile_id))
         # TODO the following statement can produce an error if an
         # unknown device makes two simultaneous queries, since only
@@ -314,6 +313,10 @@ def do_incremental(cursor, profile_id, device_sequence, sql, metadata):
                 metadata.append({ "INSERT" : "profile/%s" % my_fingerprint })
                 sql.append(param("INSERT INTO profile (fingerprint, username, real_name, email, status, message, created, modified) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
                                  (my_fingerprint, my_username, my_real_name, my_email, my_status, my_message, my_created, my_modified)))
+            elif type == "DELETE":
+                metadata.append({ "DELETE" : "profile/%s" % my_fingerprint })
+                sql.append(param("DELETE FROM profile WHERE fingerprint = %s",
+                                 (my_fingerprint,)))
         elif tab == "CREW":
             if type == "INSERT":
                 metadata.append({ "INSERT" : "crew/%s" % crew_id })
@@ -723,7 +726,7 @@ def create_crew(request):
             # make sure that this profile is subscribed to every other
             # (no-op if already so), because devices must know about
             # profiles before they are referenced by crew_member
-            cursor.execute("""SELECT speedycrew.profile_subscribe(%s, %s)""",
+            cursor.execute("""SELECT speedycrew.profile_subscription_inc(%s, %s)""",
                            (member_profile_id, other_member_profile_id))
             # replicate crew membership
             cursor.execute("""INSERT INTO speedycrew.event (profile, seq, type, crew, other_profile, tab)
@@ -822,20 +825,20 @@ def invite_crew(request):
                                ORDER BY profile""",
                            (crew_id,))
             for other_member_profile_id, in cursor.fetchall():
-                cursor.execute("""SELECT speedycrew.profile_subscribe(%s, %s)""",
+                cursor.execute("""SELECT speedycrew.profile_subscription_inc(%s, %s)""",
                                (member_profile_id, other_member_profile_id))
                 cursor.execute("""INSERT INTO speedycrew.event (profile, seq, type, tab, crew, other_profile)
                                   VALUES (%s, next_sequence(%s), 'INSERT', 'CREW_MEMBER', %s, %s)""",
                                (member_profile_id, member_profile_id, crew_id, other_member_profile_id))
         else:
             for crew_member_insert in crew_member_inserts:
-                cursor.execute("""SELECT speedycrew.profile_subscribe(%s, %s)""",
+                cursor.execute("""SELECT speedycrew.profile_subscription_inc(%s, %s)""",
                                (member_profile_id, crew_member_insert))
                 cursor.execute("""INSERT INTO speedycrew.event (profile, seq, type, tab, crew, other_profile)
                               VALUES (%s, next_sequence(%s), 'INSERT', 'CREW_MEMBER', %s, %s)""",
                                (member_profile_id, member_profile_id, crew_id, crew_member_insert))
             for crew_member_update in crew_member_updates:
-                cursor.execute("""SELECT speedycrew.profile_subscribe(%s, %s)""", # in theory not necessary...?
+                cursor.execute("""SELECT speedycrew.profile_subscription_inc(%s, %s)""",
                                (member_profile_id, crew_member_update))
                 cursor.execute("""INSERT INTO speedycrew.event (profile, seq, type, tab, crew, other_profile)
                               VALUES (%s, next_sequence(%s), 'UPDATE', 'CREW_MEMBER', %s, %s)""",
