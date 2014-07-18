@@ -133,14 +133,15 @@ def do_refresh(cursor, profile_id, timeline, high_sequence, sql, metadata):
     sql.append(param("INSERT INTO profile (fingerprint, username, real_name, email, status, message, created, modified) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
                      (fingerprint, username, real_name, email, status, message, created, modified)))
 
-    # it is now safe to send you crew_member records, for all crews
+    # it is now safe to send your crew_member records, for all crews
     # you're a member of, because all crews and potentially relevant
     # profiles have been inserted
     cursor.execute("""SELECT cm.crew, p.fingerprint, cm.status
                         FROM speedycrew.crew_member cm
                         JOIN speedycrew.profile p ON cm.profile = p.id
-                        JOIN speedycrew.crew_member cm2 ON cm.crew = cm2.crew
-                       WHERE cm2.profile = %s""",
+                       WHERE cm.crew IN (SELECT cm.crew
+                                           FROM speedycrew.crew_member cm2
+                                          WHERE cm2.profile = %s)""",
                    (profile_id,))
     for crew_id, fingerprint, status in cursor:
         sql.append(param("INSERT INTO crew_member (crew, fingerprint, status) VALUES (%s, %s, %s)", (crew_id, fingerprint, status)))
