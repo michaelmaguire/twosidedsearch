@@ -1,3 +1,9 @@
+speedy-api (1.2) unstable; urgency=low
+
+  * Replicate profiles using reference counting.
+
+ -- Thomas Munro <munro@ip9.org>  Sun, 20 Jul 2014 17:47:09 +0100
+
 speedy-api (1.1) unstable; urgency=low
 
   * Replicate profile changes.  Fixed bug in match replication.
