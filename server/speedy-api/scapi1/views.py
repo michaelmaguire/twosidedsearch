@@ -1003,7 +1003,7 @@ def media(request, fingerprint, name):
     # whose media are we looking at?
     media_profile_id = get_media_profile_id(cursor, fingerprint)
     if media_profile_id == -1:
-        return HttpResponseNotFound("Profile not found -- 404")
+        return HttpResponseNotFound("404: Profile not found")
     
     if request.method == "GET":
         # which file is it?
@@ -1014,17 +1014,17 @@ def media(request, fingerprint, name):
                        (media_profile_id, name))
         row = cursor.fetchone()
         if row == None:
-            return HttpResponseNotFound("File not found -- 404")
+            return HttpResponseNotFound("404: File not found")
         mime_type, data, modified, public = row
         if profile_id != media_profile_id and not public:
-            return HttpResponseForbidden("Access denied -- 403")
+            return HttpResponseForbidden("403: Access denied")
         # TODO: do something with modified time; also support HTTP HEAD so
         # that clients can check if media has changed without fetching it?
         return HttpResponse(data, content_type=mime_type)
     elif request.method == "PUT":
         # you can only PUT your own media
         if profile_id != media_profile_id:
-            return HttpResponseForbidden("You are not allowed to do that -- 403")
+            return HttpResponseForbidden("403: You are not allowed to do that")
 
         public = True # TODO get from a header!
         data = request.raw_post_data
@@ -1056,7 +1056,7 @@ def media(request, fingerprint, name):
     elif request.method == "DELETE":
         # you can only DELETE your own media
         if profile_id != media_profile_id:
-            return HttpResponseForbidden("You are not allowed to do that -- 403")
+            return HttpResponseForbidden("403: You are not allowed to do that")
         cursor.execute("""DELETE
                             FROM speedycrew.file
                            WHERE profile = %s
@@ -1065,7 +1065,7 @@ def media(request, fingerprint, name):
         if cursor.rowcount == 1:
             return HttpResponse("OK")
         else:
-            return HttpResponseNotFound("File not found -- 404")
+            return HttpResponseNotFound("404: File not found")
         
 
             
