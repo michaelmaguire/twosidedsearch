@@ -582,8 +582,9 @@ def create_search(request):
 
     # resolve tags to tag IDs, creating them if necessary
     tag_ids = []
-    for tag in tags:        
-        tag = tag.lower() # TODO what does this really do?
+    processed_tags = [tag.lower() for tag in tags] # also remove accents?
+    processed_tags.sort() # deadlock avoidance
+    for tag in processed_tags:
         cursor.execute("""SELECT id, status
                             FROM speedycrew.tag
                            WHERE name = %s""",
