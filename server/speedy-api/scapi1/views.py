@@ -1,5 +1,6 @@
 from django.db import connection
-from django.http import HttpResponse, HttpResponseNotFound, HttpResponseForbidden
+from django.db.utils import IntegrityError
+from django.http import HttpResponse, HttpResponseNotFound, HttpResponseForbidden, HttpResponseBadRequest
 from django.shortcuts import render
 import hashlib
 import json
@@ -551,27 +552,33 @@ def create_search(request):
     cursor = connection.cursor()
 
     # required parameters
-    query = request.REQUEST["query"]
-    side = request.REQUEST["side"]
-    longitude = request.REQUEST["longitude"]
-    latitude = request.REQUEST["latitude"]
+    id = param_or_null(request, "id")
+    query = param_or_null(request, "query")
+    side = param_or_null(request, "side")
+    longitude = param_or_null(request, "longitude")
+    latitude = param_or_null(request, "latitude")
 
     # optional parameters
-    id = param_or_null(request, "id")
     request_id = param_or_null(request, "request_id")
     address = param_or_null(request, "address")
     city = param_or_null(request, "city")
     country = param_or_null(request, "country")
     postcode = param_or_null(request, "postcode")
-    radius = param_or_null(request, "radius") # required if side = PROVIDE
+    radius = param_or_null(request, "radius") # required if side = SEEK
 
     timeline = param_or_null(request, "timeline")
     sequence = param_or_null(request, "sequence")
 
-    if id == None:
-        # device should supply this, but for a short time only i'll
-        # make one up if none was included in the request
-        id = str(uuid.uuid4())
+    # validate inputs
+    if id == None or query == None or side == None or longitude == None or latitude == None:
+        return HttpResponseBadRequest("400: Expected id, query, side, longitude, latitude")
+    if side not in ("SEEK", "PROVIDE"):
+        return HttpResponseBadRequest("400: Expected side=SEEK or side=PROVIDE")
+    if side == "SEEK" and radius == None:
+        return HttpResponseBadRequest("400: Expected radius to be provided for side=SEEK")
+    if side == "PROVIDE" and radius != None:
+        return HttpResponseBadRequest("400: Did not expect radius for side=PROVIDE")
+    # TODO validate the wellformedness of latitude, longitude
 
     tags = re.findall(r"(\w+)", query)    
     if not tags:
@@ -612,14 +619,21 @@ def create_search(request):
                 pass
 
     if len(tag_ids) == 0:
+        # should this be a 200 or 400?
         return json_response({ "message_type" : "create_search_response",
                                "request_id" : request_id,
                                "status" : "ERROR",
                                "message" : "query contains no indexable words" })
 
-    cursor.execute("""INSERT INTO speedycrew.search (id, owner, query, side, address, postcode, city, country, geography, radius, status, created)
-                      VALUES (%s, %s, %s, %s, %s, %s, %s, %s, speedycrew.make_geo(%s, %s), %s, 'ACTIVE', now())""",
-                   (id, profile_id, query, side, address, postcode, city, country, longitude, latitude, radius))
+    try:
+        cursor.execute("""INSERT INTO speedycrew.search (id, owner, query, side, address, postcode, city, country, geography, radius, status, created)
+                          VALUES (%s, %s, %s, %s, %s, %s, %s, %s, speedycrew.make_geo(%s, %s), %s, 'ACTIVE', now())""",
+                       (id, profile_id, query, side, address, postcode, city, country, longitude, latitude, radius))
+    except IntegrityError, e:
+        if e.message.find('"search_pkey"') != -1:
+            return HttpResponseBadRequest("400: Search ID already exists")
+        else:
+            raise e
 
     for tag_id in tag_ids:
         cursor.execute("""INSERT INTO speedycrew.search_tag VALUES (%s, %s)""",
