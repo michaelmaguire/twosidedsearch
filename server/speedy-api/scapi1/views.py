@@ -60,7 +60,7 @@ def begin(request):
         profile_id = cursor.fetchone()[0]
         # every profile needs a sequence number range tracking record
         cursor.execute("""INSERT INTO speedycrew.profile_sequence (profile, low_sequence, high_sequence)
-                          VALUES (%s, 0, 0)""",
+                          VALUES (%s, NULL, 0)""",
                        (profile_id,))
         # every profile 'subscribes' to itself, so that devices receive
         # notifications of changes to their own profile
