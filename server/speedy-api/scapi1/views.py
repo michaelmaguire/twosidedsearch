@@ -453,6 +453,7 @@ def update_profile(request):
         cursor.execute("""SELECT * FROM speedycrew.profile WHERE email = %s AND id != %s""",
                        (email, profile_id))
         if cursor.fetchone():
+            # TODO should be using 400 for this?
             return json_response({ "message_type" : "update_profile_response",
                                    "request_id" : request_id,
                                    "status" : "ERROR",
@@ -461,6 +462,7 @@ def update_profile(request):
         cursor.execute("""SELECT * FROM speedycrew.profile WHERE username = %s AND id != %s""",
                        (username, profile_id))
         if cursor.fetchone():
+            # TODO should be using 400 for this?
             return json_response({ "message_type" : "update_profile_response",
                                    "request_id" : request_id,
                                    "status" : "ERROR",
