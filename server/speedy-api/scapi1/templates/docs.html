@@ -20,7 +20,7 @@
     schema will be auto-magically recreated by the server, watch this
     space...)</p>
     <ol>
-      <li><a href="synchronise?x-id=1234;timeline=0;sequence=0">/api/1/synchronise?x=1234;timeline=0;sequence=0</a>
+      <li><a href="synchronise?x-id=1234;timeline=0;sequence=0">/api/1/synchronise?timeline=0;sequence=0</a>
       where the <code>timeline</code> and <code>sequence</code>
       parameters are optional, and should be loaded from the Sqlite
       table 'control' if it contains a row (it should contain one row
@@ -63,23 +63,23 @@
 	  -- a search belonging to the user</li>
 	</ul>
       </li>
-      <li><a href="set_notification?x-id=1234;google_registration_id=1234">/api/1/set_notification?x-id=1234;google_registration_id=1234</a> to set the Google magic token for the calling device</li>
-      <li><a href="set_notification?x-id=1234;apple_device_token=1234">/api/1/set_notification?x-id=1234;apple_device_token=1234</a> to set the Google magic token for the calling device</li>
-      <li><a href="set_notification?x-id=1234">/api/1/set_notification?x-id=1234</a> to disable notifications for the calling device</li>
+      <li><a href="set_notification?x-id=1234;google_registration_id=1234">/api/1/set_notification?google_registration_id=1234</a> to set the Google magic token for the calling device</li>
+      <li><a href="set_notification?x-id=1234;apple_device_token=1234">/api/1/set_notification?apple_device_token=1234</a> to set the Google magic token for the calling device</li>
+      <li><a href="set_notification?x-id=1234">/api/1/set_notification</a> to disable notifications for the calling device</li>
     </ol>
 
     <h2>Profile management</h2>
     <ol>
-      <li><a href="profile?x-id=1234">/api/1/profile?x-id=1234</a> to retrieve profile data</li>
-      <li><a href="update_profile?x-id=1234&real_name=Joe+Bloggs&message=I+can+cook&email=foo@bar">/api/1/update_profile?x-id=1234</a> with optional parameters real_name, message, email to update profile data (use empty string as value to clear the values)</li>
+      <li><a href="profile?x-id=1234">/api/1/profile</a> to retrieve profile data</li>
+      <li><a href="update_profile?x-id=1234;real_name=Joe+Bloggs;message=I+can+cook;email=foo@bar">/api/1/update_profile?real_name=Joe+Bloggs</a> with optional parameters real_name, message, email to update profile data (use empty string as value to clear the values)</li>
       <li>TODO: merging two profiles (ie merging separate devices)</li>
       <li>TODO: deleting profile</li>
     </ol>
 
     <h2>Search management</h2>
     <ol>
-      <li><a href="create_search?x-id=1234&id=12345678-1234-1234-1234-123456789012&side=SEEK&query=I+am+a+%23chef&longitude=-0.15&latitude=51.5&radius=5000">/api/1/create_search?x-id=1234&amp;side=PROVIDE&amp;query=I+am+a+%23chef&amp;longitude=-0.15&amp;latitude=51.5&amp;radius=5000</a> with optional extra parameters city, country, address, postcode (radius is required for side=SEEK, absent for side=PROVIDE) (note: id is new, and is a UUID in 8-4-4-4-12 format; if you miss it out, one will be made up automatically for a limited time only)</li>
-      <li><a href="delete_search?x-id=1234&search=12345678-1234-1234-1234-123456789012">/api/1/delete_search?x-id=1234&amp;search=12345678-1234-1234-1234-123456789012</a></li>
+      <li><a href="create_search?x-id=1234;id=12345678-1234-1234-1234-123456789012;side=SEEK;query=I+am+a+%23chef;longitude=-0.15;latitude=51.5;radius=5000">/api/1/create_search?id=12345678-1234-1234-1234-123456789012;side=PROVIDE;query=I+am+a+%23chef;longitude=-0.15;latitude=51.5;radius=5000</a> with optional extra parameters city, country, address, postcode (radius is required for side=SEEK, absent for side=PROVIDE) (note: id is new, and is a UUID in 8-4-4-4-12 format; if you miss it out, one will be made up automatically for a limited time only)</li>
+      <li><a href="delete_search?x-id=1234;search=12345678-1234-1234-1234-123456789012">/api/1/delete_search?search=12345678-1234-1234-1234-123456789012</a></li>
       <li>TODO: no tracking/filtering of available dates yet (searches match based on location + tags only for now)</li>
     </ol>
 
@@ -97,16 +97,16 @@
 
     <h2>Media management</h2>
     <ol>
-      <li><a href="media/1234?x-id=1234">/api/1/media/1234?x-id=1234</a> to list all media files available for the profile in the URL (ie the part before ?, the part after is just the caller's identity when not using SSL cert identification, and happens to be the same here for simplicity)</li>
-      <li><a href="media/1234/test?x-id=1234">/api/1/media/1234/test?x-id=1234</a> to GET file 'test' belonging to profile fingerprint 1234</li>
+      <li><a href="media/1234?x-id=1234">/api/1/media/1234</a> to list all media files available for the profile in the URL (ie the part before ?, the part after is just the caller's identity when not using SSL cert identification, and happens to be the same here for simplicity)</li>
+      <li><a href="media/1234/test?x-id=1234">/api/1/media/1234/test</a> to GET file 'test' belonging to profile fingerprint 1234</li>
       <li><code>curl --upload-file foo.jpg -u captain:cook https://dev.speedycrew.com/api/1/media/1234/foo?x-id=1234</code> to PUT a new media file</li>
       <li><code>curl -X DELETE -u captain:cook https://dev.speedycrew.com/api/1/media/1234/foo?x-id=1234</code> to DELETE a new media file</li>
     </ol>
 
     <h2>Miscellaneous</h2>
     <ol>
-      <li><a href="tags?x-id=1234&prefix=s">/api/1/tags?x-id=1234&amp;prefix=s</a> to fetch tags with a certain prefix, for auto-complete (?!)</li>
-      <li><a href="trending?x-id=1234">/api/1/trending?x-id=1234</a> to get some trending tags</li>
+      <li><a href="tags?x-id=1234;prefix=s">/api/1/tags?prefix=s</a> to fetch tags with a certain prefix, for auto-complete (?!)</li>
+      <li><a href="trending?x-id=1234">/api/1/trending</a> to get some trending tags</li>
       <li><a href="../../monitoring/dashboard">/monitoring/dashboard</a> to view a primitive dashboard page</li>
     </ol>
   </body>
