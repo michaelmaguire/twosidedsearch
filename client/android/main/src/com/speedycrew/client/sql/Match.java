@@ -17,6 +17,7 @@ public interface Match extends android.provider.BaseColumns {
 	public final static String SEARCH = "search";
 	public final static String OTHER_SEARCH = "other_search";
 	public final static String USERNAME = "username";
+	public final static String EMAIL = "email";
 	public final static String FINGERPRINT = "fingerprint";
 	public final static String QUERY = "query";
 	public final static String LONGITUDE = "longitude";

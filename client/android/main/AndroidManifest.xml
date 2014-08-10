@@ -75,7 +75,7 @@
         <service android:name="com.speedycrew.client.connection.NotificationsReceiver$GcmIntentService" />
 
         <provider
-            android:name=".sql.SyncedContentProvider"
+            android:name="com.speedycrew.client.sql.SyncedContentProvider"
             android:authorities="com.speedycrew.client.sql.synced.contentprovider"
             android:exported="false" >
         </provider>
@@ -109,6 +109,11 @@
         <meta-data
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
+
+        <activity
+            android:name="com.speedycrew.client.MatchActivity"
+            android:label="@string/title_activity_match" >
+        </activity>
     </application>
 
 </manifest>

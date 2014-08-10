@@ -5,6 +5,7 @@ import org.json.JSONObject;
 import android.app.Fragment;
 import android.content.AsyncQueryHandler;
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -29,16 +30,21 @@ import com.speedycrew.client.sql.Search;
 import com.speedycrew.client.sql.SyncedContentProvider;
 import com.speedycrew.client.util.RequestHelper;
 
-public class SearchFragment extends Fragment implements View.OnClickListener, OnGroupClickListener, OnChildClickListener, OnItemLongClickListener {
+public class SearchFragment extends Fragment implements View.OnClickListener,
+		OnGroupClickListener, OnChildClickListener, OnItemLongClickListener {
 	private static final String LOGTAG = SearchFragment.class.getName();
 
-	static final String[] SEARCH_PROJECTION = new String[] { Search.QUERY, Search.ID, Search._ID };
+	static final String[] SEARCH_PROJECTION = new String[] { Search.QUERY,
+			Search.ID, Search._ID };
 	static final int[] SEARCH_VIEWS_FROM_LAYOUT = new int[] { R.id.query };
 
-	static final String[] MATCH_PROJECTION = new String[] { Match.USERNAME, Match.DISTANCE, Match.SEARCH, Match.OTHER_SEARCH, Match._ID, };
-	static final int[] MATCH_VIEWS_FROM_LAYOUT = new int[] { R.id.username, R.id.distance };
+	static final String[] MATCH_PROJECTION = new String[] { Match.USERNAME,
+			Match.DISTANCE, Match.SEARCH, Match.OTHER_SEARCH, Match._ID, };
+	static final int[] MATCH_VIEWS_FROM_LAYOUT = new int[] { R.id.username,
+			R.id.distance };
 
-	static final String SORTED_ORDER = SyncedContentProvider.SQLITE_ROWID + " DESC";
+	static final String SORTED_ORDER = SyncedContentProvider.SQLITE_ROWID
+			+ " DESC";
 
 	static final int TOKEN_GROUP = 0;
 	static final int TOKEN_CHILD = 1;
@@ -88,52 +94,70 @@ public class SearchFragment extends Fragment implements View.OnClickListener, On
 	@Override
 	public void onClick(View view) {
 		Log.i(LOGTAG, "SearchFragment onClick");
-		EditText searchText = (EditText) ((View) view.getParent()).findViewById(R.id.queryString);
+		EditText searchText = (EditText) ((View) view.getParent())
+				.findViewById(R.id.queryString);
 		final String queryString = searchText.getText().toString();
 		Log.i(LOGTAG, "SearchFragment queryString[" + queryString + ']');
 
 		try {
-			RequestHelper.createSearch(getActivity(), queryString, this instanceof HiringFragment, new ResultReceiver(new Handler()) {
+			RequestHelper.createSearch(getActivity(), queryString,
+					this instanceof HiringFragment, new ResultReceiver(
+							new Handler()) {
 
-				@Override
-				public void onReceiveResult(int resultCode, Bundle resultData) {
-					Log.i(LOGTAG, "onReceiveResult from createSearch resultCode[" + resultCode + "] resultData[" + resultData + "]");
+						@Override
+						public void onReceiveResult(int resultCode,
+								Bundle resultData) {
+							Log.i(LOGTAG,
+									"onReceiveResult from createSearch resultCode["
+											+ resultCode + "] resultData["
+											+ resultData + "]");
 
-					try {
-						String jsonString = resultData.getString(ConnectionService.BUNDLE_KEY_JSON_RESPONSE);
-						JSONObject responseJson = new JSONObject(jsonString);
-						String status = responseJson.getString(Key.STATUS);
-						if (!"OK".equalsIgnoreCase(status)) {
-							String errorMessage = responseJson.getString(ConnectionService.Key.MESSAGE);
+							try {
+								String jsonString = resultData
+										.getString(ConnectionService.BUNDLE_KEY_JSON_RESPONSE);
+								JSONObject responseJson = new JSONObject(
+										jsonString);
+								String status = responseJson
+										.getString(Key.STATUS);
+								if (!"OK".equalsIgnoreCase(status)) {
+									String errorMessage = responseJson
+											.getString(ConnectionService.Key.MESSAGE);
 
-							Toast.makeText(getActivity(), errorMessage, Toast.LENGTH_SHORT).show();
+									Toast.makeText(getActivity(), errorMessage,
+											Toast.LENGTH_SHORT).show();
 
-						} else {
+								} else {
 
-							// We no longer do this, since we now get back
-							// synchronize results in every response for which
-							// we send timeline and sequence.
-							// RequestHelper.sendSynchronize(getActivity(), 0,
-							// 0, new ResultReceiver(new Handler()) {
-							//
-							// @Override
-							// public void onReceiveResult(int resultCode,
-							// Bundle resultData) {
-							// Log.i(LOGTAG,
-							// "onReceiveResult from synchronize resultCode[" +
-							// resultCode + "] resultData[" + resultData + "]");
-							// Toast.makeText(getActivity(),
-							// "Got synchronise results",
-							// Toast.LENGTH_SHORT).show();
-							// }
-							// });
-							//
+									// We no longer do this, since we now get
+									// back
+									// synchronize results in every response for
+									// which
+									// we send timeline and sequence.
+									// RequestHelper.sendSynchronize(getActivity(),
+									// 0,
+									// 0, new ResultReceiver(new Handler()) {
+									//
+									// @Override
+									// public void onReceiveResult(int
+									// resultCode,
+									// Bundle resultData) {
+									// Log.i(LOGTAG,
+									// "onReceiveResult from synchronize resultCode["
+									// +
+									// resultCode + "] resultData[" + resultData
+									// + "]");
+									// Toast.makeText(getActivity(),
+									// "Got synchronise results",
+									// Toast.LENGTH_SHORT).show();
+									// }
+									// });
+									//
+								}
+							} catch (Exception e) {
+								Log.e(LOGTAG, "onClick get results error: " + e);
+							}
 						}
-					} catch (Exception e) {
-						Log.e(LOGTAG, "onClick get results error: " + e);
-					}
-				}
-			});
+					});
 		} catch (Exception e) {
 			Log.e(LOGTAG, "onClick error: " + e);
 		}
@@ -158,7 +182,9 @@ public class SearchFragment extends Fragment implements View.OnClickListener, On
 			// ID (retrieved from server).
 			// The _ID is needed otherwise you will see errors like Unable to
 			// find column 'id'.
-			super(context, null, R.layout.search_group, SEARCH_PROJECTION, SEARCH_VIEWS_FROM_LAYOUT, R.layout.search_result_child, MATCH_PROJECTION, MATCH_VIEWS_FROM_LAYOUT);
+			super(context, null, R.layout.search_group, SEARCH_PROJECTION,
+					SEARCH_VIEWS_FROM_LAYOUT, R.layout.search_result_child,
+					MATCH_PROJECTION, MATCH_VIEWS_FROM_LAYOUT);
 
 			mContext = context;
 		}
@@ -180,47 +206,73 @@ public class SearchFragment extends Fragment implements View.OnClickListener, On
 			builder.appendEncodedPath(Match.TABLE_NAME);
 			Uri matchUri = builder.build();
 
-			mQueryHandler.startQuery(SearchFragment.TOKEN_CHILD, groupCursor.getPosition(), matchUri, SearchFragment.MATCH_PROJECTION, null, null, SORTED_ORDER);
+			mQueryHandler.startQuery(SearchFragment.TOKEN_CHILD,
+					groupCursor.getPosition(), matchUri,
+					SearchFragment.MATCH_PROJECTION, null, null, SORTED_ORDER);
 
 			return null;
 		}
 	}
 
 	@Override
-	public boolean onChildClick(ExpandableListView parent, View v, int groupPosition, int childPosition, long id) {
+	public boolean onChildClick(ExpandableListView parent, View v,
+			int groupPosition, int childPosition, long id) {
 
-		Cursor cursor = mSearchResultsListAdapter.getChild(groupPosition, childPosition);
-		String matchID = cursor.getString(cursor.getColumnIndex(Match.SEARCH)) + '|' + cursor.getString(cursor.getColumnIndex(Match.OTHER_SEARCH));
+		Cursor cursor = mSearchResultsListAdapter.getChild(groupPosition,
+				childPosition);
+		String search = cursor.getString(cursor.getColumnIndex(Match.SEARCH));
+		String other_search = cursor.getString(cursor
+				.getColumnIndex(Match.OTHER_SEARCH));
 
-		Log.i(LOGTAG, "onChildClick groupPosition[" + groupPosition + "] childPosition[" + childPosition + "] id[" + id + "] matchID[" + matchID + "]");
+		Log.i(LOGTAG, "onChildClick groupPosition[" + groupPosition
+				+ "] childPosition[" + childPosition + "] id[" + id
+				+ "] search[" + search + "] other_search[" + other_search + "]");
 
-		return false;
+		Intent intent = new Intent(getActivity(), MatchActivity.class);
+		intent.putExtra(Match.SEARCH, search);
+		intent.putExtra(Match.OTHER_SEARCH, other_search);
+		startActivity(intent);
+
+		return true;
 	}
 
 	@Override
-	public boolean onGroupClick(ExpandableListView parent, View v, int groupPosition, long id) {
+	public boolean onGroupClick(ExpandableListView parent, View v,
+			int groupPosition, long id) {
 
 		Cursor cursor = mSearchResultsListAdapter.getGroup(groupPosition);
 		String searchID = cursor.getString(cursor.getColumnIndex(Search.ID));
 
-		Log.i(LOGTAG, "onGroupClick groupPosition[" + groupPosition + "] id[" + id + "] searchID[" + searchID + "]");
+		Log.i(LOGTAG, "onGroupClick groupPosition[" + groupPosition + "] id["
+				+ id + "] searchID[" + searchID + "]");
 
 		return false;
 	}
 
 	@Override
-	public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+	public boolean onItemLongClick(AdapterView<?> parent, View view,
+			int position, long id) {
 
-		long packedPosition = mExpandableListView.getExpandableListPosition(position);
+		long packedPosition = mExpandableListView
+				.getExpandableListPosition(position);
 		if (ExpandableListView.getPackedPositionType(packedPosition) == ExpandableListView.PACKED_POSITION_TYPE_CHILD) {
 			// get item ID's
-			int groupPosition = ExpandableListView.getPackedPositionGroup(packedPosition);
-			int childPosition = ExpandableListView.getPackedPositionChild(packedPosition);
+			int groupPosition = ExpandableListView
+					.getPackedPositionGroup(packedPosition);
+			int childPosition = ExpandableListView
+					.getPackedPositionChild(packedPosition);
 
-			Cursor cursor = mSearchResultsListAdapter.getChild(groupPosition, childPosition);
-			String matchID = cursor.getString(cursor.getColumnIndex(Match.SEARCH)) + '|' + cursor.getString(cursor.getColumnIndex(Match.OTHER_SEARCH));
+			Cursor cursor = mSearchResultsListAdapter.getChild(groupPosition,
+					childPosition);
+			String matchID = cursor.getString(cursor
+					.getColumnIndex(Match.SEARCH))
+					+ '|'
+					+ cursor.getString(cursor
+							.getColumnIndex(Match.OTHER_SEARCH));
 
-			Log.i(LOGTAG, "onItemLongClick CHILD position[" + position + "] id[" + id + "] groupPosition[" + groupPosition + "] childPosition[" + childPosition + "] matchID["
+			Log.i(LOGTAG, "onItemLongClick CHILD position[" + position
+					+ "] id[" + id + "] groupPosition[" + groupPosition
+					+ "] childPosition[" + childPosition + "] matchID["
 					+ matchID + "]");
 
 			// handle data
@@ -228,16 +280,21 @@ public class SearchFragment extends Fragment implements View.OnClickListener, On
 			// return true as we are handling the event.
 			return true;
 		} else if (ExpandableListView.getPackedPositionType(packedPosition) == ExpandableListView.PACKED_POSITION_TYPE_GROUP) {
-			int groupPosition = ExpandableListView.getPackedPositionGroup(packedPosition);
+			int groupPosition = ExpandableListView
+					.getPackedPositionGroup(packedPosition);
 
 			Cursor cursor = mSearchResultsListAdapter.getGroup(groupPosition);
-			String searchID = cursor.getString(cursor.getColumnIndex(Search.ID));
+			String searchID = cursor
+					.getString(cursor.getColumnIndex(Search.ID));
 
-			Log.i(LOGTAG, "onItemLongClick GROUP position[" + position + "] id[" + id + "] groupPosition[" + groupPosition + "] searchID[" + searchID + "]");
+			Log.i(LOGTAG, "onItemLongClick GROUP position[" + position
+					+ "] id[" + id + "] groupPosition[" + groupPosition
+					+ "] searchID[" + searchID + "]");
 
 			return true;
 		} else {
-			Log.i(LOGTAG, "onItemLongClick OTHER position[" + position + "] id[" + id + "]");
+			Log.i(LOGTAG, "onItemLongClick OTHER position[" + position
+					+ "] id[" + id + "]");
 		}
 		return false;
 	}
