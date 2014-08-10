@@ -582,6 +582,10 @@ def create_search(request):
     timeline = param_or_null(request, "timeline")
     sequence = param_or_null(request, "sequence")
 
+    # for a limited time only, make up an id if none was provided
+    if id == None:
+        id = str(uuid.uuid4())
+
     # validate inputs
     if id == None or query == None or side == None or longitude == None or latitude == None:
         return HttpResponseBadRequest("400: Expected id, query, side, longitude, latitude")
