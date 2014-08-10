@@ -410,6 +410,12 @@ def docs(request):
     # TODO turn this shit off in production
     return render(request, "docs.html", { "test": "foox" })
 
+def dashboard(request):
+    """A view handler for our cheap and cheerful dashboard web page."""
+    cursor = connection.cursor()
+    # TODO figure out what we want to show...
+    return render(request, "dashboard.html", { "test": "foox" })
+
 def profile(request):
     """A view handler for fetching the user's profile data."""
     profile_id = begin(request)

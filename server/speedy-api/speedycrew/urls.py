@@ -31,6 +31,8 @@ urlpatterns = patterns('',
 
     url(r'^api/1/synchronise$', 'scapi1.views.synchronise', name='synchronise'),
 
+    url(r'^monitoring/dashboard$', 'scapi1.views.dashboard', name='dashboard'),
+
     # Examples:
     # url(r'^$', 'speedycrew.views.home', name='home'),
     # url(r'^speedycrew/', include('speedycrew.foo.urls')),
