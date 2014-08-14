@@ -92,7 +92,10 @@
       <li><a href="leave_crew?x-id=1234;crew=12345678-1234-1234-1234-123456789012">leave_crew</a>
       -- takes crew ID</li>
       <li><a href="send_message?x-id=1234;crew=12345678-1234-1234-1234-123456789012;id=12345678-1234-1234-1234-123456789012;body=Hello">send_message</a>
-      -- takes crew, id, body</li>
+      -- takes crew, id, body to send to an existing crew, or takes
+      id, fingerprint, body to send to a single recipient
+      (automatically creating a new crew if there isn't one already
+      that has only the sender and the recipient in it)</li>
     </ol>
 
     <h2>Media management</h2>

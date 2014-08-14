@@ -914,13 +914,76 @@ def leave_crew(request):
 
 def send_message(request):
     profile_id = begin(request)
-    crew_id = request.REQUEST["crew"]
+    crew_id = param_or_null(request, "crew")
+    fingerprint = param_or_null(request, "fingerprint")
     id = request.REQUEST["id"]
     body = request.REQUEST["body"]
+
+    if (crew_id == None) == (fingerprint == None):
+        return HttpResponseBadRequest("400: Expected exactly one of crew, fingerprint")
+
+    # if you provided a recipient in fingerprint, then we will try to
+    # find a suitable crew: one that has the requestor, the recipient,
+    # and no one else as members
     cursor = connection.cursor()
-    cursor.execute("""INSERT INTO speedycrew.message (id, sender, crew, body, created)
-                      VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP)""",
-                   (id, profile_id, crew_id, body))
+    if fingerprint:
+        cursor.execute("""SELECT p.id
+                            FROM speedycrew.profile p
+                           WHERE p.fingerprint = %s""",
+                       (fingerprint,))
+        row = cursor.fetchone()
+        if row == None:
+            return HttpResponseBadRequest("400: Unknown fingerprint")
+        recipient_profile_id, = row
+        cursor.execute("""SELECT cm.crew
+                            FROM speedycrew.crew_member cm
+                           WHERE cm.crew IN (SELECT cm2.crew
+                                               FROM speedycrew.crew_member cm2
+                                              WHERE cm2.profile = %s
+                                                AND cm2.status = 'ACTIVE')
+                             AND cm.status = 'ACTIVE'
+                           GROUP BY cm.crew
+                          HAVING COUNT(*) = 2
+                             AND BOOL_OR(cm.profile = %s)""",
+                       (profile_id, recipient_profile_id))
+        row = cursor.fetchone()
+        if row == None:
+            # no suitable crew already exists, so we create one and
+            # invite both members
+            crew_id = str(uuid.uuid4())
+            cursor.execute("""INSERT INTO speedycrew.crew (id, created, creator)
+                              VALUES (%s, CURRENT_TIMESTAMP, %s)""",
+                           (crew_id, profile_id))
+            cursor.execute("""INSERT INTO speedycrew.crew_member (crew, profile, status, invited_by, created)
+                              VALUES (%s, %s, 'ACTIVE', %s, CURRENT_TIMESTAMP),
+                                     (%s, %s, 'ACTIVE', %s, CURRENT_TIMESTAMP)""",
+                           (crew_id, profile_id, profile_id, crew_id, recipient_profile_id, profile_id))
+            # make sure we do things in the right order...
+            member_profile_ids = [profile_id, recipient_profile_id]
+            member_profile_ids.sort()
+            for member_profile_id in member_profile_ids:
+                cursor.execute("""INSERT INTO speedycrew.event (profile, seq, type, tab, crew)
+                                  VALUES (%s, speedycrew.next_sequence(%s), 'INSERT', 'CREW', %s)""",
+                               (member_profile_id, member_profile_id, crew_id))
+                for other_member_profile_id in member_profile_ids:
+                    cursor.execute("""SELECT speedycrew.profile_subscription_inc(%s, %s)""",
+                                   (member_profile_id, other_member_profile_id))
+                    cursor.execute("""INSERT INTO speedycrew.event (profile, seq, type, crew, other_profile, tab)
+                                      VALUES (%s, next_sequence(%s), 'INSERT', %s, %s, 'CREW_MEMBER')""",
+                                   (member_profile_id, member_profile_id, crew_id, other_member_profile_id))                    
+        else:
+            crew_id, = row                      
+
+    try:
+        cursor.execute("""INSERT INTO speedycrew.message (id, sender, crew, body, created)
+                          VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP)""",
+                       (id, profile_id, crew_id, body))
+    except IntegrityError, e:
+        if e.message.find('"message_pkey"') != -1:
+            return HttpResponseBadRequest("400: Message ID already exists")
+        else:
+            raise e
+
     cursor.execute("""SELECT profile
                         FROM speedycrew.crew_member
                        WHERE crew = %s

@@ -234,6 +234,40 @@ class Simple(unittest.TestCase):
         self.assertEqual(("00000000-0000-0000-0000-000000000009", "1111", "00000000-0000-0000-0000-000000000000", "This is the body of a message"), self.cursor.fetchone())
         self.assertEqual(("00000000-0000-0000-0000-00000000000a", "2222", "00000000-0000-0000-0000-000000000000", "Foo bar"), self.cursor.fetchone())
         self.assertEqual(None, self.cursor.fetchone())
+        # mr 3333 sends a message to me with just a fingerprint, no crew
+        self.cursor.execute("SELECT COUNT(*) FROM crew")
+        self.assertEqual(1, self.cursor.fetchone()[0])
+        self.cursor.execute("SELECT id FROM crew")
+        crew_id = self.cursor.fetchone()[0]
+        response = post("/api/1/send_message",
+                        { "x-id" : "3333",
+                          "fingerprint" : x_id,
+                          "id" : "00000000-0000-0000-0000-00000000000b",
+                          "body" : "Foo bar foo" })
+        self.assertEqual(response["status"], "OK")
+        # a new crew has been created with me and 3333 in it
+        self.assertEqual("incremental", synchronise(self.local_db))
+        self.cursor.execute("SELECT COUNT(*) FROM crew")
+        self.assertEqual(2, self.cursor.fetchone()[0])
+        self.cursor.execute("SELECT id FROM crew WHERE id != ?", (crew_id,))
+        new_crew_id = self.cursor.fetchone()[0]
+        # both x_id and 3333 are in it
+        self.cursor.execute("SELECT COUNT(*) FROM crew_member WHERE crew = ? AND fingerprint IN (?, ?)", (new_crew_id, x_id, 3333))
+        self.assertEqual(2, self.cursor.fetchone()[0])
+        # I received a message
+        self.cursor.execute("SELECT id, sender, crew, body FROM message WHERE id = '00000000-0000-0000-0000-00000000000b'")
+        self.assertEqual(("00000000-0000-0000-0000-00000000000b", "3333", new_crew_id, "Foo bar foo"), self.cursor.fetchone())
+        # mr 3333 sends another message to me with just a fingerprint, no crew
+        response = post("/api/1/send_message",
+                        { "x-id" : "3333",
+                          "fingerprint" : x_id,
+                          "id" : "00000000-0000-0000-0000-00000000000c",
+                          "body" : "Foo bar foo2" })
+        self.assertEqual(response["status"], "OK")
+        # I received a message in the same crew as before, a new one wasn't created
+        self.assertEqual("incremental", synchronise(self.local_db))
+        self.cursor.execute("SELECT id, sender, crew, body FROM message WHERE id = '00000000-0000-0000-0000-00000000000c'")
+        self.assertEqual(("00000000-0000-0000-0000-00000000000c", "3333", new_crew_id, "Foo bar foo2"), self.cursor.fetchone())
 
     def test_post_search(self):
         # put a matchable query in first
