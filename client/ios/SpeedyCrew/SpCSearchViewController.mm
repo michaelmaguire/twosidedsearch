@@ -16,6 +16,7 @@
 #import <SDWebImage/UIImageView+WebCache.h>
 
 #include "Database.h"
+#include <stdexcept>
 
 @interface SpCSearchViewController ()
 @property NSMutableArray* searches;
@@ -93,10 +94,14 @@
 {
     SpeedyCrew::Database* db = [SpCDatabase getDatabase];
     std::string side([self.side UTF8String]);
-    std::vector<std::string> searches(db->queryColumn("select id from search where side='" + side + "'"));
     [self.searches removeAllObjects];
-    for (std::vector<std::string>::const_iterator it(searches.begin()), end(searches.end()); it != end; ++it) {
-        [self.searches addObject: [SpCSearchView makeWithId:[NSString stringWithFormat:@"%s", it->c_str()] andSide:self.side]];
+    try {
+        std::vector<std::string> searches(db->queryColumn("select id from search where side='" + side + "'"));
+        for (std::vector<std::string>::const_iterator it(searches.begin()), end(searches.end()); it != end; ++it) {
+            [self.searches addObject: [SpCSearchView makeWithId:[NSString stringWithFormat:@"%s", it->c_str()] andSide:self.side]];
+        }
+    }
+    catch (std::runtime_error const& ex) { // eat database errors
     }
 }
 

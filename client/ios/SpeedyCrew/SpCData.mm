@@ -73,9 +73,10 @@
 {
     //-dk:TODO get the radius from the configuration
     // NSString* query = [NSString stringWithFormat:@"side=%@%@&query=%@&longitude=-0.15&latitude=51.5",
-    NSString* query = [NSString stringWithFormat:@"side=%@%@&query=%@&longitude=%f&latitude=%f",
+    //-dk:TODO add id=<uuid> NSString* uuid  = [[NSUUID UUID] UUIDString];
+    NSString* query = [NSString stringWithFormat:@"side=%@%@;query=%@;longitude=%f;latitude=%f",
                         side,
-                        [side isEqual:@"SEEK"]? @"&radius=5000": @"",
+                        [side isEqual:@"SEEK"]? @";radius=5000": @"",
                         [SpCData encodeURL:text],
                         self.longitude,
                         self.latitude
@@ -162,11 +163,11 @@
          || [query isEqual:@"create_search"]
          || [query isEqual:@"update_profile"]
          )
-        && db->query<int>("select count(*) from control") == 1) {
-        sout << "&timeline=" << db->query<std::string>("select timeline from control");
-        sout << "&sequence=" << db->query<std::string>("select sequence from control");
+        && db->query<int>("select count(*) from control", 0) == 1) {
+        sout << ";timeline=" << db->query<std::string>("select timeline from control");
+        sout << ";sequence=" << db->query<std::string>("select sequence from control");
     } 
-    sout << ([body isEqual:@""]? "": "&");
+    sout << ([body isEqual:@""]? "": ";");
     body = [NSString stringWithFormat:@"%s%@", sout.str().c_str(), body];
 
     NSLog(@"sending HTTP POST: url='%@' body='%@'", str, body);
