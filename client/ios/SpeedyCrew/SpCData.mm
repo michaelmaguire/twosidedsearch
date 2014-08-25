@@ -73,6 +73,8 @@
 {
     //-dk:TODO get the radius from the configuration
     // NSString* query = [NSString stringWithFormat:@"side=%@%@&query=%@&longitude=-0.15&latitude=51.5",
+    self.longitude=-0.14;
+    self.latitude=51.4;
     NSString* uuid  = [[[NSUUID UUID] UUIDString] lowercaseString];
     NSString* query = [NSString stringWithFormat:@"id=%@;side=%@%@;query=%@;longitude=%f;latitude=%f",
                         uuid,

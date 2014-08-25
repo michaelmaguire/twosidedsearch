@@ -7,8 +7,13 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "SpCResultView.h"
+#import "SpCProfile.h"
 
 @interface SpCMatchTableViewController : UITableViewController
-@property (weak, nonatomic) IBOutlet UINavigationItem *onToggleView;
+
+- (IBAction)onToggleView:(id)sender;
+@property SpCResultView* result;
+@property SpCProfile*    profile;
 
 @end

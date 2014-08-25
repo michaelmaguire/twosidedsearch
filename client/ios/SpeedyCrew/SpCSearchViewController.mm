@@ -10,6 +10,7 @@
 #import "SpCSearchView.h"
 #import "SpCResultView.h"
 #import "SpCMapViewController.h"
+#import "SpCMatchTableViewController.h"
 #import "SpCAppDelegate.h"
 #import "SpCDatabase.h"
 #import "SpCData.h"
@@ -61,6 +62,12 @@
     if (0 <= tag && tag < [self.searches count]) {
         SpCMapViewController* map = [segue destinationViewController];
         map.search = [self.searches objectAtIndex: tag];
+    }
+    else {
+        SpCMatchTableViewController* match = [segue destinationViewController];
+        match.result = [SpCResultView makeWithRow:-tag];
+        match.profile = [SpCProfile makeWithFingerprint: match.result.fingerprint];
+        NSLog(@"profile: real_name=%@ username=%@ email=%@ message=%@", match.profile.real_name, match.profile.username, match.profile.email, match.profile.message);
     }
 }
 
@@ -179,7 +186,8 @@
         cell = [tv dequeueReusableCellWithIdentifier:@"Search Result"];
         SpCResultView* result = [search.results objectAtIndex: path.row - 1];
 
-        cell.tag = -1;
+        NSLog(@"rowid=%d", result.rowid);
+        cell.tag = -result.rowid;
         cell.textLabel.text = result.identity;
         cell.detailTextLabel.text = result.query;
 

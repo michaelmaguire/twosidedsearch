@@ -49,14 +49,31 @@
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-    return 2;
+    return ([self.profile.real_name length] == 0? 0: 1)
+        +  ([self.profile.username length] == 0? 0: 1)
+        +  ([self.profile.email length] == 0? 0: 1)
+        +  ([self.profile.message length] == 0? 0: 1);
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier: (indexPath.row == 0? @"MatchOverview": @"MatchChat") forIndexPath:indexPath];
-    
-    // Configure the cell...
+    // UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier: (indexPath.row == 0? @"MatchOverview": @"MatchChat") forIndexPath:indexPath];
+    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:  @"MatchOverview" forIndexPath:indexPath];
+    UILabel* label = [cell.contentView viewWithTag:1];
+
+    int count(0);
+    if ([self.profile.real_name length] != 0 && count++ == indexPath.row) {
+        label.text = [NSString stringWithFormat:@"Name: %@", self.profile.real_name];
+    }
+    else if ([self.profile.username length] != 0 && count++ == indexPath.row) {
+        label.text = [NSString stringWithFormat:@"User: %@", self.profile.username];
+    }
+    else if ([self.profile.email length] != 0 && count++ == indexPath.row) {
+        label.text = [NSString stringWithFormat:@"Mail: %@", self.profile.email];
+    }
+    else if ([self.profile.message length] != 0 && count++ == indexPath.row) {
+        label.text = self.profile.message;
+    }
     
     return cell;
 }
@@ -109,5 +126,14 @@
     // Pass the selected object to the new view controller.
 }
 */
+
+// ----------------------------------------------------------------------------
+
+- (IBAction)onToggleView:(id)sender
+{
+    NSLog(@"toggling match view");
+}
+
+// ----------------------------------------------------------------------------
 
 @end
