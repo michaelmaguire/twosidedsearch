@@ -30,6 +30,7 @@
 		AB9C2E6E184EA15400454DCD /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = AB9C2E6C184EA15400454DCD /* InfoPlist.strings */; };
 		AB9C2E70184EA15400454DCD /* SpeedyCrewTests.m in Sources */ = {isa = PBXBuildFile; fileRef = AB9C2E6F184EA15400454DCD /* SpeedyCrewTests.m */; };
 		ABAC2F8718720A4A006D7F7E /* SpCData.mm in Sources */ = {isa = PBXBuildFile; fileRef = ABAC2F8618720A4A006D7F7E /* SpCData.mm */; };
+		ABC8BC4E19AA41D600B33287 /* SpCMatchTableViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = ABC8BC4D19AA41D600B33287 /* SpCMatchTableViewController.m */; };
 		ABD4EA78191FE91F00A37FA1 /* SpCCaptainSearchViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = ABD4EA77191FE91F00A37FA1 /* SpCCaptainSearchViewController.mm */; };
 		ABD4EA7B1922DF9F00A37FA1 /* SpCSearchView.mm in Sources */ = {isa = PBXBuildFile; fileRef = ABD4EA7A1922DF9F00A37FA1 /* SpCSearchView.mm */; };
 		ABE6E2BF19155EEB003D61CC /* SpCCrewSearchViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = ABE6E2BE19155EEB003D61CC /* SpCCrewSearchViewController.mm */; };
@@ -110,6 +111,8 @@
 		AB9C2E6F184EA15400454DCD /* SpeedyCrewTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SpeedyCrewTests.m; sourceTree = "<group>"; };
 		ABAC2F8518720A4A006D7F7E /* SpCData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SpCData.h; sourceTree = "<group>"; };
 		ABAC2F8618720A4A006D7F7E /* SpCData.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = SpCData.mm; sourceTree = "<group>"; };
+		ABC8BC4C19AA41D600B33287 /* SpCMatchTableViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SpCMatchTableViewController.h; sourceTree = "<group>"; };
+		ABC8BC4D19AA41D600B33287 /* SpCMatchTableViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SpCMatchTableViewController.m; sourceTree = "<group>"; };
 		ABD4EA76191FE91F00A37FA1 /* SpCCaptainSearchViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SpCCaptainSearchViewController.h; sourceTree = "<group>"; };
 		ABD4EA77191FE91F00A37FA1 /* SpCCaptainSearchViewController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = SpCCaptainSearchViewController.mm; sourceTree = "<group>"; };
 		ABD4EA791922DF9F00A37FA1 /* SpCSearchView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SpCSearchView.h; sourceTree = "<group>"; };
@@ -227,6 +230,8 @@
 				ABEC17E818C3B00E00D54C93 /* SpCChanging.mm */,
 				ABF397011918185000B8FE39 /* Database.cpp */,
 				ABF397021918185000B8FE39 /* Database.h */,
+				ABC8BC4C19AA41D600B33287 /* SpCMatchTableViewController.h */,
+				ABC8BC4D19AA41D600B33287 /* SpCMatchTableViewController.m */,
 			);
 			path = SpeedyCrew;
 			sourceTree = "<group>";
@@ -397,6 +402,7 @@
 				AB9C2E51184EA15400454DCD /* main.mm in Sources */,
 				ABD4EA78191FE91F00A37FA1 /* SpCCaptainSearchViewController.mm in Sources */,
 				AB6EDE5E187701AE0026A1AB /* SpCSearchViewController.mm in Sources */,
+				ABC8BC4E19AA41D600B33287 /* SpCMatchTableViewController.m in Sources */,
 				AB937E2B192952F200FC921D /* SpCMapViewController.mm in Sources */,
 				AB6EDE64187869E20026A1AB /* SpCDatabase.mm in Sources */,
 				ABF397031918185000B8FE39 /* Database.cpp in Sources */,

@@ -58,7 +58,7 @@
 {
     UIView* view = (UIButton*)sender;
     int tag = view.tag;
-    if (tag < [self.searches count]) {
+    if (0 <= tag && tag < [self.searches count]) {
         SpCMapViewController* map = [segue destinationViewController];
         map.search = [self.searches objectAtIndex: tag];
     }
@@ -179,6 +179,7 @@
         cell = [tv dequeueReusableCellWithIdentifier:@"Search Result"];
         SpCResultView* result = [search.results objectAtIndex: path.row - 1];
 
+        cell.tag = -1;
         cell.textLabel.text = result.identity;
         cell.detailTextLabel.text = result.query;
 
