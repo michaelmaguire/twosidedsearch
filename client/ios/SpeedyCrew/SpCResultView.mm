@@ -24,7 +24,7 @@
     return [[SpCResultView alloc] initWithKey:key];
 }
 
-+ (SpCResultView*)makeWithRow:(int)row
++ (SpCResultView*)makeWithRow:(long)row
 {
     SpeedyCrew::Database* db = [SpCDatabase getDatabase];
     std::ostringstream condition;
@@ -117,7 +117,7 @@
 
 // ----------------------------------------------------------------------------
 
-- (int)rowid
+- (long)rowid
 {
     SpeedyCrew::Database* db = [SpCDatabase getDatabase];
     std::string key = [self.key UTF8String];

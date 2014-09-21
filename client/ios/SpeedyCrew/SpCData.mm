@@ -20,6 +20,7 @@
 #include <string>
  
 @interface SpCData()
+@property NSString*            usedIdentity;
 @property NSString*            baseURL;
 @property NSMutableDictionary* listeners;
 @property NSCache*             cache;
@@ -31,7 +32,8 @@
 {
     SpCDatabase* database = [SpCDatabase database];
     self.baseURL = @"http://captain:cook@dev.speedycrew.com/api/1/";
-    self.identity = [database querySetting: @"scid"];
+    self.usedIdentity = [database querySetting: @"scid"];
+    NSLog(@"using identity scid='%@'", self.identity);
     self.searches = [[NSMutableArray alloc] init]; //-dk:TODO recover stored searches
     self.listeners = [[NSMutableDictionary alloc] init];
     self.cache = [[NSCache alloc] init];
@@ -39,6 +41,11 @@
     self.latitude  = 0.0;
     
     return self;
+}
+
+- (NSString*)identity
+{
+    return self.usedIdentity;
 }
 
 - (void)synchronise
@@ -62,9 +69,8 @@
 
 - (void)updateSetting:(NSString*)name with:(NSString*)value
 {
-    SpCDatabase* database = [SpCDatabase database];
-    [database updateSetting:name with:value];
-    NSString* encoded = [value stringByAddingPercentEscapesUsingEncoding: NSUTF8StringEncoding];
+    NSLog(@"updating setting name='%@' value='%@'", name, value);
+    NSString* encoded = [value stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet characterSetWithCharactersInString:@"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"]];
     NSString* query = [NSString stringWithFormat:@"%@=%@", name, encoded];
     [self sendHttpRequest:@"update_profile" withBody:query];
 }
@@ -104,10 +110,11 @@
 
         SpeedyCrew::Database* db = [SpCDatabase getDatabase];
         NSArray* queries = [dict objectForKey: @"sql"];
-        if (queries) {
+        if (queries && ![queries isEqual:[NSNull null]]) {
+            NSLog(@"queries=%@", queries);
             try {
                 SpeedyCrew::Database::Transaction transaction(db);
-                for (int i = 0, count = [queries count]; i != count; ++i) {
+                for (long i = 0, count = [queries count]; i != count; ++i) {
                     db->execute([[queries objectAtIndex: i] UTF8String]);
                     // try { db->execute([[queries objectAtIndex: i] UTF8String]); } catch(...) {}
                 }
@@ -120,8 +127,8 @@
             }
         }
         NSArray* meta = [dict objectForKey: @"metadata"];
-        if (meta) {
-            for (int i = 0, count = [meta count]; i != count; ++i) {
+        if (meta && ![meta isEqual:[NSNull null]]) {
+            for (long i = 0, count = [meta count]; i != count; ++i) {
                 NSString* data = [[meta objectAtIndex:i] objectForKey: @"DELETE"];
                 if (data) {
                     std::string str([data UTF8String]);
@@ -133,7 +140,7 @@
             }
         }
 
-        if (type) {
+        if (type && ![type isEqual:[NSNull null]]) {
             if ([type isEqual:@"synchronise_response"]
                 || [type isEqual:@"create_search_response"]
                 || [type isEqual:@"update_profile_response"]
@@ -229,7 +236,7 @@
                    [](unsigned char c){ return char(std::tolower(c)); });
 
     unsigned char buffer[CC_MD5_DIGEST_LENGTH];
-    CC_MD5(mail.c_str(), mail.size(), buffer);
+    CC_MD5(mail.c_str(), (unsigned int)mail.size(), buffer);
     std::ostringstream out;
     (out << std::hex).fill('0');
     for (unsigned char* it(std::begin(buffer)),* end(std::end(buffer));

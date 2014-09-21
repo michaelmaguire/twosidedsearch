@@ -59,7 +59,7 @@
 {
     // UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier: (indexPath.row == 0? @"MatchOverview": @"MatchChat") forIndexPath:indexPath];
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:  @"MatchOverview" forIndexPath:indexPath];
-    UILabel* label = [cell.contentView viewWithTag:1];
+    UILabel* label = (UILabel*)[cell.contentView viewWithTag:1];
 
     int count(0);
     if ([self.profile.real_name length] != 0 && count++ == indexPath.row) {

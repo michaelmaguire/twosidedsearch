@@ -12,7 +12,7 @@
 
 @interface SpCData : SpCChanging
 
-@property NSString*       identity;
+@property (readonly) NSString*       identity;
 @property NSMutableArray* searches;
 @property float           longitude;
 @property float           latitude;

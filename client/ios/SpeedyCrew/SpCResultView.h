@@ -20,10 +20,10 @@
 @property (nonatomic, readonly, copy) NSString*              query;
 @property (nonatomic, readonly, copy) NSString*              email;
 @property (readonly)                  NSString*              key;
-@property (readonly)                  int                    rowid;
+@property (readonly)                  long                   rowid;
 
 + (SpCResultView*)makeWithKey:(NSString*)key;
-+ (SpCResultView*)makeWithRow:(int)row;
++ (SpCResultView*)makeWithRow:(long)row;
 - (SpCResultView*)initWithKey:(NSString*)key;
 
 @end

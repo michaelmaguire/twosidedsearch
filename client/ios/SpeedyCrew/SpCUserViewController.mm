@@ -64,27 +64,39 @@
     NSString* id = [self.elements objectAtIndex:path.row];
     SpeedyCrew::Database* db = [SpCDatabase getDatabase];
     UITableViewCell *cell = [tv dequeueReusableCellWithIdentifier:id forIndexPath:path];
-    if (0 == path.row) {
+    NSLog(@"getting cell for user view: section=%ld row=%ld", (long)path.section, (long)path.row);
+    if (0 == (long)path.row) {
         std::string val(db->query<std::string>("select value from settings where name='scid'"));
         NSString* value = [NSString stringWithFormat:@"%s", val.c_str()];
-        UIView* view = [cell.contentView viewWithTag:0];
-        if (view && 2 == view.subviews.count) {
-            UILabel* label = [view.subviews objectAtIndex:1];
+        NSLog(@"setting UUID value: '%@'", value);
+        UIView* view = [cell.contentView viewWithTag:1];
+        if (view && ![view isEqual:[NSNull null]]) {
+            NSLog(@"setting label text to UUID value: '%@'", value);
+            UILabel* label = (UILabel*)view;
             label.text = value;
         }
     }
     else {
-        UIView* view = [cell.contentView viewWithTag:0];
-        if (view && 2 == view.subviews.count) {
+        UIView* view = [cell.contentView viewWithTag: -1];
+        if (view && ![view isEqual:[NSNull null]]) {
             std::string val;
             if (db->query<int>("select count(*) from profile") == 1) {
+                NSLog(@"getting profile field '%@'", id);
                 val = db->query<std::string>("select " + std::string([id UTF8String]) + " from profile");
             }
+            else {
+                NSLog(@"not exactly one row in the profile table: %d",
+                      db->query<int>("select count(*) from profile"));
+            }
             NSString* value = [NSString stringWithFormat:@"%s", val.c_str()];
-            UITextField* text = [view.subviews objectAtIndex:1];
+            NSLog(@"setting field %ld name='%@' value='%@'", (long)path.row, id, value);
+            UITextField* text = (UITextField*)view;
             text.text     = value;
             text.tag      = path.row;
             text.delegate = self;
+        }
+        else {
+            NSLog(@"couldn't locate content view for row '%ld' name='%@'", (long)path.row, id);
         }
     }
     return cell;
