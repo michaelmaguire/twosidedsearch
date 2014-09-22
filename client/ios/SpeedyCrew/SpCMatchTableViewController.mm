@@ -136,4 +136,22 @@
 
 // ----------------------------------------------------------------------------
 
+- (BOOL)textView:(UITextView *)textView shouldInteractWithURL:(NSURL *)URL inRange:(NSRange)characterRange
+{
+    NSLog(@"intercepted URL click: '%@'", URL);
+    if ([URL.scheme isEqual:@"mailto"]) {
+        NSString *subject = self.result.query;
+        NSString *address = URL.resourceSpecifier;
+        NSLog(@"address='%@' subject='%@'", address, subject);
+
+        NSURL *url = [[NSURL alloc]
+                         initWithString:[NSString stringWithFormat:@"mailto:?to=%@&subject=%@",
+                                                  [address stringByAddingPercentEscapesUsingEncoding:NSASCIIStringEncoding],
+                                                  [subject stringByAddingPercentEscapesUsingEncoding:NSASCIIStringEncoding]]];
+        [[UIApplication sharedApplication] openURL:url];
+        return NO;
+    }
+    return YES;
+}
+
 @end
