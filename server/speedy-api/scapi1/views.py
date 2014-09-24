@@ -1003,6 +1003,8 @@ def send_message(request):
 
     return json_response({ "message_type" : "send_message_response",
                            "status" : "OK",
+                           "crew_id" : crew_id,
+                           "message_id" : id,
                            "operation" : operation,
                            "metadata" : metadata,
                            "sql" : sql })
