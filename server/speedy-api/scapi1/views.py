@@ -918,6 +918,8 @@ def send_message(request):
     fingerprint = param_or_null(request, "fingerprint")
     id = request.REQUEST["id"]
     body = request.REQUEST["body"]
+    timeline = param_or_null(request, "timeline")
+    sequence = param_or_null(request, "sequence")
 
     if (crew_id == None) == (fingerprint == None):
         return HttpResponseBadRequest("400: Expected exactly one of crew, fingerprint")
@@ -994,8 +996,16 @@ def send_message(request):
                           VALUES (%s, next_sequence(%s), 'INSERT', 'MESSAGE', %s)""",
                        (member_profile_id, member_profile_id, id))
 
+    if timeline and sequence:
+        operation, metadata, sql = do_synchronise(profile_id, int(timeline), int(sequence))
+    else:
+        operation, metadata, sql = None, None, None
+
     return json_response({ "message_type" : "send_message_response",
-                           "status" : "OK" })
+                           "status" : "OK",
+                           "operation" : operation,
+                           "metadata" : metadata,
+                           "sql" : sql })
 
 def trending(request):
     """A dump of popular tags."""
