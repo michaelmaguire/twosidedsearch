@@ -339,7 +339,7 @@ def do_incremental(cursor, profile_id, device_sequence, sql, metadata):
                 sql.append(param("UPDATE crew_member SET status = %s WHERE crew = %s AND fingerprint = %s", (member_status, crew_id, my_fingerprint)))
         elif tab == "MESSAGE":
             if type == "INSERT":
-                metadata.append({ "INSERT" : "message/%s" % message_id })
+                metadata.append({ "INSERT" : "message/%s/%s" % (crew_id, message_id) })
                 sql.append(param("INSERT INTO message (id, sender, crew, body, created) VALUES (%s, %s, %s, %s, %s)", (message_id, message_sender_fingerprint, message_crew, message_body, message_created)))
             # TODO DELETE?  is UPDATE needed?
                 
@@ -992,9 +992,9 @@ def send_message(request):
                        ORDER BY profile""",
                    (crew_id,))
     for member_profile_id, in cursor.fetchall():
-        cursor.execute("""INSERT INTO speedycrew.event (profile, seq, type, tab, message)
-                          VALUES (%s, next_sequence(%s), 'INSERT', 'MESSAGE', %s)""",
-                       (member_profile_id, member_profile_id, id))
+        cursor.execute("""INSERT INTO speedycrew.event (profile, seq, type, tab, message, crew)
+                          VALUES (%s, next_sequence(%s), 'INSERT', 'MESSAGE', %s, %s)""",
+                       (member_profile_id, member_profile_id, id, crew_id))
 
     if timeline and sequence:
         operation, metadata, sql = do_synchronise(profile_id, int(timeline), int(sequence))
