@@ -27,13 +27,19 @@ public class SyncedContentProvider extends ContentProvider {
 	// used for the UriMacher
 	private static final int URI_SEARCH_INDEX = 10;
 	private static final int URI_MATCH_INDEX = 20;
+	private static final int URI_CREW_INDEX = 30;
+	private static final int URI_MESSAGE_INDEX = 40;
 
 	private static final String AUTHORITY = "com.speedycrew.client.sql.synced.contentprovider";
 	private static final String BASE_PATH = "/";
 	public static final Uri BASE_URI = Uri.parse("content://" + AUTHORITY);
-	public static final Uri SEARCH_URI = Uri.parse("content://" + AUTHORITY + BASE_PATH + Search.TABLE_NAME);
+	public static final Uri SEARCH_URI = Uri.parse("content://" + AUTHORITY
+			+ BASE_PATH + Search.TABLE_NAME);
+	public static final Uri CREW_URI = Uri.parse("content://" + AUTHORITY
+			+ BASE_PATH + Crew.TABLE_NAME);
 
-	private static final UriMatcher sURIMatcher = new UriMatcher(UriMatcher.NO_MATCH);
+	private static final UriMatcher sURIMatcher = new UriMatcher(
+			UriMatcher.NO_MATCH);
 
 	/**
 	 * SQLite has a handy hidden _rowid_ columns.
@@ -44,7 +50,11 @@ public class SyncedContentProvider extends ContentProvider {
 	public static final String METHOD_ON_SYNCHRONIZE_RESPONSE = "synchronize";
 	static {
 		sURIMatcher.addURI(AUTHORITY, Search.TABLE_NAME, URI_SEARCH_INDEX);
-		sURIMatcher.addURI(AUTHORITY, Search.TABLE_NAME + "/*/" + Match.TABLE_NAME, URI_MATCH_INDEX);
+		sURIMatcher.addURI(AUTHORITY, Search.TABLE_NAME + "/*/"
+				+ Match.TABLE_NAME, URI_MATCH_INDEX);
+		sURIMatcher.addURI(AUTHORITY, Crew.TABLE_NAME, URI_CREW_INDEX);
+		sURIMatcher.addURI(AUTHORITY, Message.TABLE_NAME + "/*/"
+				+ Message.TABLE_NAME, URI_MESSAGE_INDEX);
 	}
 
 	@Override
@@ -55,7 +65,8 @@ public class SyncedContentProvider extends ContentProvider {
 	}
 
 	@Override
-	public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
+	public Cursor query(Uri uri, String[] projection, String selection,
+			String[] selectionArgs, String sortOrder) {
 
 		Log.i(LOGTAG, "query URI[" + uri + "]");
 
@@ -74,7 +85,8 @@ public class SyncedContentProvider extends ContentProvider {
 				newProjectionVector.add(passedIn);
 			}
 		}
-		String[] newProjection = newProjectionVector.toArray(new String[projection.length]);
+		String[] newProjection = newProjectionVector
+				.toArray(new String[projection.length]);
 
 		// Using SQLiteQueryBuilder instead of query() method
 		SQLiteQueryBuilder queryBuilder = new SQLiteQueryBuilder();
@@ -87,7 +99,16 @@ public class SyncedContentProvider extends ContentProvider {
 			break;
 		case URI_MATCH_INDEX:
 			queryBuilder.setTables(Match.TABLE_NAME);
-			queryBuilder.appendWhere(Match.SEARCH + "='" + pathSegments.get(1) + "'");
+			queryBuilder.appendWhere(Match.SEARCH + "='" + pathSegments.get(1)
+					+ "'");
+			break;
+		case URI_CREW_INDEX:
+			queryBuilder.setTables(Crew.TABLE_NAME);
+			break;
+		case URI_MESSAGE_INDEX:
+			queryBuilder.setTables(Message.TABLE_NAME);
+			queryBuilder.appendWhere(Message.CREW + "='" + pathSegments.get(1)
+					+ "'");
 			break;
 		default:
 			Log.e(LOGTAG, "Unhandled URI[" + uri + "]");
@@ -99,7 +120,8 @@ public class SyncedContentProvider extends ContentProvider {
 
 		SQLiteDatabase db = mSyncedSQLiteOpenHelper.getReadableDatabase();
 
-		Cursor cursor = queryBuilder.query(db, newProjection, selection, selectionArgs, null, null, sortOrder);
+		Cursor cursor = queryBuilder.query(db, newProjection, selection,
+				selectionArgs, null, null, sortOrder);
 
 		// make sure that potential listeners are getting notified
 		cursor.setNotificationUri(getContext().getContentResolver(), uri);
@@ -122,7 +144,8 @@ public class SyncedContentProvider extends ContentProvider {
 
 				JSONArray sqlArray = jsonResponse.getJSONArray("sql");
 				if (sqlArray != null) {
-					SQLiteDatabase db = mSyncedSQLiteOpenHelper.getWritableDatabase();
+					SQLiteDatabase db = mSyncedSQLiteOpenHelper
+							.getWritableDatabase();
 					String sqlStatement = null;
 					int i = 0;
 					try {
@@ -131,19 +154,22 @@ public class SyncedContentProvider extends ContentProvider {
 						final int length = sqlArray.length();
 						for (i = 0; i < length; ++i) {
 							sqlStatement = sqlArray.getString(i);
-							Log.i(LOGTAG, "call: SQL sqlStatement[" + sqlStatement + "]");
+							Log.i(LOGTAG, "call: SQL sqlStatement["
+									+ sqlStatement + "]");
 							db.execSQL(sqlStatement);
 						}
 						db.setTransactionSuccessful();
 					} catch (SQLException sqle) {
-						Log.e(LOGTAG, "call: SQLException for sqlStatement(" + i + ")[" + sqlStatement + "]", sqle);
+						Log.e(LOGTAG, "call: SQLException for sqlStatement("
+								+ i + ")[" + sqlStatement + "]", sqle);
 					} finally {
 						db.endTransaction();
 					}
 				}
 
 			} catch (JSONException jsone) {
-				Log.i(LOGTAG, "call: error parsing as JSON" + jsone.getMessage());
+				Log.i(LOGTAG,
+						"call: error parsing as JSON" + jsone.getMessage());
 			}
 
 			// make sure that potential listeners are getting notified
@@ -153,16 +179,22 @@ public class SyncedContentProvider extends ContentProvider {
 			long timeline = 0;
 			long sequence = 0;
 			try {
-				SQLiteDatabase db = mSyncedSQLiteOpenHelper.getReadableDatabase();
-				Cursor cursor = db.rawQuery("SELECT * FROM " + Control.TABLE_NAME, null);
+				SQLiteDatabase db = mSyncedSQLiteOpenHelper
+						.getReadableDatabase();
+				Cursor cursor = db.rawQuery("SELECT * FROM "
+						+ Control.TABLE_NAME, null);
 				if (cursor.moveToFirst()) {
-					timeline = cursor.getLong(cursor.getColumnIndex(Control.TIMELINE));
-					sequence = cursor.getLong(cursor.getColumnIndex(Control.SEQUENCE));
+					timeline = cursor.getLong(cursor
+							.getColumnIndex(Control.TIMELINE));
+					sequence = cursor.getLong(cursor
+							.getColumnIndex(Control.SEQUENCE));
 				} else {
 					Log.w(LOGTAG, "call: empty cursor, starting sync from 0, 0");
 				}
 			} catch (Exception e) {
-				Log.w(LOGTAG, "call: problem querying timeline and sequence, restarting sync from 0, 0", e);
+				Log.w(LOGTAG,
+						"call: problem querying timeline and sequence, restarting sync from 0, 0",
+						e);
 			}
 			bundle = new Bundle();
 			// We'll use column names as bundle keys here.
@@ -195,7 +227,8 @@ public class SyncedContentProvider extends ContentProvider {
 	}
 
 	@Override
-	public int update(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
+	public int update(Uri uri, ContentValues values, String selection,
+			String[] selectionArgs) {
 		// TODO Auto-generated method stub
 		return 0;
 	}

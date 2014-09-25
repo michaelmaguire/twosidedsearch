@@ -21,7 +21,7 @@ import android.widget.SimpleCursorTreeAdapter;
 
 import com.speedycrew.client.sql.Crew;
 import com.speedycrew.client.sql.Match;
-import com.speedycrew.client.sql.Search;
+import com.speedycrew.client.sql.Message;
 import com.speedycrew.client.sql.SyncedContentProvider;
 
 public class MessageListFragment extends Fragment implements
@@ -132,20 +132,20 @@ public class MessageListFragment extends Fragment implements
 			// Given the group, we return a cursor for all the children within
 			// that group
 
-			// Return a cursor that points to this search's matches
-			Uri.Builder builder = SyncedContentProvider.SEARCH_URI.buildUpon();
+			// Return a cursor that points to this Crew's Messages.
+			Uri.Builder builder = SyncedContentProvider.CREW_URI.buildUpon();
 
-			// Must appendPath so that search id gets encoded as it contains
+			// Must appendPath so that crew id gets encoded as it contains
 			// hyphens.
-			final int columnIndex = groupCursor.getColumnIndex(Search.ID);
-			final String searchIDString = groupCursor.getString(columnIndex);
-			builder.appendPath(searchIDString);
+			final int columnIndex = groupCursor.getColumnIndex(Crew.ID);
+			final String crewIDString = groupCursor.getString(columnIndex);
+			builder.appendPath(crewIDString);
 
-			builder.appendEncodedPath(Match.TABLE_NAME);
-			Uri matchUri = builder.build();
+			builder.appendEncodedPath(com.speedycrew.client.sql.Message.TABLE_NAME);
+			Uri messageUri = builder.build();
 
 			mQueryHandler.startQuery(MessageListFragment.TOKEN_CHILD,
-					groupCursor.getPosition(), matchUri,
+					groupCursor.getPosition(), messageUri,
 					MessageListFragment.MESSAGE_PROJECTION, null, null,
 					SORTED_ORDER);
 
@@ -159,17 +159,14 @@ public class MessageListFragment extends Fragment implements
 
 		Cursor cursor = mMessageListAdapter.getChild(groupPosition,
 				childPosition);
-		String search = cursor.getString(cursor.getColumnIndex(Match.SEARCH));
-		String other_search = cursor.getString(cursor
-				.getColumnIndex(Match.OTHER_SEARCH));
+		String messageId = cursor.getString(cursor.getColumnIndex(Message.ID));
 
 		Log.i(LOGTAG, "onChildClick groupPosition[" + groupPosition
 				+ "] childPosition[" + childPosition + "] id[" + id
-				+ "] search[" + search + "] other_search[" + other_search + "]");
+				+ "] messageId[" + messageId + "]");
 
-		Intent intent = new Intent(getActivity(), MatchActivity.class);
-		intent.putExtra(Match.SEARCH, search);
-		intent.putExtra(Match.OTHER_SEARCH, other_search);
+		Intent intent = new Intent(getActivity(), MessageActivity.class);
+		intent.putExtra(Message.ID, messageId);
 		startActivity(intent);
 
 		return true;
@@ -180,10 +177,10 @@ public class MessageListFragment extends Fragment implements
 			int groupPosition, long id) {
 
 		Cursor cursor = mMessageListAdapter.getGroup(groupPosition);
-		String searchID = cursor.getString(cursor.getColumnIndex(Search.ID));
+		String crewID = cursor.getString(cursor.getColumnIndex(Crew.ID));
 
 		Log.i(LOGTAG, "onGroupClick groupPosition[" + groupPosition + "] id["
-				+ id + "] searchID[" + searchID + "]");
+				+ id + "] crewID[" + crewID + "]");
 
 		return false;
 	}
@@ -203,16 +200,13 @@ public class MessageListFragment extends Fragment implements
 
 			Cursor cursor = mMessageListAdapter.getChild(groupPosition,
 					childPosition);
-			String matchID = cursor.getString(cursor
-					.getColumnIndex(Match.SEARCH))
-					+ '|'
-					+ cursor.getString(cursor
-							.getColumnIndex(Match.OTHER_SEARCH));
+			String messageID = cursor.getString(cursor
+					.getColumnIndex(Message.ID));
 
 			Log.i(LOGTAG, "onItemLongClick CHILD position[" + position
 					+ "] id[" + id + "] groupPosition[" + groupPosition
-					+ "] childPosition[" + childPosition + "] matchID["
-					+ matchID + "]");
+					+ "] childPosition[" + childPosition + "] messageID["
+					+ messageID + "]");
 
 			// handle data
 
@@ -223,12 +217,11 @@ public class MessageListFragment extends Fragment implements
 					.getPackedPositionGroup(packedPosition);
 
 			Cursor cursor = mMessageListAdapter.getGroup(groupPosition);
-			String searchID = cursor
-					.getString(cursor.getColumnIndex(Search.ID));
+			String crewID = cursor.getString(cursor.getColumnIndex(Crew.ID));
 
 			Log.i(LOGTAG, "onItemLongClick GROUP position[" + position
 					+ "] id[" + id + "] groupPosition[" + groupPosition
-					+ "] searchID[" + searchID + "]");
+					+ "] crewID[" + crewID + "]");
 
 			return true;
 		} else {
