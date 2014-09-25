@@ -46,7 +46,7 @@
         locationManager = [[CLLocationManager alloc] init];
         locationManager.delegate = self;
         locationManager.desiredAccuracy = kCLLocationAccuracyBest;
-#if 1
+#if 0
         //-dk:TODO enable location updates
         [locationManager startUpdatingLocation];
 #else

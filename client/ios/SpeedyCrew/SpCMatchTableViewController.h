@@ -11,6 +11,7 @@
 #import "SpCProfile.h"
 
 @interface SpCMatchTableViewController : UITableViewController
+@property (strong, nonatomic) IBOutlet UITableView *tableView;
 
 - (IBAction)onToggleView:(id)sender;
 @property SpCResultView* result;

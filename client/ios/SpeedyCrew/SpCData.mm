@@ -28,6 +28,11 @@
 
 @implementation SpCData
 
++ (NSString*)makeUUID
+{
+    return [[[NSUUID UUID] UUIDString] lowercaseString];
+}
+
 - (SpCData*)init
 {
     SpCDatabase* database = [SpCDatabase database];
@@ -40,6 +45,11 @@
     self.longitude = 0.0; //-dk:TODO use coordinate and deal with no coordinate set!
     self.latitude  = 0.0;
     
+    [NSTimer scheduledTimerWithTimeInterval:10.0
+                                     target:self
+                                   selector:@selector(timedSynchronise:)
+                                   userInfo:nil
+                                    repeats:YES];
     return self;
 }
 
@@ -51,6 +61,11 @@
 - (void)synchronise
 {
     [self sendHttpRequest:@"synchronise" withBody:@""];
+}
+
+- (void)timedSynchronise:(id)none
+{
+    [self synchronise];
 }
 
 - (void)sendToken:(NSString*)token
@@ -79,9 +94,9 @@
 {
     //-dk:TODO get the radius from the configuration
     // NSString* query = [NSString stringWithFormat:@"side=%@%@&query=%@&longitude=-0.15&latitude=51.5",
-    self.longitude=-0.14;
-    self.latitude=51.4;
-    NSString* uuid  = [[[NSUUID UUID] UUIDString] lowercaseString];
+    // self.longitude=-0.14;
+    // self.latitude=51.4;
+    NSString* uuid  = [SpCData makeUUID];
     NSString* query = [NSString stringWithFormat:@"id=%@;side=%@%@;query=%@;longitude=%f;latitude=%f",
                         uuid,
                         side,
@@ -144,7 +159,8 @@
             if ([type isEqual:@"synchronise_response"]
                 || [type isEqual:@"create_search_response"]
                 || [type isEqual:@"update_profile_response"]
-                || [type isEqual:@"set_notification_response"]) {
+                || [type isEqual:@"set_notification_response"]
+                || [type isEqual:@"send_message_response"]) {
             }
             else if ([type isEqual:@"delete_search_response"]) {
                 [self synchronise];
@@ -172,6 +188,7 @@
     if (([query isEqual:@"synchronise"]
          || [query isEqual:@"create_search"]
          || [query isEqual:@"update_profile"]
+         || [query isEqual:@"send_message"]
          )
         && db->query<int>("select count(*) from control", 0) == 1) {
         sout << ";timeline=" << db->query<std::string>("select timeline from control");

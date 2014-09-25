@@ -26,7 +26,7 @@
 		<key>AAC89ED9B554F3B5CF7DDB2BF162FB96327908FE</key>
 		<string>../../../..</string>
 		<key>E28E36D423EC87798E52E2BF482E9F7A1E6479D6</key>
-		<string>../../../..client/ios/SpeedyCrew/SDWebImage/</string>
+		<string>../../../..client/ios/SpeedyCrew/SDWebImage</string>
 	</dict>
 	<key>IDESourceControlProjectURL</key>
 	<string>https://bitbucket.org/michaelupstairs/upstairsdownstairs.git</string>
