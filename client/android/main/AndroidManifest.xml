@@ -114,6 +114,10 @@
             android:name="com.speedycrew.client.MatchActivity"
             android:label="@string/title_activity_match" >
         </activity>
+        <activity
+            android:name="com.speedycrew.client.MessageListActivity"
+            android:label="@string/title_activity_message_list" >
+        </activity>
     </application>
 
 </manifest>
