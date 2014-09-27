@@ -1,5 +1,6 @@
 package com.speedycrew.client.connection;
 
+import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -22,6 +23,7 @@ import java.security.SignatureException;
 import java.security.UnrecoverableEntryException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
+import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.security.spec.AlgorithmParameterSpec;
@@ -38,6 +40,7 @@ import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
+import org.bouncycastle.util.encoders.Base64Encoder;
 
 import android.content.Context;
 import android.provider.Settings.Secure;
@@ -362,6 +365,14 @@ public final class KeyManager {
 		X509Certificate certificate = (X509Certificate) privateKeyEntry
 				.getCertificate();
 
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		byte[] bytes = certificate.getEncoded();
+		Base64Encoder encoder = new Base64Encoder();
+		encoder.encode(bytes, 0, bytes.length, baos);
+		String certificateString = baos.toString();
+
+		Log.i(LOGTAG, "certificateString[" + certificateString + "]");
+
 		return getPublicKeySHA1Fingerprint(certificate);
 	}
 
@@ -375,15 +386,18 @@ public final class KeyManager {
 	 * @param certificate
 	 * @return
 	 * @throws NoSuchAlgorithmException
+	 * @throws CertificateEncodingException
 	 */
 	public static String getPublicKeySHA1Fingerprint(
 			java.security.cert.X509Certificate certificate)
-			throws NoSuchAlgorithmException {
+			throws NoSuchAlgorithmException, CertificateEncodingException {
 
 		MessageDigest md = MessageDigest
 				.getInstance(FINGERPRINT_ALGORITHM_SHA1);
-		byte[] asn1EncodedPublicKey = md.digest(certificate.getPublicKey()
-				.getEncoded());
+		// We have chosen to follow the convention of making the 'fingerprint'
+		// of a certificate to be the SHA1 hash of the *whole* cert DER,
+		// rather than simply the publicKey.
+		byte[] asn1EncodedPublicKey = md.digest(certificate.getEncoded());
 
 		// Hex encode.
 		StringBuffer hexString = new StringBuffer();

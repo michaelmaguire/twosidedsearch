@@ -125,10 +125,13 @@ public class ConnectionService extends IntentService {
 	 */
 	public static final String RESERVED_INTERPROCESS_PREFIX = "RESERVED_INTERPROCESS_PREFIX-";
 
-	public static final String BUNDLE_KEY_RESULT_RECEIVER = RESERVED_INTERPROCESS_PREFIX + "result-receiver";
-	public static final String BUNDLE_KEY_JSON_RESPONSE = RESERVED_INTERPROCESS_PREFIX + "json-response";
+	public static final String BUNDLE_KEY_RESULT_RECEIVER = RESERVED_INTERPROCESS_PREFIX
+			+ "result-receiver";
+	public static final String BUNDLE_KEY_JSON_RESPONSE = RESERVED_INTERPROCESS_PREFIX
+			+ "json-response";
 
-	private void makeRequestWithParameters(final Uri uri, final Bundle parameters) {
+	private void makeRequestWithParameters(final Uri uri,
+			final Bundle parameters) {
 		new Thread(new Runnable() {
 			public void run() {
 
@@ -143,29 +146,36 @@ public class ConnectionService extends IntentService {
 						uniqueUserId = KeyManager.getInstance().getUserId();
 						Log.i(LOGTAG, "uniqueUserId[" + uniqueUserId + "]");
 					} catch (Exception e) {
-						Log.e(LOGTAG, "makeRequestWithParameters getUserId: " + e.getMessage());
+						Log.e(LOGTAG, "makeRequestWithParameters getUserId: "
+								+ e.getMessage());
 						throw e;
 					}
 
 					DefaultHttpClient httpsClient = null;
 					try {
-						SSLSocketFactory socketFactory = KeyManager.getInstance().getSSLSocketFactory();
+						SSLSocketFactory socketFactory = KeyManager
+								.getInstance().getSSLSocketFactory();
 
 						// Set parameter data.
 						HttpParams params = new BasicHttpParams();
-						HttpProtocolParams.setVersion(params, HttpVersion.HTTP_1_1);
+						HttpProtocolParams.setVersion(params,
+								HttpVersion.HTTP_1_1);
 						HttpProtocolParams.setContentCharset(params, "UTF-8");
 						HttpProtocolParams.setUseExpectContinue(params, true);
-						HttpProtocolParams.setUserAgent(params, "Android SpeedyCrew/1.0.0");
+						HttpProtocolParams.setUserAgent(params,
+								"Android SpeedyCrew/1.0.0");
 
 						// Make connection pool.
 						ConnPerRoute connPerRoute = new ConnPerRouteBean(12);
-						ConnManagerParams.setMaxConnectionsPerRoute(params, connPerRoute);
+						ConnManagerParams.setMaxConnectionsPerRoute(params,
+								connPerRoute);
 						ConnManagerParams.setMaxTotalConnections(params, 20);
 
 						// Set timeout.
-						HttpConnectionParams.setStaleCheckingEnabled(params, false);
-						HttpConnectionParams.setConnectionTimeout(params, 30 * 1000);
+						HttpConnectionParams.setStaleCheckingEnabled(params,
+								false);
+						HttpConnectionParams.setConnectionTimeout(params,
+								30 * 1000);
 						HttpConnectionParams.setSoTimeout(params, 30 * 1000);
 						HttpConnectionParams.setSocketBufferSize(params, 8192);
 
@@ -173,18 +183,23 @@ public class ConnectionService extends IntentService {
 						HttpClientParams.setRedirecting(params, false);
 
 						SchemeRegistry schReg = new SchemeRegistry();
-						schReg.register(new Scheme("http", PlainSocketFactory.getSocketFactory(), 80));
+						schReg.register(new Scheme("http", PlainSocketFactory
+								.getSocketFactory(), 80));
 						schReg.register(new Scheme("https", socketFactory, 443));
-						ClientConnectionManager conMgr = new ThreadSafeClientConnManager(params, schReg);
+						ClientConnectionManager conMgr = new ThreadSafeClientConnManager(
+								params, schReg);
 						httpsClient = new DefaultHttpClient(conMgr, params);
 					} catch (Exception e) {
-						Log.e(LOGTAG, "makeRequestWithParameters: error creating DefaultHttpClient: " + e.getMessage());
+						Log.e(LOGTAG,
+								"makeRequestWithParameters: error creating DefaultHttpClient: "
+										+ e.getMessage());
 						throw e;
 					}
 
 					HttpPost httpPost = null;
 					try {
-						httpPost = new HttpPost(SPEEDY_API_URL_PREFIX + uri.getSchemeSpecificPart());
+						httpPost = new HttpPost(SPEEDY_API_URL_PREFIX
+								+ uri.getSchemeSpecificPart());
 
 						// This was only needed initially before we got SSL
 						// working.
@@ -192,20 +207,28 @@ public class ConnectionService extends IntentService {
 						// uniqueUserId);
 
 						// Needed for **dev**.speedycrew.com
-						httpPost.setHeader("Authorization", "Basic " + Base64.encodeToString("captain:cook".getBytes(), Base64.NO_WRAP));
+						httpPost.setHeader(
+								"Authorization",
+								"Basic "
+										+ Base64.encodeToString(
+												"captain:cook".getBytes(),
+												Base64.NO_WRAP));
 
 						// Set post data.
 
 						Set<String> keys = parameters.keySet();
 
-						List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(keys.size());
+						List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(
+								keys.size());
 
 						for (String key : keys) {
 
 							if (!key.startsWith(RESERVED_INTERPROCESS_PREFIX)) {
 								final String value = parameters.getString(key);
-								Log.i(LOGTAG, "Adding to request: key[" + key + "] + value[" + value + "]");
-								nameValuePairs.add(new BasicNameValuePair(key, value));
+								Log.i(LOGTAG, "Adding to request: key[" + key
+										+ "] + value[" + value + "]");
+								nameValuePairs.add(new BasicNameValuePair(key,
+										value));
 							}
 						}
 
@@ -216,10 +239,13 @@ public class ConnectionService extends IntentService {
 						// nameValuePairs.add(new BasicNameValuePair("password",
 						// "N/A"));
 
-						httpPost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
+						httpPost.setEntity(new UrlEncodedFormEntity(
+								nameValuePairs));
 
 					} catch (Exception e) {
-						Log.e(LOGTAG, "makeRequestWithParameters: error HttpGet: " + e.getMessage());
+						Log.e(LOGTAG,
+								"makeRequestWithParameters: error HttpGet: "
+										+ e.getMessage());
 						throw e;
 					}
 
@@ -227,22 +253,28 @@ public class ConnectionService extends IntentService {
 					try {
 						response = httpsClient.execute(httpPost);
 					} catch (Exception e) {
-						Log.e(LOGTAG, "makeRequestWithParameters: error execute: " + e.getMessage());
+						Log.e(LOGTAG,
+								"makeRequestWithParameters: error execute: "
+										+ e.getMessage());
 						throw e;
 					}
 
 					String resultString = null;
 
 					try {
-						final int statusCode = response.getStatusLine().getStatusCode();
+						final int statusCode = response.getStatusLine()
+								.getStatusCode();
 						if (statusCode < 200 || statusCode >= 300) {
 							throw new Exception("HTTP statusCode " + statusCode);
 						}
 
-						resultString = EntityUtils.toString(response.getEntity());
+						resultString = EntityUtils.toString(response
+								.getEntity());
 
 					} catch (Exception e) {
-						Log.e(LOGTAG, "makeRequestWithParameters: error reading response: " + e.getMessage());
+						Log.e(LOGTAG,
+								"makeRequestWithParameters: error reading response: "
+										+ e.getMessage());
 						throw e;
 					}
 
@@ -250,30 +282,40 @@ public class ConnectionService extends IntentService {
 
 					if (jsonResponse.has("sql")) {
 						ContentResolver contentResolver = getContentResolver();
-						contentResolver.call(SyncedContentProvider.BASE_URI, SyncedContentProvider.METHOD_ON_SYNCHRONIZE_RESPONSE, resultString, null);
+						contentResolver
+								.call(SyncedContentProvider.BASE_URI,
+										SyncedContentProvider.METHOD_ON_SYNCHRONIZE_RESPONSE,
+										resultString, null);
 					}
 
 				} catch (Throwable t) {
-					final String errorMessage = "makeRequestWithParameters: " + t.getMessage();
+					final String errorMessage = "makeRequestWithParameters: "
+							+ t.getMessage();
 					Log.e(LOGTAG, errorMessage);
 
 					try {
 						jsonResponse = new JSONObject();
 						jsonResponse.put(Key.STATUS, errorMessage);
-						jsonResponse.put(ConnectionService.Key.MESSAGE, errorMessage);
+						jsonResponse.put(ConnectionService.Key.MESSAGE,
+								errorMessage);
 					} catch (Exception e) {
 						Log.e(LOGTAG, "Unable to report error to UI");
 					}
 				} finally {
-					ResultReceiver replyTo = parameters.getParcelable(BUNDLE_KEY_RESULT_RECEIVER);
+					ResultReceiver replyTo = parameters
+							.getParcelable(BUNDLE_KEY_RESULT_RECEIVER);
 					if (replyTo != null) {
 						try {
-							final String jsonResponseString = jsonResponse.toString();
+							final String jsonResponseString = jsonResponse
+									.toString();
 							Bundle resultData = new Bundle();
-							resultData.putString(BUNDLE_KEY_JSON_RESPONSE, jsonResponseString);
+							resultData.putString(BUNDLE_KEY_JSON_RESPONSE,
+									jsonResponseString);
 							replyTo.send(0, resultData);
 						} catch (Exception e) {
-							Log.e(LOGTAG, "makeRequestWithParameters: error sending response to calling process: " + e.getMessage());
+							Log.e(LOGTAG,
+									"makeRequestWithParameters: error sending response to calling process: "
+											+ e.getMessage());
 						}
 					}
 
@@ -290,7 +332,8 @@ public class ConnectionService extends IntentService {
 		try {
 			KeyManager.getInstance();
 
-			mSyncedSQLiteOpenHelper = new SyncedSQLiteOpenHelper(SpeedyCrewApplication.getAppContext());
+			mSyncedSQLiteOpenHelper = new SyncedSQLiteOpenHelper(
+					SpeedyCrewApplication.getAppContext());
 
 			Log.i(LOGTAG, "onCreate - ConnectionService is running");
 		} catch (Exception e) {
@@ -306,24 +349,32 @@ public class ConnectionService extends IntentService {
 
 	private void enrichWithTimelineAndSequence(Bundle bundle) {
 		ContentResolver contentResolver = getContentResolver();
-		Bundle timelineSequenceResponse = contentResolver.call(SyncedContentProvider.BASE_URI, SyncedContentProvider.METHOD_FETCH_TIMELINE_SEQUENCE, null, null);
+		Bundle timelineSequenceResponse = contentResolver.call(
+				SyncedContentProvider.BASE_URI,
+				SyncedContentProvider.METHOD_FETCH_TIMELINE_SEQUENCE, null,
+				null);
 
 		// By happy (planned) coincidence, the HTTP parameters and
 		// the column names are the same.
-		bundle.putString(Control.SEQUENCE, Long.toString(timelineSequenceResponse.getLong(Control.SEQUENCE)));
-		bundle.putString(Control.TIMELINE, Long.toString(timelineSequenceResponse.getLong(Control.TIMELINE)));
+		bundle.putString(Control.SEQUENCE, Long
+				.toString(timelineSequenceResponse.getLong(Control.SEQUENCE)));
+		bundle.putString(Control.TIMELINE, Long
+				.toString(timelineSequenceResponse.getLong(Control.TIMELINE)));
 	}
 
 	private void enrichWithGeoLocation(Bundle bundle) {
 		// Enrich the bundle with geo location -- probably best not
 		// to try this on the UI thread.
 		LatLng latLng = getLatLng();
-		bundle.putString(ConnectionService.Key.LATITUDE, Double.toString(latLng.latitude));
-		bundle.putString(ConnectionService.Key.LONGITUDE, Double.toString(latLng.longitude));
+		bundle.putString(ConnectionService.Key.LATITUDE,
+				Double.toString(latLng.latitude));
+		bundle.putString(ConnectionService.Key.LONGITUDE,
+				Double.toString(latLng.longitude));
 
-		if (ConnectionService.Key.VALUE_SIDE_SEEK.equals(bundle.getString(ConnectionService.Key.SIDE))) {
+		if (ConnectionService.Key.VALUE_SIDE_SEEK.equals(bundle
+				.getString(ConnectionService.Key.SIDE))) {
 			// Radius must be present for SEEK, absent for PROVIDE.
-			bundle.putString("radius", "5000");
+			bundle.putString("radius", "50000");
 		}
 	}
 
@@ -342,7 +393,8 @@ public class ConnectionService extends IntentService {
 					enrichWithTimelineAndSequence(bundle);
 
 					makeRequestWithParameters(uri, bundle);
-				} else if (ACTION_MAKE_LOCATION_ENRICHED_REQUEST_WITH_PARAMETERS.equals(action)) {
+				} else if (ACTION_MAKE_LOCATION_ENRICHED_REQUEST_WITH_PARAMETERS
+						.equals(action)) {
 					final Uri uri = intent.getData();
 					Log.i(LOGTAG, "onHandleIntent uri[" + uri + "]");
 

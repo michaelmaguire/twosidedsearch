@@ -7,13 +7,17 @@
         android:title="@string/action_profile"/>
     <item
         android:id="@+id/action_about"
-        android:orderInCategory="100"
+        android:orderInCategory="200"
         android:showAsAction="ifRoom"
         android:title="@string/action_about"/>
     <item
         android:id="@+id/action_map"
-        android:orderInCategory="100"
+        android:orderInCategory="40"
         android:showAsAction="ifRoom"
         android:title="@string/action_map"/>
-
+    <item
+        android:id="@+id/action_messages"
+        android:orderInCategory="30"
+        android:showAsAction="ifRoom"
+        android:title="@string/action_messages"/>
 </menu>
