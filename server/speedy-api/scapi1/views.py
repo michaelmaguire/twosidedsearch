@@ -942,28 +942,32 @@ def send_message(request):
                            WHERE cm.crew IN (SELECT cm2.crew
                                                FROM speedycrew.crew_member cm2
                                               WHERE cm2.profile = %s
-                                                AND cm2.status = 'ACTIVE')
+                                                AND cm2.status = 'ACTIVE') -- recipient is one of them
                              AND cm.status = 'ACTIVE'
                            GROUP BY cm.crew
-                          HAVING COUNT(*) = 2
-                             AND BOOL_OR(cm.profile = %s)""",
-                       (profile_id, recipient_profile_id))
+                          HAVING BOOL_AND(cm.profile IN (%s, %s)) -- no other profiles
+                             AND BOOL_OR(cm.profile = %s)         -- sender is one of them""",
+                       (recipient_profile_id, profile_id, recipient_profile_id, profile_id))
         row = cursor.fetchone()
         if row == None:
             # no suitable crew already exists, so we create one and
-            # invite both members
+            # invite both members (or just the sender if sending to
+            # self...)
             crew_id = str(uuid.uuid4())
             cursor.execute("""INSERT INTO speedycrew.crew (id, created, creator)
                               VALUES (%s, CURRENT_TIMESTAMP, %s)""",
                            (crew_id, profile_id))
-            cursor.execute("""INSERT INTO speedycrew.crew_member (crew, profile, status, invited_by, created)
-                              VALUES (%s, %s, 'ACTIVE', %s, CURRENT_TIMESTAMP),
-                                     (%s, %s, 'ACTIVE', %s, CURRENT_TIMESTAMP)""",
-                           (crew_id, profile_id, profile_id, crew_id, recipient_profile_id, profile_id))
-            # make sure we do things in the right order...
-            member_profile_ids = [profile_id, recipient_profile_id]
+            # make sure we do things in the right order...  but also
+            # make sure that if we are sending a message to ourselves,
+            # we don't create a group with ourselves twice!
+            member_profile_ids = [profile_id]
+            if profile_id != recipient_profile_id:
+                member_profile_ids.append(recipient_profile_id)
             member_profile_ids.sort()
             for member_profile_id in member_profile_ids:
+                cursor.execute("""INSERT INTO speedycrew.crew_member (crew, profile, status, invited_by, created)
+                                  VALUES (%s, %s, 'ACTIVE', %s, CURRENT_TIMESTAMP)""",
+                               (crew_id, member_profile_id, profile_id))
                 cursor.execute("""INSERT INTO speedycrew.event (profile, seq, type, tab, crew)
                                   VALUES (%s, speedycrew.next_sequence(%s), 'INSERT', 'CREW', %s)""",
                                (member_profile_id, member_profile_id, crew_id))
