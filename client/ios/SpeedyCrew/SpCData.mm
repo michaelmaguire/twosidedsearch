@@ -72,7 +72,10 @@
 
 - (void)sendToken:(NSString*)token
 {
-    [self sendHttpRequest:@"set_notification" withBody:[NSString stringWithFormat:@"apple_device_token=%@", token]];
+    std::string strToken([token UTF8String]);
+    strToken.erase(std::remove_if(strToken.begin(), strToken.end(),
+                                  [](char c){ return c == '<' || c == ' ' || c == '>'; }));
+    [self sendHttpRequest:@"set_notification" withBody:[NSString stringWithFormat:@"apple_device_token=%s", strToken.c_str()]];
 }
 
 + (NSString*)encodeURL:(NSString*)str

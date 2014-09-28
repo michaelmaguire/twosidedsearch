@@ -64,14 +64,11 @@
     NSString* id = [self.elements objectAtIndex:path.row];
     SpeedyCrew::Database* db = [SpCDatabase getDatabase];
     UITableViewCell *cell = [tv dequeueReusableCellWithIdentifier:id forIndexPath:path];
-    NSLog(@"getting cell for user view: section=%ld row=%ld", (long)path.section, (long)path.row);
     std::string scid(db->query<std::string>("select value from settings where name='scid'"));
     if (0 == (long)path.row) {
         NSString* value = [NSString stringWithFormat:@"%s", scid.c_str()];
-        NSLog(@"setting UUID value: '%@'", value);
         UIView* view = [cell.contentView viewWithTag:1];
         if (view && ![view isEqual:[NSNull null]]) {
-            NSLog(@"setting label text to UUID value: '%@'", value);
             UILabel* label = (UILabel*)view;
             label.text = value;
         }
@@ -81,15 +78,9 @@
         if (view && ![view isEqual:[NSNull null]]) {
             std::string val;
             if (db->query<int>("select count(*) from profile where fingerprint='" + scid + "'") == 1) {
-                NSLog(@"getting profile field '%@'", id);
                 val = db->query<std::string>("select " + std::string([id UTF8String]) + " from profile where fingerprint='" + scid + "'");
             }
-            else {
-                NSLog(@"not exactly one row in the profile table: %d",
-                      db->query<int>("select count(*) from profile"));
-            }
             NSString* value = [NSString stringWithFormat:@"%s", val.c_str()];
-            NSLog(@"setting field %ld name='%@' value='%@'", (long)path.row, id, value);
             UITextField* text = (UITextField*)view;
             text.text     = value;
             text.tag      = path.row;

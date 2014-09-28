@@ -44,7 +44,6 @@
 -(void)reloadMessages
 {
     [self.tableView reloadData];
-    NSLog(@"reloading table: rows=%d", self.rows);
     NSIndexPath* ipath = [NSIndexPath indexPathForRow: self.rows-1 inSection: 0];
     [self.tableView scrollToRowAtIndexPath: ipath atScrollPosition: UITableViewScrollPositionBottom animated: YES];
 }
