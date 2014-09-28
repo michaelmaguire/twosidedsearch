@@ -20,9 +20,8 @@ def param_or_null(request, name):
         return request.REQUEST[name]
 
 def is_well_formed_uuid(s):
-    """Check if a string is a valid RFC <TODO> UUID."""
-    # TODO tolerate uppercase?
-    return re.match(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$', s) != None
+    """Check if a string is a valid RFC 4122 UUID."""
+    return re.match(r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$', s) != None
 
 def get_device_id(request):
     """Extract the device ID and certificate from a request."""
