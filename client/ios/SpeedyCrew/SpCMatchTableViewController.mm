@@ -83,14 +83,11 @@
                                                       "   WHERE cm2.fingerprint = '" + fingerprint + "') "
                                                       "GROUP BY cm.crew "
                                                       " HAVING COUNT(*) = 2");
-            NSLog(@"found crew: %s", crew.c_str());
             int count = db->query<int>("select count(*) from message where crew = '" + crew + "'");
-            NSLog(@"crew %s has %d messages", crew.c_str(), count);
             self.crew = [NSString stringWithFormat:@"%s", crew.c_str()];
             return count;
         }
         catch (std::exception const& ex) {
-            NSLog(@"no existing crew found: %s", ex.what());
             return 0;
         }
     }
@@ -119,9 +116,7 @@
         return cell;
     }
     else {
-        NSLog(@"getting message cell: %ld", (long)indexPath.row);
         UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:  @"Message" forIndexPath:indexPath];
-        NSLog(@"getting message cell: row=%ld cell=%s", (long)indexPath.row, cell? "non-null": "null");
         if (self.crew) {
             UILabel* label = (UILabel*)[cell.contentView viewWithTag:1];
             std::ostringstream query;
@@ -132,7 +127,6 @@
                   << "  LIMIT 1 "
                   << "  OFFSET " << (long)indexPath.row;
             SpeedyCrew::Database* db = [SpCDatabase getDatabase];
-            NSLog(@"getting message cell: row=%ld label=%s query=%s", (long)indexPath.row, label? "non-null": "null", query.str().c_str());
             try {
                 std::string message = db->query<std::string>(query.str());
                 label.text = [NSString stringWithFormat:@"%s", message.c_str()];
@@ -205,11 +199,9 @@
 
 - (BOOL)textView:(UITextView *)textView shouldInteractWithURL:(NSURL *)URL inRange:(NSRange)characterRange
 {
-    NSLog(@"intercepted URL click: '%@'", URL);
     if ([URL.scheme isEqual:@"mailto"]) {
         NSString *subject = self.result.query;
         NSString *address = URL.resourceSpecifier;
-        NSLog(@"address='%@' subject='%@'", address, subject);
 
         NSURL *url = [[NSURL alloc]
                          initWithString:[NSString stringWithFormat:@"mailto:?to=%@&subject=%@",

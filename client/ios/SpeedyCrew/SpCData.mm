@@ -45,8 +45,8 @@
     self.longitude = 0.0; //-dk:TODO use coordinate and deal with no coordinate set!
     self.latitude  = 0.0;
     
-#if 0
-    [NSTimer scheduledTimerWithTimeInterval:10.0
+#if 1
+    [NSTimer scheduledTimerWithTimeInterval:60.0
                                      target:self
                                    selector:@selector(timedSynchronise:)
                                    userInfo:nil
