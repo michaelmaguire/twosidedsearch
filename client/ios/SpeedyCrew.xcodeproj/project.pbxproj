@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		AB29B4B719D8712A004C1AAC /* SpCCrewViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = AB29B4B619D8712A004C1AAC /* SpCCrewViewController.mm */; };
 		AB333835195CCDE800BEC08C /* libSDWebImage.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AB33382E195CCD6D00BEC08C /* libSDWebImage.a */; };
 		AB333837195CCE1B00BEC08C /* ImageIO.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AB333836195CCE1B00BEC08C /* ImageIO.framework */; };
 		AB3FA25219AB831C003D02DC /* SpCProfile.mm in Sources */ = {isa = PBXBuildFile; fileRef = AB3FA25119AB831C003D02DC /* SpCProfile.mm */; };
@@ -79,6 +80,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		AB29B4B519D8712A004C1AAC /* SpCCrewViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SpCCrewViewController.h; sourceTree = "<group>"; };
+		AB29B4B619D8712A004C1AAC /* SpCCrewViewController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = SpCCrewViewController.mm; sourceTree = "<group>"; };
 		AB333826195CCD6D00BEC08C /* SDWebImage.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SDWebImage.xcodeproj; path = SpeedyCrew/SDWebImage/SDWebImage.xcodeproj; sourceTree = "<group>"; };
 		AB333836195CCE1B00BEC08C /* ImageIO.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ImageIO.framework; path = System/Library/Frameworks/ImageIO.framework; sourceTree = SDKROOT; };
 		AB3FA25019AB831C003D02DC /* SpCProfile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SpCProfile.h; sourceTree = "<group>"; };
@@ -237,6 +240,8 @@
 				ABC8BC4D19AA41D600B33287 /* SpCMatchTableViewController.mm */,
 				AB3FA25019AB831C003D02DC /* SpCProfile.h */,
 				AB3FA25119AB831C003D02DC /* SpCProfile.mm */,
+				AB29B4B519D8712A004C1AAC /* SpCCrewViewController.h */,
+				AB29B4B619D8712A004C1AAC /* SpCCrewViewController.mm */,
 			);
 			path = SpeedyCrew;
 			sourceTree = "<group>";
@@ -410,6 +415,7 @@
 				ABC8BC4E19AA41D600B33287 /* SpCMatchTableViewController.mm in Sources */,
 				AB937E2B192952F200FC921D /* SpCMapViewController.mm in Sources */,
 				AB6EDE64187869E20026A1AB /* SpCDatabase.mm in Sources */,
+				AB29B4B719D8712A004C1AAC /* SpCCrewViewController.mm in Sources */,
 				ABF397031918185000B8FE39 /* Database.cpp in Sources */,
 				AB3FA25219AB831C003D02DC /* SpCProfile.mm in Sources */,
 				ABD4EA7B1922DF9F00A37FA1 /* SpCSearchView.mm in Sources */,
