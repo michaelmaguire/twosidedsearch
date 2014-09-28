@@ -9,6 +9,8 @@ import android.os.ResultReceiver;
 import android.util.Log;
 
 import com.speedycrew.client.connection.ConnectionService;
+import com.speedycrew.client.sql.Crew;
+import com.speedycrew.client.sql.Profile;
 
 public abstract class RequestHelper {
 
@@ -38,6 +40,33 @@ public abstract class RequestHelper {
 			context.startService(intent);
 		} catch (Exception e) {
 			Log.e(LOGTAG, "getSearchResults send error: " + e);
+			throw e;
+		}
+	}
+
+	/**
+	 * One of crew or fingerprint may be null, depending on whether we're
+	 * replying to a user fingerprint specified in a match, or whether we're
+	 * adding to an existing crewId chat.
+	 * 
+	 * messageId may be null, in which case a new UUID will be randomly
+	 * generated.
+	 */
+	public static void sendMessage(Context context, Crew crew, Profile fingerprint, com.speedycrew.client.sql.Message message, String bodyTextString, ResultReceiver resultReceiver)
+			throws Exception {
+		try {
+			if (message == null) {
+				message = new com.speedycrew.client.sql.Message();
+			}
+
+			Uri uri = Uri.parse("1/send_message");
+			Bundle bundle = produceSendMessageBundle(crew, message, fingerprint, bodyTextString);
+			bundle.putParcelable(ConnectionService.BUNDLE_KEY_RESULT_RECEIVER, resultReceiver);
+			Intent intent = new Intent(ConnectionService.ACTION_MAKE_SIMPLE_REQUEST_WITH_PARAMETERS, uri, context, ConnectionService.class);
+			intent.putExtras(bundle);
+			context.startService(intent);
+		} catch (Exception e) {
+			Log.e(LOGTAG, "createSearch send error: " + e);
 			throw e;
 		}
 	}
@@ -118,6 +147,29 @@ public abstract class RequestHelper {
 		Bundle bundle = new Bundle();
 
 		bundle.putString(ConnectionService.Key.SEARCH, searchId);
+
+		return bundle;
+	}
+
+	/**
+	 * One of crewId or fingerprint may be null, depending on whether we're
+	 * replying to a user fingerprint specified in a match, or whether we're
+	 * adding to an existing crewId chat.
+	 * 
+	 * messageId may be null, in which case a new UUID will be randomly
+	 * generated.
+	 */
+	private static Bundle produceSendMessageBundle(Crew crew, com.speedycrew.client.sql.Message message, Profile fingerprint, String bodyText) {
+		Bundle bundle = new Bundle();
+
+		if (crew != null) {
+			bundle.putString(com.speedycrew.client.sql.Message.CREW, crew.getCrewId());
+		}
+		if (fingerprint != null) {
+			bundle.putString(com.speedycrew.client.sql.Match.FINGERPRINT, fingerprint.getFingerprint());
+		}
+		bundle.putString(com.speedycrew.client.sql.Message.ID, message.getMessageId());
+		bundle.putString(com.speedycrew.client.sql.Message.BODY, bodyText);
 
 		return bundle;
 	}

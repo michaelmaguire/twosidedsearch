@@ -18,5 +18,8 @@
     <string name="title_activity_message_list">MessageListActivity</string>
     <string name="title_activity_message">MessageActivity</string>
     <string name="hello_world">Hello world!</string>
+    <string name="title_activity_message_compose">MessageComposeActivity</string>
+    <string name="action_reply">Reply</string>
+    <string name="action_send">Send</string>
 
 </resources>

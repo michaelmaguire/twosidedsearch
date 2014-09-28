@@ -53,7 +53,7 @@ public class SyncedContentProvider extends ContentProvider {
 		sURIMatcher.addURI(AUTHORITY, Search.TABLE_NAME + "/*/"
 				+ Match.TABLE_NAME, URI_MATCH_INDEX);
 		sURIMatcher.addURI(AUTHORITY, Crew.TABLE_NAME, URI_CREW_INDEX);
-		sURIMatcher.addURI(AUTHORITY, Message.TABLE_NAME + "/*/"
+		sURIMatcher.addURI(AUTHORITY, Crew.TABLE_NAME + "/*/"
 				+ Message.TABLE_NAME, URI_MESSAGE_INDEX);
 	}
 

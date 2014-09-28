@@ -1,8 +1,22 @@
 package com.speedycrew.client.sql;
 
-public interface Profile extends android.provider.BaseColumns {
+public class Profile implements android.provider.BaseColumns {
 
 	public final static String TABLE_NAME = "profile";
+
+	private String mFingerprint;
+
+	public Profile(String fingerprint) {
+		mFingerprint = fingerprint;
+	}
+
+	public String getFingerprint() {
+		return mFingerprint;
+	}
+
+	public String toString() {
+		return getFingerprint();
+	}
 
 	// Columns names
 	public static final String USERNAME = "username";

@@ -20,7 +20,6 @@ import android.widget.ExpandableListView.OnGroupClickListener;
 import android.widget.SimpleCursorTreeAdapter;
 
 import com.speedycrew.client.sql.Crew;
-import com.speedycrew.client.sql.Match;
 import com.speedycrew.client.sql.Message;
 import com.speedycrew.client.sql.SyncedContentProvider;
 
@@ -28,31 +27,54 @@ public class MessageListFragment extends Fragment implements
 		View.OnClickListener, OnGroupClickListener, OnChildClickListener,
 		OnItemLongClickListener {
 
-	@Override
-	public View onCreateView(LayoutInflater inflater, ViewGroup container,
-			Bundle savedInstanceState) {
-		View rootView = inflater.inflate(R.layout.fragment_message_list,
-				container, false);
-		return rootView;
-	}
+	protected QueryHandler mQueryHandler;
+
+	protected ExpandableListView mExpandableListView;
+
+	protected MessageListAdapter mMessageListAdapter;
 
 	private static final String LOGTAG = MessageListFragment.class.getName();
 
 	static final String[] CREW_PROJECTION = new String[] { Crew.NAME, Crew.ID,
 			Crew._ID };
-	static final int[] CREW_VIEWS_FROM_LAYOUT = new int[] { R.id.name };
+	static final int[] CREW_VIEWS_FROM_LAYOUT = new int[] { R.id.name, R.id.id };
 
 	static final String[] MESSAGE_PROJECTION = new String[] {
 			com.speedycrew.client.sql.Message.SENDER,
-			com.speedycrew.client.sql.Message.BODY, Match._ID, };
+			com.speedycrew.client.sql.Message.BODY, Message.ID, Message._ID, };
 	static final int[] MESSAGE_VIEWS_FROM_LAYOUT = new int[] { R.id.sender,
-			R.id.body };
+			R.id.body, R.id.id };
 
 	static final String SORTED_ORDER = SyncedContentProvider.SQLITE_ROWID
 			+ " DESC";
 
 	static final int TOKEN_GROUP = 0;
 	static final int TOKEN_CHILD = 1;
+
+	@Override
+	public View onCreateView(LayoutInflater inflater, ViewGroup container,
+			Bundle savedInstanceState) {
+		View rootView = inflater.inflate(R.layout.fragment_message_list,
+				container, false);
+
+		mMessageListAdapter = new MessageListAdapter(getActivity());
+		mExpandableListView = (ExpandableListView) rootView
+				.findViewById(R.id.list);
+		mExpandableListView.setAdapter(mMessageListAdapter);
+		mExpandableListView.setOnGroupClickListener(this);
+		mExpandableListView.setOnChildClickListener(this);
+		mExpandableListView.setLongClickable(true);
+		mExpandableListView.setOnItemLongClickListener(this);
+
+		mQueryHandler = new QueryHandler(getActivity(), mMessageListAdapter);
+
+		// Query for chat crews.
+		mQueryHandler.startQuery(TOKEN_GROUP, null,
+				SyncedContentProvider.CREW_URI, CREW_PROJECTION, null, null,
+				SORTED_ORDER);
+
+		return rootView;
+	}
 
 	static final class QueryHandler extends AsyncQueryHandler {
 		private CursorTreeAdapter mAdapter;
@@ -76,12 +98,6 @@ public class MessageListFragment extends Fragment implements
 			}
 		}
 	}
-
-	protected QueryHandler mQueryHandler;
-
-	protected ExpandableListView mExpandableListView;
-
-	protected MessageListAdapter mMessageListAdapter;
 
 	@Override
 	public void onCreate(Bundle saved) {

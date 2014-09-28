@@ -1,6 +1,12 @@
 package com.speedycrew.client.sql;
 
-public interface Message extends android.provider.BaseColumns {
+import java.util.UUID;
+
+import android.util.Log;
+
+public class Message implements android.provider.BaseColumns {
+	private static final String LOGTAG = Message.class.getName();
+
 	public final static String TABLE_NAME = "message";
 
 	// Columns names
@@ -9,4 +15,24 @@ public interface Message extends android.provider.BaseColumns {
 	public static final String CREW = "crew";
 	public static final String BODY = "body";
 	public static final String CREATED = "created";
+
+	private String mMessageId;
+
+	public Message(String messageId) {
+		mMessageId = messageId;
+	}
+
+	public Message() {
+		UUID uuid = UUID.randomUUID();
+		mMessageId = uuid.toString();
+		Log.i(LOGTAG, "Message constructor generating randomUUID mMessageId[" + mMessageId + "]");
+	}
+
+	public String getMessageId() {
+		return mMessageId;
+	}
+
+	public String toString() {
+		return getMessageId();
+	}
 }
