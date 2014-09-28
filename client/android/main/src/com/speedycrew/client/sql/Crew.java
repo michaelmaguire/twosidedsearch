@@ -6,6 +6,9 @@ public class Crew implements android.provider.BaseColumns {
 
 	public final static String TABLE_NAME = "crew";
 
+	// HTTP parameter name
+	public static final String PARAMETER_NAME = "crew_id";
+
 	// Columns names
 	public static final String ID = "id";
 	public static final String NAME = "name";
@@ -22,7 +25,7 @@ public class Crew implements android.provider.BaseColumns {
 
 	public void addToBundle(Bundle bundle) {
 		if (mCrewId != null) {
-			bundle.putString(com.speedycrew.client.sql.Message.CREW, mCrewId);
+			bundle.putString(PARAMETER_NAME, mCrewId);
 		}
 	}
 

@@ -10,6 +10,9 @@ public class Message implements android.provider.BaseColumns {
 
 	public final static String TABLE_NAME = "message";
 
+	// HTTP parameter name
+	public static final String PARAMETER_NAME = "message_id";
+
 	// Columns names
 	public static final String ID = "id";
 	public static final String SENDER = "sender";
@@ -35,7 +38,7 @@ public class Message implements android.provider.BaseColumns {
 
 	public void addToBundle(Bundle bundle) {
 		if (mMessageId != null) {
-			bundle.putString(ID, mMessageId);
+			bundle.putString(PARAMETER_NAME, mMessageId);
 		}
 	}
 
