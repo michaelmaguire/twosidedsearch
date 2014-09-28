@@ -122,6 +122,10 @@
             android:name="com.speedycrew.client.MessageActivity"
             android:label="@string/title_activity_message" >
         </activity>
+        <activity
+            android:name="com.speedycrew.client.MessageComposeActivity"
+            android:label="@string/title_activity_message_compose" >
+        </activity>
     </application>
 
 </manifest>

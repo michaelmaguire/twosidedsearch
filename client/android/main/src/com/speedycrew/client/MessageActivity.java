@@ -2,17 +2,20 @@ package com.speedycrew.client;
 
 import android.app.Activity;
 import android.app.Fragment;
+import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.speedycrew.client.sql.Crew;
 import com.speedycrew.client.sql.Message;
 import com.speedycrew.client.sql.SyncedSQLiteOpenHelper;
 
@@ -30,31 +33,49 @@ public class MessageActivity extends Activity {
 		}
 	}
 
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-
-		// Inflate the menu; this adds items to the action bar if it is present.
-		getMenuInflater().inflate(R.menu.message, menu);
-		return true;
-	}
-
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-		// Handle action bar item clicks here. The action bar will
-		// automatically handle clicks on the Home/Up button, so long
-		// as you specify a parent activity in AndroidManifest.xml.
-		int id = item.getItemId();
-		if (id == R.id.action_settings) {
-			return true;
-		}
-		return super.onOptionsItemSelected(item);
-	}
-
 	public static class MessageFragment extends Fragment {
 		SyncedSQLiteOpenHelper mSyncedSQLiteOpenHelper;
 
 		public MessageFragment() {
 
+		}
+
+		@Override
+		public void onCreate(Bundle saved) {
+			super.onCreate(saved);
+			if (null != saved) {
+				// Restore state here
+			}
+			Log.i(LOGTAG, "onCreate");
+
+			setHasOptionsMenu(true);
+		}
+
+		@Override
+		public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+
+			// Inflate the menu; this adds items to the action bar if it is
+			// present.
+			inflater.inflate(R.menu.message, menu);
+		}
+
+		@Override
+		public boolean onOptionsItemSelected(MenuItem item) {
+			// Handle action bar item clicks here. The action bar will
+			// automatically handle clicks on the Home/Up button, so long
+			// as you specify a parent activity in AndroidManifest.xml.
+			int id = item.getItemId();
+			if (id == R.id.action_reply) {
+				Intent intent = new Intent(getActivity(),
+						MessageComposeActivity.class);
+
+				TextView t = (TextView) getActivity().findViewById(R.id.crew);
+				String crewId = t.getText().toString();
+				intent.putExtra(Crew.ID, crewId);
+				startActivity(intent);
+				return true;
+			}
+			return super.onOptionsItemSelected(item);
 		}
 
 		@Override
