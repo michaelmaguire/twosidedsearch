@@ -1,5 +1,7 @@
 package com.speedycrew.client.sql;
 
+import android.os.Bundle;
+
 public class Crew implements android.provider.BaseColumns {
 
 	public final static String TABLE_NAME = "crew";
@@ -16,6 +18,12 @@ public class Crew implements android.provider.BaseColumns {
 
 	public String getCrewId() {
 		return mCrewId;
+	}
+
+	public void addToBundle(Bundle bundle) {
+		if (mCrewId != null) {
+			bundle.putString(com.speedycrew.client.sql.Message.CREW, mCrewId);
+		}
 	}
 
 	public String toString() {

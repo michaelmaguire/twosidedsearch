@@ -2,6 +2,7 @@ package com.speedycrew.client.sql;
 
 import java.util.UUID;
 
+import android.os.Bundle;
 import android.util.Log;
 
 public class Message implements android.provider.BaseColumns {
@@ -30,6 +31,12 @@ public class Message implements android.provider.BaseColumns {
 
 	public String getMessageId() {
 		return mMessageId;
+	}
+
+	public void addToBundle(Bundle bundle) {
+		if (mMessageId != null) {
+			bundle.putString(ID, mMessageId);
+		}
 	}
 
 	public String toString() {

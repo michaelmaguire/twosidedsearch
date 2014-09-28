@@ -1,5 +1,7 @@
 package com.speedycrew.client.sql;
 
+import android.os.Bundle;
+
 public class Profile implements android.provider.BaseColumns {
 
 	public final static String TABLE_NAME = "profile";
@@ -12,6 +14,12 @@ public class Profile implements android.provider.BaseColumns {
 
 	public String getFingerprint() {
 		return mFingerprint;
+	}
+
+	public void addToBundle(Bundle bundle) {
+		if (mFingerprint != null) {
+			bundle.putString(com.speedycrew.client.sql.Match.FINGERPRINT, mFingerprint);
+		}
 	}
 
 	public String toString() {

@@ -163,12 +163,12 @@ public abstract class RequestHelper {
 		Bundle bundle = new Bundle();
 
 		if (crew != null) {
-			bundle.putString(com.speedycrew.client.sql.Message.CREW, crew.getCrewId());
+			crew.addToBundle(bundle);
 		}
 		if (fingerprint != null) {
-			bundle.putString(com.speedycrew.client.sql.Match.FINGERPRINT, fingerprint.getFingerprint());
+			fingerprint.addToBundle(bundle);
 		}
-		bundle.putString(com.speedycrew.client.sql.Message.ID, message.getMessageId());
+		message.addToBundle(bundle);
 		bundle.putString(com.speedycrew.client.sql.Message.BODY, bodyText);
 
 		return bundle;
