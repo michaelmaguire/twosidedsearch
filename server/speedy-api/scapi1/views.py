@@ -13,11 +13,21 @@ def json_response(object):
     return HttpResponse(json.dumps(object, indent=4),
                         content_type="application/json")
 
-def param_or_null(request, name):
-    if name not in request.REQUEST:
-        return None
-    else:
-        return request.REQUEST[name]
+def param_required(request, names):
+    if isinstance(names, basestring):
+        names = (names,)
+    for name in names:
+        if name in request.REQUEST:
+            return request.REQUEST[name]
+    raise Exception("Expected one of %s" % str(names))
+
+def param_or_null(request, names):
+    if isinstance(names, basestring):
+        names = (names,)
+    for name in names:
+        if name in request.REQUEST:
+            return request.REQUEST[name]
+    return None
 
 def is_well_formed_uuid(s):
     """Check if a string is a valid RFC 4122 UUID."""
@@ -564,7 +574,7 @@ def create_search(request):
     cursor = connection.cursor()
 
     # required parameters
-    id = param_or_null(request, "id")
+    id = param_or_null(request, ("search_id", "id")) # TODO remove deprecated form
     query = param_or_null(request, "query")
     side = param_or_null(request, "side")
     longitude = param_or_null(request, "longitude")
@@ -587,7 +597,7 @@ def create_search(request):
 
     # validate inputs
     if id == None or query == None or side == None or longitude == None or latitude == None:
-        return HttpResponseBadRequest("400: Expected id, query, side, longitude, latitude")
+        return HttpResponseBadRequest("400: Expected search_id, query, side, longitude, latitude")
     if not is_well_formed_uuid(id):
         return HttpResponseBadRequest("400: Malformed UUID")
     if side not in ("SEEK", "PROVIDE"):
@@ -684,7 +694,7 @@ def create_search(request):
 def delete_search(request):
     """End an existing active search."""
     profile_id = begin(request)
-    search_id = request.REQUEST["search"]
+    search_id = param_required(request, ("search_id", "search")) # TODO remove deprecated form
     request_id = param_or_null(request, "request_id")
     cursor = connection.cursor()
     # make sure the search belongs to this profile and it's in the
@@ -724,7 +734,7 @@ def set_notification(request):
 
 def create_crew(request):
     profile_id = begin(request)
-    id = request.REQUEST["id"]
+    id = param_required(request, ("crew_id", "id")) # TODO remove deprecated form
     name = request.REQUEST["name"]
     fingerprints = request.REQUEST["fingerprints"].split(",")
     cursor = connection.cursor()
@@ -770,7 +780,7 @@ def create_crew(request):
 
 def invite_crew(request):
     profile_id = begin(request)
-    crew_id = request.REQUEST["crew"]
+    crew_id = param_required(request, ("crew_id", "crew")) # TODO remove deprecated form
     fingerprints = request.REQUEST["fingerprints"].split(",")
     # resolve the fingerprints to profile IDs
     profile_ids = []
@@ -882,7 +892,7 @@ def invite_crew(request):
 
 def leave_crew(request):
     profile_id = begin(request)
-    crew_id = request.REQUEST["crew"]
+    crew_id = param_required(request, ("crew_id", "crew")) # TODO remove deprecated form
     cursor = connection.cursor()
     # lock crew row so membership doesn't change...
     cursor.execute("""SELECT 1 FROM speedycrew.crew WHERE id = %s FOR UPDATE""",
@@ -913,9 +923,9 @@ def leave_crew(request):
 
 def send_message(request):
     profile_id = begin(request)
-    crew_id = param_or_null(request, "crew")
+    crew_id = param_or_null(request, ("crew_id", "crew")) # TODO remove deprecated form
     fingerprint = param_or_null(request, "fingerprint")
-    id = request.REQUEST["id"]
+    id = param_required(request, ("message_id", "id")) # TODO remove deprecated form
     body = request.REQUEST["body"]
     timeline = param_or_null(request, "timeline")
     sequence = param_or_null(request, "sequence")
