@@ -7,6 +7,7 @@
 //
 
 #import "SpCCrewViewController.h"
+#import "SpCMessageViewController.h"
 #import "SpCDatabase.h"
 #include "Database.h"
 #include <sstream>
@@ -22,7 +23,6 @@
 {
     SpeedyCrew::Database* db = [SpCDatabase getDatabase];
     int rows = db->query<int>("select count(*) from crew");
-    NSLog(@"there are %d crew chats", rows);
     return rows;
 }
 
@@ -38,10 +38,24 @@
     //         and only then something generic; the crew name should probably 
     //         be created to start off as the search name and possibly be
     //         editable
-    UILabel* label = (UILabel*)[cell.contentView viewWithTag:1];
-    label.text = [NSString stringWithFormat:@"%s", name.c_str()];
+    UIButton* button = (UIButton*)[cell.contentView viewWithTag:1];
+    button.tag = indexPath.row;
+    [button setTitle:[NSString stringWithFormat:@"%s", name.c_str()] forState:UIControlStateNormal];
 
     return cell;
+}
+
+// ----------------------------------------------------------------------------
+
+- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
+{
+    UIButton* button = (UIButton*)sender;
+    std::ostringstream query;
+    query << "select id from crew order by id limit 1 offset " << (long)button.tag;
+    SpeedyCrew::Database* db = [SpCDatabase getDatabase];
+    std::string crewId = db->query<std::string>(query.str());
+    SpCMessageViewController* messages = [segue destinationViewController];
+    messages.crewId = [NSString stringWithFormat:@"%s", crewId.c_str()];
 }
 
 @end

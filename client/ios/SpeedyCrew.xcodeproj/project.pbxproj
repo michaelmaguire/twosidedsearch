@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		AB29B4B719D8712A004C1AAC /* SpCCrewViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = AB29B4B619D8712A004C1AAC /* SpCCrewViewController.mm */; };
+		AB29B4BD19D8883A004C1AAC /* SpCMessageViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = AB29B4BC19D8883A004C1AAC /* SpCMessageViewController.mm */; };
 		AB333835195CCDE800BEC08C /* libSDWebImage.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AB33382E195CCD6D00BEC08C /* libSDWebImage.a */; };
 		AB333837195CCE1B00BEC08C /* ImageIO.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AB333836195CCE1B00BEC08C /* ImageIO.framework */; };
 		AB3FA25219AB831C003D02DC /* SpCProfile.mm in Sources */ = {isa = PBXBuildFile; fileRef = AB3FA25119AB831C003D02DC /* SpCProfile.mm */; };
@@ -82,6 +83,8 @@
 /* Begin PBXFileReference section */
 		AB29B4B519D8712A004C1AAC /* SpCCrewViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SpCCrewViewController.h; sourceTree = "<group>"; };
 		AB29B4B619D8712A004C1AAC /* SpCCrewViewController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = SpCCrewViewController.mm; sourceTree = "<group>"; };
+		AB29B4BB19D8883A004C1AAC /* SpCMessageViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SpCMessageViewController.h; sourceTree = "<group>"; };
+		AB29B4BC19D8883A004C1AAC /* SpCMessageViewController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = SpCMessageViewController.mm; sourceTree = "<group>"; };
 		AB333826195CCD6D00BEC08C /* SDWebImage.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SDWebImage.xcodeproj; path = SpeedyCrew/SDWebImage/SDWebImage.xcodeproj; sourceTree = "<group>"; };
 		AB333836195CCE1B00BEC08C /* ImageIO.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ImageIO.framework; path = System/Library/Frameworks/ImageIO.framework; sourceTree = SDKROOT; };
 		AB3FA25019AB831C003D02DC /* SpCProfile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SpCProfile.h; sourceTree = "<group>"; };
@@ -212,6 +215,8 @@
 				AB9C2E53184EA15400454DCD /* SpCAppDelegate.h */,
 				AB9C2E54184EA15400454DCD /* SpCAppDelegate.mm */,
 				AB9C2E56184EA15400454DCD /* Main.storyboard */,
+				AB29B4BB19D8883A004C1AAC /* SpCMessageViewController.h */,
+				AB29B4BC19D8883A004C1AAC /* SpCMessageViewController.mm */,
 				AB937E29192952F200FC921D /* SpCMapViewController.h */,
 				AB937E2A192952F200FC921D /* SpCMapViewController.mm */,
 				ABD4EA76191FE91F00A37FA1 /* SpCCaptainSearchViewController.h */,
@@ -408,6 +413,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				AB937E2E1932B0DF00FC921D /* SpCResultView.mm in Sources */,
+				AB29B4BD19D8883A004C1AAC /* SpCMessageViewController.mm in Sources */,
 				AB6EDE61187799BB0026A1AB /* SpCUserViewController.mm in Sources */,
 				AB9C2E51184EA15400454DCD /* main.mm in Sources */,
 				ABD4EA78191FE91F00A37FA1 /* SpCCaptainSearchViewController.mm in Sources */,
