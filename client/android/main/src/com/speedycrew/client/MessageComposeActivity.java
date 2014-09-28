@@ -1,5 +1,7 @@
 package com.speedycrew.client;
 
+import org.json.JSONObject;
+
 import android.app.Activity;
 import android.app.Fragment;
 import android.os.Bundle;
@@ -13,7 +15,10 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.speedycrew.client.connection.ConnectionService;
+import com.speedycrew.client.connection.ConnectionService.Key;
 import com.speedycrew.client.sql.Crew;
 import com.speedycrew.client.sql.Match;
 import com.speedycrew.client.util.RequestHelper;
@@ -95,6 +100,28 @@ public class MessageComposeActivity extends Activity {
 													+ resultCode
 													+ "] resultData["
 													+ resultData + "]");
+
+									try {
+										String jsonString = resultData
+												.getString(ConnectionService.BUNDLE_KEY_JSON_RESPONSE);
+										JSONObject responseJson = new JSONObject(
+												jsonString);
+										String status = responseJson
+												.getString(Key.STATUS);
+										if (!"OK".equalsIgnoreCase(status)) {
+											String errorMessage = responseJson
+													.getString(ConnectionService.Key.MESSAGE);
+
+											Toast.makeText(getActivity(),
+													errorMessage,
+													Toast.LENGTH_SHORT).show();
+
+										}
+									} catch (Exception e) {
+										Log.e(LOGTAG,
+												"onClick get results error: "
+														+ e);
+									}
 
 								}
 							});
