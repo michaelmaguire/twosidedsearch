@@ -104,6 +104,9 @@ public class MessageComposeActivity extends Activity {
 
 									Toast.makeText(getActivity(), errorMessage, Toast.LENGTH_SHORT).show();
 
+								} else {
+									Toast.makeText(getActivity(), "Message sent!", Toast.LENGTH_SHORT).show();
+									getActivity().finish();
 								}
 							} catch (Exception e) {
 								Log.e(LOGTAG, "onClick get results error: " + e);
