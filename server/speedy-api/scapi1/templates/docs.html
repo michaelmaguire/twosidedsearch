@@ -78,21 +78,21 @@
 
     <h2>Search management</h2>
     <ol>
-      <li><a href="create_search?x-id=1234;id=12345678-1234-1234-1234-123456789012;side=SEEK;query=I+am+a+%23chef;longitude=-0.15;latitude=51.5;radius=5000">/api/1/create_search?id=12345678-1234-1234-1234-123456789012;side=PROVIDE;query=I+am+a+%23chef;longitude=-0.15;latitude=51.5;radius=5000</a> with optional extra parameters city, country, address, postcode (radius is required for side=SEEK, absent for side=PROVIDE) (note: id is new, and is a UUID in 8-4-4-4-12 format; if you miss it out, one will be made up automatically for a limited time only)</li>
-      <li><a href="delete_search?x-id=1234;search=12345678-1234-1234-1234-123456789012">/api/1/delete_search?search=12345678-1234-1234-1234-123456789012</a></li>
+      <li><a href="create_search?x-id=1234;search_id=12345678-1234-1234-1234-123456789012;side=SEEK;query=I+am+a+%23chef;longitude=-0.15;latitude=51.5;radius=5000">/api/1/create_search?search_id=12345678-1234-1234-1234-123456789012;side=PROVIDE;query=I+am+a+%23chef;longitude=-0.15;latitude=51.5;radius=5000</a> with optional extra parameters city, country, address, postcode (radius is required for side=SEEK, absent for side=PROVIDE) (note: id is new, and is a UUID in 8-4-4-4-12 format; if you miss it out, one will be made up automatically for a limited time only)</li>
+      <li><a href="delete_search?x-id=1234;search_id=12345678-1234-1234-1234-123456789012">/api/1/delete_search?search_id=12345678-1234-1234-1234-123456789012</a></li>
       <li>TODO: no tracking/filtering of available dates yet (searches match based on location + tags only for now)</li>
     </ol>
 
     <h2>Messaging</h2>
     <ol>
-      <li><a href="create_crew?x-id=1234;id=12345678-1234-1234-1234-123456789012;name=Fred;fingerprints=">create_crew</a>
-      -- takes id (a UUID), name, fingerprints (comma separated)</li>
-      <li><a href="invite_crew?x-id=1234;crew=12345678-1234-1234-1234-123456789012;fingerprints=1111,2222">invite_crew</a>
-      -- takes crew, fingerprints</li>
-      <li><a href="leave_crew?x-id=1234;crew=12345678-1234-1234-1234-123456789012">leave_crew</a>
-      -- takes crew ID</li>
-      <li><a href="send_message?x-id=1234;crew=12345678-1234-1234-1234-123456789012;id=12345678-1234-1234-1234-123456789012;body=Hello">send_message</a>
-      -- takes crew, id, body to send to an existing crew, or takes
+      <li><a href="create_crew?x-id=1234;message_id=12345678-1234-1234-1234-123456789012;name=Fred;fingerprints=">/api/1/create_crew</a>
+      -- takes message_id (a UUID), name, fingerprints (comma separated)</li>
+      <li><a href="invite_crew?x-id=1234;crew_id=12345678-1234-1234-1234-123456789012;fingerprints=1111,2222">/api/1/invite_crew</a>
+      -- takes crew_id, fingerprints</li>
+      <li><a href="leave_crew?x-id=1234;crew_id=12345678-1234-1234-1234-123456789012">/api/1/leave_crew</a>
+      -- takes crew_id</li>
+      <li><a href="send_message?x-id=1234;crew_id=12345678-1234-1234-1234-123456789012;message_id=12345678-1234-1234-1234-123456789012;body=Hello">send_message</a>
+      -- takes crew_id, message_id, body to send to an existing crew, or takes
       id, fingerprint, body to send to a single recipient
       (automatically creating a new crew if there isn't one already
       that has only the sender and the recipient in it)</li>
