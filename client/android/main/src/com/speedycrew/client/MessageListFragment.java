@@ -20,7 +20,6 @@ import android.widget.ExpandableListView.OnGroupClickListener;
 import android.widget.SimpleCursorTreeAdapter;
 
 import com.speedycrew.client.sql.Crew;
-import com.speedycrew.client.sql.Match;
 import com.speedycrew.client.sql.Message;
 import com.speedycrew.client.sql.SyncedContentProvider;
 
@@ -42,9 +41,9 @@ public class MessageListFragment extends Fragment implements
 
 	static final String[] MESSAGE_PROJECTION = new String[] {
 			com.speedycrew.client.sql.Message.SENDER,
-			com.speedycrew.client.sql.Message.BODY, Match._ID, };
+			com.speedycrew.client.sql.Message.BODY, Message.ID, Message._ID, };
 	static final int[] MESSAGE_VIEWS_FROM_LAYOUT = new int[] { R.id.sender,
-			R.id.body };
+			R.id.body, R.id.id };
 
 	static final String SORTED_ORDER = SyncedContentProvider.SQLITE_ROWID
 			+ " DESC";
@@ -69,7 +68,7 @@ public class MessageListFragment extends Fragment implements
 
 		mQueryHandler = new QueryHandler(getActivity(), mMessageListAdapter);
 
-		// Query for crew searches.
+		// Query for chat crews.
 		mQueryHandler.startQuery(TOKEN_GROUP, null,
 				SyncedContentProvider.CREW_URI, CREW_PROJECTION, null, null,
 				SORTED_ORDER);

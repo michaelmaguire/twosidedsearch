@@ -50,9 +50,6 @@ public class MatchActivity extends Activity {
 		return super.onOptionsItemSelected(item);
 	}
 
-	/**
-	 * A placeholder fragment containing a simple view.
-	 */
 	public static class MatchFragment extends Fragment {
 		SyncedSQLiteOpenHelper mSyncedSQLiteOpenHelper;
 
@@ -143,7 +140,7 @@ public class MatchActivity extends Activity {
 							+ "] other_search[" + other_search + "] not found");
 				}
 			} catch (Exception e) {
-				Log.w(LOGTAG, "call: problem queryingsearch[" + search
+				Log.w(LOGTAG, "call: problem querying search[" + search
 						+ "] other_search[" + other_search + "]", e);
 			}
 
