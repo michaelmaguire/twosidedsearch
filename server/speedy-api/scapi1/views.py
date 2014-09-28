@@ -983,7 +983,6 @@ def send_message(request):
         cursor.execute("""INSERT INTO speedycrew.message (id, sender, crew, body, created)
                           VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP)""",
                        (id, profile_id, crew_id, body))
-        # TODO insert message into tickle_queue
     except IntegrityError, e:
         if e.message.find('"message_pkey"') != -1:
             return HttpResponseBadRequest("400: Message ID already exists")
@@ -999,6 +998,9 @@ def send_message(request):
         cursor.execute("""INSERT INTO speedycrew.event (profile, seq, type, tab, message, crew)
                           VALUES (%s, next_sequence(%s), 'INSERT', 'MESSAGE', %s, %s)""",
                        (member_profile_id, member_profile_id, id, crew_id))
+        cursor.execute("""INSERT INTO speedycrew.tickle_queue (profile, message)
+                          VALUES (%s, 'You have a new message')""",
+                       (member_profile_id,))
 
     if timeline and sequence:
         operation, metadata, sql = do_synchronise(profile_id, int(timeline), int(sequence))
