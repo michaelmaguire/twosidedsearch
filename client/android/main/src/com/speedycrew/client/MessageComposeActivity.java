@@ -15,6 +15,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.speedycrew.client.sql.Crew;
+import com.speedycrew.client.sql.Match;
 import com.speedycrew.client.util.RequestHelper;
 
 public class MessageComposeActivity extends Activity {
@@ -62,25 +63,29 @@ public class MessageComposeActivity extends Activity {
 			// as you specify a parent activity in AndroidManifest.xml.
 			int id = item.getItemId();
 			if (id == R.id.action_send) {
-				// TODO: is it kosher to query intent later like this?
+
+				// One of these two may be null, depending on whether
+				// we're replying to a user fingerprint specified in a
+				// match, or whether we're adding to an existing crew
+				// chat.
 				String crewId = getActivity().getIntent().getExtras()
 						.getString(Crew.ID);
+				String fingerprint = getActivity().getIntent().getExtras()
+						.getString(Match.FINGERPRINT);
 
 				TextView t = (TextView) getActivity().findViewById(R.id.body);
 				String bodyTextString = t.getText().toString();
 
 				Log.i(LOGTAG, "onOptionsItemSelected crewId[" + crewId
-						+ "] bodyTextString[" + bodyTextString + "]");
+						+ "] fingerprint[" + fingerprint + "] bodyTextString["
+						+ bodyTextString + "]");
 
 				try {
-					RequestHelper.sendMessage(getActivity(), crewId, null /*
-																		 * asks
-																		 * it to
-																		 * generate
-																		 * for
-																		 * us
-																		 */,
-							bodyTextString, new ResultReceiver(new Handler()) {
+					RequestHelper.sendMessage(getActivity(), crewId,
+							fingerprint, null /*
+											 * asks it to generate for us
+											 */, bodyTextString,
+							new ResultReceiver(new Handler()) {
 
 								@Override
 								public void onReceiveResult(int resultCode,
@@ -111,7 +116,11 @@ public class MessageComposeActivity extends Activity {
 			String crewId = getActivity().getIntent().getExtras()
 					.getString(Crew.ID);
 
-			Log.i(LOGTAG, "onCreateView crewId[" + crewId + "]");
+			String fingerprint = getActivity().getIntent().getExtras()
+					.getString(Match.FINGERPRINT);
+
+			Log.i(LOGTAG, "onCreateView crewId[" + crewId + "] fingerprint["
+					+ fingerprint + "]");
 
 			return rootView;
 		}

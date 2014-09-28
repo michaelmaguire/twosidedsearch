@@ -52,8 +52,16 @@ public abstract class RequestHelper {
 		}
 	}
 
+	/**
+	 * One of crewId or fingerprint may be null, depending on whether we're
+	 * replying to a user fingerprint specified in a match, or whether we're
+	 * adding to an existing crewId chat.
+	 * 
+	 * messageId may be null, in which case a new UUID will be randomly
+	 * generated.
+	 */
 	public static void sendMessage(Context context, String crewId,
-			String messageId, String bodyTextString,
+			String fingerprint, String messageId, String bodyTextString,
 			ResultReceiver resultReceiver) throws Exception {
 		try {
 			if (messageId == null) {
@@ -66,7 +74,7 @@ public abstract class RequestHelper {
 
 			Uri uri = Uri.parse("1/send_message");
 			Bundle bundle = produceSendMessageBundle(crewId, messageId,
-					bodyTextString);
+					fingerprint, bodyTextString);
 			bundle.putParcelable(ConnectionService.BUNDLE_KEY_RESULT_RECEIVER,
 					resultReceiver);
 			Intent intent = new Intent(
@@ -181,11 +189,25 @@ public abstract class RequestHelper {
 		return bundle;
 	}
 
+	/**
+	 * One of crewId or fingerprint may be null, depending on whether we're
+	 * replying to a user fingerprint specified in a match, or whether we're
+	 * adding to an existing crewId chat.
+	 * 
+	 * messageId may be null, in which case a new UUID will be randomly
+	 * generated.
+	 */
 	private static Bundle produceSendMessageBundle(String crewId,
-			String messageId, String bodyText) {
+			String fingerprint, String messageId, String bodyText) {
 		Bundle bundle = new Bundle();
 
-		bundle.putString(com.speedycrew.client.sql.Message.CREW, crewId);
+		if (crewId != null) {
+			bundle.putString(com.speedycrew.client.sql.Message.CREW, crewId);
+		}
+		if (fingerprint != null) {
+			bundle.putString(com.speedycrew.client.sql.Match.FINGERPRINT,
+					fingerprint);
+		}
 		bundle.putString(com.speedycrew.client.sql.Message.ID, messageId);
 		bundle.putString(com.speedycrew.client.sql.Message.BODY, bodyText);
 

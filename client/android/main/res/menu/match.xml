@@ -3,9 +3,10 @@
     tools:context="com.speedycrew.client.MatchActivity" >
 
     <item
-        android:id="@+id/action_settings"
+        android:id="@+id/action_reply"
         android:orderInCategory="100"
-        android:showAsAction="never"
-        android:title="@string/action_settings"/>
+        android:showAsAction="ifRoom"
+        android:title="@string/action_reply">
+    </item>
 
 </menu>
