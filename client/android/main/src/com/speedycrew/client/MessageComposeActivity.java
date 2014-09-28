@@ -21,6 +21,7 @@ import com.speedycrew.client.connection.ConnectionService;
 import com.speedycrew.client.connection.ConnectionService.Key;
 import com.speedycrew.client.sql.Crew;
 import com.speedycrew.client.sql.Match;
+import com.speedycrew.client.sql.Profile;
 import com.speedycrew.client.util.RequestHelper;
 
 public class MessageComposeActivity extends Activity {
@@ -32,8 +33,7 @@ public class MessageComposeActivity extends Activity {
 		setContentView(R.layout.activity_message_compose);
 
 		if (savedInstanceState == null) {
-			getFragmentManager().beginTransaction()
-					.add(R.id.container, new MessageComposeFragment()).commit();
+			getFragmentManager().beginTransaction().add(R.id.container, new MessageComposeFragment()).commit();
 		}
 	}
 
@@ -73,58 +73,44 @@ public class MessageComposeActivity extends Activity {
 				// we're replying to a user fingerprint specified in a
 				// match, or whether we're adding to an existing crew
 				// chat.
-				String crewId = getActivity().getIntent().getExtras()
-						.getString(Crew.ID);
-				String fingerprint = getActivity().getIntent().getExtras()
-						.getString(Match.FINGERPRINT);
+				Crew crew = new Crew(getActivity().getIntent().getExtras().getString(Crew.ID));
+				Profile fingerprint = new Profile(getActivity().getIntent().getExtras().getString(Match.FINGERPRINT));
 
 				TextView t = (TextView) getActivity().findViewById(R.id.body);
 				String bodyTextString = t.getText().toString();
 
-				Log.i(LOGTAG, "onOptionsItemSelected crewId[" + crewId
-						+ "] fingerprint[" + fingerprint + "] bodyTextString["
-						+ bodyTextString + "]");
+				Log.i(LOGTAG, "onOptionsItemSelected crewId[" + crew + "] fingerprint[" + fingerprint + "] bodyTextString[" + bodyTextString + "]");
 
 				try {
-					RequestHelper.sendMessage(getActivity(), crewId,
-							fingerprint, null /*
-											 * asks it to generate for us
-											 */, bodyTextString,
-							new ResultReceiver(new Handler()) {
+					RequestHelper.sendMessage(getActivity(), crew, fingerprint, null /*
+																					 * asks
+																					 * it
+																					 * to
+																					 * generate
+																					 * for
+																					 * us
+																					 */, bodyTextString, new ResultReceiver(new Handler()) {
 
-								@Override
-								public void onReceiveResult(int resultCode,
-										Bundle resultData) {
-									Log.i(LOGTAG,
-											"onReceiveResult from createMessage resultCode["
-													+ resultCode
-													+ "] resultData["
-													+ resultData + "]");
+						@Override
+						public void onReceiveResult(int resultCode, Bundle resultData) {
+							Log.i(LOGTAG, "onReceiveResult from createMessage resultCode[" + resultCode + "] resultData[" + resultData + "]");
 
-									try {
-										String jsonString = resultData
-												.getString(ConnectionService.BUNDLE_KEY_JSON_RESPONSE);
-										JSONObject responseJson = new JSONObject(
-												jsonString);
-										String status = responseJson
-												.getString(Key.STATUS);
-										if (!"OK".equalsIgnoreCase(status)) {
-											String errorMessage = responseJson
-													.getString(ConnectionService.Key.MESSAGE);
+							try {
+								String jsonString = resultData.getString(ConnectionService.BUNDLE_KEY_JSON_RESPONSE);
+								JSONObject responseJson = new JSONObject(jsonString);
+								String status = responseJson.getString(Key.STATUS);
+								if (!"OK".equalsIgnoreCase(status)) {
+									String errorMessage = responseJson.getString(ConnectionService.Key.MESSAGE);
 
-											Toast.makeText(getActivity(),
-													errorMessage,
-													Toast.LENGTH_SHORT).show();
-
-										}
-									} catch (Exception e) {
-										Log.e(LOGTAG,
-												"onClick get results error: "
-														+ e);
-									}
+									Toast.makeText(getActivity(), errorMessage, Toast.LENGTH_SHORT).show();
 
 								}
-							});
+							} catch (Exception e) {
+								Log.e(LOGTAG, "onClick get results error: " + e);
+							}
+
+						}
+					});
 				} catch (Exception e) {
 					Log.e(LOGTAG, "onClick error: " + e);
 				}
@@ -135,19 +121,14 @@ public class MessageComposeActivity extends Activity {
 		}
 
 		@Override
-		public View onCreateView(LayoutInflater inflater, ViewGroup container,
-				Bundle savedInstanceState) {
-			View rootView = inflater.inflate(R.layout.fragment_message_compose,
-					container, false);
+		public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+			View rootView = inflater.inflate(R.layout.fragment_message_compose, container, false);
 
-			String crewId = getActivity().getIntent().getExtras()
-					.getString(Crew.ID);
+			String crewId = getActivity().getIntent().getExtras().getString(Crew.ID);
 
-			String fingerprint = getActivity().getIntent().getExtras()
-					.getString(Match.FINGERPRINT);
+			String fingerprint = getActivity().getIntent().getExtras().getString(Match.FINGERPRINT);
 
-			Log.i(LOGTAG, "onCreateView crewId[" + crewId + "] fingerprint["
-					+ fingerprint + "]");
+			Log.i(LOGTAG, "onCreateView crewId[" + crewId + "] fingerprint[" + fingerprint + "]");
 
 			return rootView;
 		}
