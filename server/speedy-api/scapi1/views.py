@@ -1002,6 +1002,8 @@ def send_message(request):
                           VALUES (%s, 'You have a new message')""",
                        (member_profile_id,))
 
+    cursor.execute("""NOTIFY tickle""")
+
     if timeline and sequence:
         operation, metadata, sql = do_synchronise(profile_id, int(timeline), int(sequence))
     else:
