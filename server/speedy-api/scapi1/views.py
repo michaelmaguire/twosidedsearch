@@ -984,6 +984,7 @@ def send_message(request):
         cursor.execute("""INSERT INTO speedycrew.message (id, sender, crew, body, created)
                           VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP)""",
                        (id, profile_id, crew_id, body))
+        # TODO insert message into tickle_queue
     except IntegrityError, e:
         if e.message.find('"message_pkey"') != -1:
             return HttpResponseBadRequest("400: Message ID already exists")
