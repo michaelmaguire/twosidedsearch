@@ -154,6 +154,19 @@ class Simple(unittest.TestCase):
                           "fingerprints" : "2222" })
         self.assertEqual(response["status"], "ERROR")
 
+        # try to leave the crew again, but we can't
+        response = post("/api/1/leave_crew",
+                        { "x-id" : x_id,
+                          "crew_id" : "00000000-0000-0000-0000-000000000000" })
+        self.assertEqual(response["status"], "ERROR")
+
+        # also can't leave crews that don't exist (sort of redundant
+        # considering the above but it reaches a different code path)
+        response = post("/api/1/leave_crew",
+                        { "x-id" : x_id,
+                          "crew_id" : "00000000-0000-0000-0000-000000000666" })
+        self.assertEqual(response["status"], "ERROR")
+
         # that other guy is going to invite us back...
         response = post("/api/1/invite_crew",
                         { "x-id" : "1111",

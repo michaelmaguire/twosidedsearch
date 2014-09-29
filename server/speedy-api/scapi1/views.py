@@ -898,14 +898,18 @@ def leave_crew(request):
     cursor.execute("""SELECT 1 FROM speedycrew.crew WHERE id = %s FOR UPDATE""",
                    (crew_id,))
     if cursor.fetchone() == None:
-        return json_response({ "message_type", "leave_crew_response",
-                               "status", "ERROR",
-                               "message", "unknown crew" })
-    # mark ours as LEFT (TODO: check it was ACTIVE...)
+        return json_response({ "message_type": "leave_crew_response",
+                               "status": "ERROR",
+                               "message": "unknown crew" })
+    # mark ours as LEFT
     cursor.execute("""UPDATE speedycrew.crew_member
                          SET status = 'LEFT'
-                       WHERE crew = %s AND profile = %s""",
+                       WHERE crew = %s AND profile = %s AND status = 'ACTIVE'""",
                    (crew_id, profile_id))
+    if cursor.rowcount != 1:
+        return json_response({ "message_type": "leave_crew_response",
+                               "status": "ERROR",
+                               "message": "not a member" })        
     # in profile_id order, tell everyone (including ourselves!) to
     # update our crew_member record
     cursor.execute("""SELECT profile
