@@ -20,6 +20,7 @@
 #include <string>
  
 @interface SpCData()
+@property NSString*            usedIdentity;
 @property NSString*            baseURL;
 @property NSMutableDictionary* listeners;
 @property NSCache*             cache;
@@ -27,18 +28,36 @@
 
 @implementation SpCData
 
++ (NSString*)makeUUID
+{
+    return [[[NSUUID UUID] UUIDString] lowercaseString];
+}
+
 - (SpCData*)init
 {
     SpCDatabase* database = [SpCDatabase database];
     self.baseURL = @"http://captain:cook@dev.speedycrew.com/api/1/";
-    self.identity = [database querySetting: @"scid"];
+    self.usedIdentity = [database querySetting: @"scid"];
+    NSLog(@"using identity scid='%@'", self.identity);
     self.searches = [[NSMutableArray alloc] init]; //-dk:TODO recover stored searches
     self.listeners = [[NSMutableDictionary alloc] init];
     self.cache = [[NSCache alloc] init];
     self.longitude = 0.0; //-dk:TODO use coordinate and deal with no coordinate set!
     self.latitude  = 0.0;
     
+#if 1
+    [NSTimer scheduledTimerWithTimeInterval:60.0
+                                     target:self
+                                   selector:@selector(timedSynchronise:)
+                                   userInfo:nil
+                                    repeats:YES];
+#endif
     return self;
+}
+
+- (NSString*)identity
+{
+    return self.usedIdentity;
 }
 
 - (void)synchronise
@@ -46,9 +65,17 @@
     [self sendHttpRequest:@"synchronise" withBody:@""];
 }
 
+- (void)timedSynchronise:(id)none
+{
+    [self synchronise];
+}
+
 - (void)sendToken:(NSString*)token
 {
-    [self sendHttpRequest:@"set_notification" withBody:[NSString stringWithFormat:@"apple_device_token=%@", token]];
+    std::string strToken([token UTF8String]);
+    strToken.erase(std::remove_if(strToken.begin(), strToken.end(),
+                                  [](char c){ return c == '<' || c == ' ' || c == '>'; }));
+    [self sendHttpRequest:@"set_notification" withBody:[NSString stringWithFormat:@"apple_device_token=%s", strToken.c_str()]];
 }
 
 + (NSString*)encodeURL:(NSString*)str
@@ -62,9 +89,8 @@
 
 - (void)updateSetting:(NSString*)name with:(NSString*)value
 {
-    SpCDatabase* database = [SpCDatabase database];
-    [database updateSetting:name with:value];
-    NSString* encoded = [value stringByAddingPercentEscapesUsingEncoding: NSUTF8StringEncoding];
+    NSLog(@"updating setting name='%@' value='%@'", name, value);
+    NSString* encoded = [value stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet characterSetWithCharactersInString:@"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"]];
     NSString* query = [NSString stringWithFormat:@"%@=%@", name, encoded];
     [self sendHttpRequest:@"update_profile" withBody:query];
 }
@@ -73,9 +99,13 @@
 {
     //-dk:TODO get the radius from the configuration
     // NSString* query = [NSString stringWithFormat:@"side=%@%@&query=%@&longitude=-0.15&latitude=51.5",
-    NSString* query = [NSString stringWithFormat:@"side=%@%@&query=%@&longitude=%f&latitude=%f",
+    // self.longitude=-0.14;
+    // self.latitude=51.4;
+    NSString* uuid  = [SpCData makeUUID];
+    NSString* query = [NSString stringWithFormat:@"id=%@;side=%@%@;query=%@;longitude=%f;latitude=%f",
+                        uuid,
                         side,
-                        [side isEqual:@"SEEK"]? @"&radius=5000": @"",
+                        [side isEqual:@"SEEK"]? @";radius=5000": @"",
                         [SpCData encodeURL:text],
                         self.longitude,
                         self.latitude
@@ -100,10 +130,11 @@
 
         SpeedyCrew::Database* db = [SpCDatabase getDatabase];
         NSArray* queries = [dict objectForKey: @"sql"];
-        if (queries) {
+        if (queries && ![queries isEqual:[NSNull null]]) {
+            NSLog(@"queries=%@", queries);
             try {
                 SpeedyCrew::Database::Transaction transaction(db);
-                for (int i = 0, count = [queries count]; i != count; ++i) {
+                for (long i = 0, count = [queries count]; i != count; ++i) {
                     db->execute([[queries objectAtIndex: i] UTF8String]);
                     // try { db->execute([[queries objectAtIndex: i] UTF8String]); } catch(...) {}
                 }
@@ -116,8 +147,8 @@
             }
         }
         NSArray* meta = [dict objectForKey: @"metadata"];
-        if (meta) {
-            for (int i = 0, count = [meta count]; i != count; ++i) {
+        if (meta && ![meta isEqual:[NSNull null]]) {
+            for (long i = 0, count = [meta count]; i != count; ++i) {
                 NSString* data = [[meta objectAtIndex:i] objectForKey: @"DELETE"];
                 if (data) {
                     std::string str([data UTF8String]);
@@ -129,11 +160,12 @@
             }
         }
 
-        if (type) {
+        if (type && ![type isEqual:[NSNull null]]) {
             if ([type isEqual:@"synchronise_response"]
                 || [type isEqual:@"create_search_response"]
                 || [type isEqual:@"update_profile_response"]
-                || [type isEqual:@"set_notification_response"]) {
+                || [type isEqual:@"set_notification_response"]
+                || [type isEqual:@"send_message_response"]) {
             }
             else if ([type isEqual:@"delete_search_response"]) {
                 [self synchronise];
@@ -161,12 +193,13 @@
     if (([query isEqual:@"synchronise"]
          || [query isEqual:@"create_search"]
          || [query isEqual:@"update_profile"]
+         || [query isEqual:@"send_message"]
          )
-        && db->query<int>("select count(*) from control") == 1) {
-        sout << "&timeline=" << db->query<std::string>("select timeline from control");
-        sout << "&sequence=" << db->query<std::string>("select sequence from control");
+        && db->query<int>("select count(*) from control", 0) == 1) {
+        sout << ";timeline=" << db->query<std::string>("select timeline from control");
+        sout << ";sequence=" << db->query<std::string>("select sequence from control");
     } 
-    sout << ([body isEqual:@""]? "": "&");
+    sout << ([body isEqual:@""]? "": ";");
     body = [NSString stringWithFormat:@"%s%@", sout.str().c_str(), body];
 
     NSLog(@"sending HTTP POST: url='%@' body='%@'", str, body);
@@ -225,7 +258,7 @@
                    [](unsigned char c){ return char(std::tolower(c)); });
 
     unsigned char buffer[CC_MD5_DIGEST_LENGTH];
-    CC_MD5(mail.c_str(), mail.size(), buffer);
+    CC_MD5(mail.c_str(), (unsigned int)mail.size(), buffer);
     std::ostringstream out;
     (out << std::hex).fill('0');
     for (unsigned char* it(std::begin(buffer)),* end(std::end(buffer));

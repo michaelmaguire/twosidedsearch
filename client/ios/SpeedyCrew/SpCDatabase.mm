@@ -85,6 +85,7 @@ namespace
 {
     std::string query("select value from settings where name = '"
                       + s_database.escape([name UTF8String]) + "';");
+    NSLog(@"querying setting %@: '%s'", name, query.c_str());
     std::string result(s_database.query<std::string>(query));
     return [NSString stringWithFormat:@"%s", result.c_str()];
 }
@@ -100,6 +101,9 @@ namespace
                                "value='" + s_database.escape([value UTF8String]) + "' "
                                "where name='" + s_database.escape([name UTF8String]) + "';", error)) {
         NSLog(@"both update and insert failed for setting name='%@' value='%@' message='%s'", name, value, error.c_str());
+    }
+    else {
+        NSLog(@"updated settings %@ to %@", name, value);
     }
 }
 

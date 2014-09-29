@@ -64,27 +64,30 @@
     NSString* id = [self.elements objectAtIndex:path.row];
     SpeedyCrew::Database* db = [SpCDatabase getDatabase];
     UITableViewCell *cell = [tv dequeueReusableCellWithIdentifier:id forIndexPath:path];
-    if (0 == path.row) {
-        std::string val(db->query<std::string>("select value from settings where name='scid'"));
-        NSString* value = [NSString stringWithFormat:@"%s", val.c_str()];
-        UIView* view = [cell.contentView viewWithTag:0];
-        if (view && 2 == view.subviews.count) {
-            UILabel* label = [view.subviews objectAtIndex:1];
+    std::string scid(db->query<std::string>("select value from settings where name='scid'"));
+    if (0 == (long)path.row) {
+        NSString* value = [NSString stringWithFormat:@"%s", scid.c_str()];
+        UIView* view = [cell.contentView viewWithTag:1];
+        if (view && ![view isEqual:[NSNull null]]) {
+            UILabel* label = (UILabel*)view;
             label.text = value;
         }
     }
     else {
-        UIView* view = [cell.contentView viewWithTag:0];
-        if (view && 2 == view.subviews.count) {
+        UIView* view = [cell.contentView viewWithTag: -1];
+        if (view && ![view isEqual:[NSNull null]]) {
             std::string val;
-            if (db->query<int>("select count(*) from profile") == 1) {
-                val = db->query<std::string>("select " + std::string([id UTF8String]) + " from profile");
+            if (db->query<int>("select count(*) from profile where fingerprint='" + scid + "'") == 1) {
+                val = db->query<std::string>("select " + std::string([id UTF8String]) + " from profile where fingerprint='" + scid + "'");
             }
             NSString* value = [NSString stringWithFormat:@"%s", val.c_str()];
-            UITextField* text = [view.subviews objectAtIndex:1];
+            UITextField* text = (UITextField*)view;
             text.text     = value;
             text.tag      = path.row;
             text.delegate = self;
+        }
+        else {
+            NSLog(@"couldn't locate content view for row '%ld' name='%@'", (long)path.row, id);
         }
     }
     return cell;

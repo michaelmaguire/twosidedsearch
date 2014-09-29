@@ -22,16 +22,28 @@
 {
     NSLog(@"application launched");
     self.data = [[SpCData alloc] init];
+    [self.data synchronise];
     [self startLocationManager];
 
-    [[UIApplication sharedApplication] registerForRemoteNotificationTypes:
-                                          (UIRemoteNotificationTypeBadge | UIRemoteNotificationTypeSound | UIRemoteNotificationTypeAlert)];
+    if ([application respondsToSelector:@selector(registerUserNotificationSettings:)]) {
+        NSLog(@"notifications style 1");
+        UIUserNotificationSettings *settings = [UIUserNotificationSettings settingsForTypes:(UIRemoteNotificationTypeBadge
+                                                                                             | UIRemoteNotificationTypeSound
+                                                                                             | UIRemoteNotificationTypeAlert)
+                                                                                 categories:nil];
+        [application registerUserNotificationSettings:settings];
+    } else {
+        NSLog(@"notifications style 2");
+        [application registerForRemoteNotificationTypes:
+                         (UIRemoteNotificationTypeBadge | UIRemoteNotificationTypeSound | UIRemoteNotificationTypeAlert)];
+    }
     [[[SDWebImageManager sharedManager] imageCache] clearDisk];
     return YES;
 }
 
 - (void)startLocationManager
 {
+    NSLog(@"starting location manager");
     if (locationManager == nil) {
         locationManager = [[CLLocationManager alloc] init];
         locationManager.delegate = self;
@@ -108,6 +120,7 @@
 
 - (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo
 {
+    NSLog(@"received remote notification");
     [self.data synchronise];
 }
     

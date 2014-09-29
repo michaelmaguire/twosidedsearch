@@ -12,11 +12,12 @@
 
 @interface SpCData : SpCChanging
 
-@property NSString*       identity;
+@property (readonly) NSString*       identity;
 @property NSMutableArray* searches;
 @property float           longitude;
 @property float           latitude;
 
++ (NSString*)makeUUID;
 + (NSString*)gravatarURLForEmail:(NSString*)address;
 - (SpCData*)init;
 - (void)synchronise;
@@ -26,5 +27,6 @@
 - (void)addSearchWithText:(NSString*)text forSide:(NSString*)side;
 - (void)deleteSearch:(NSString*)id;
 - (void)loadImageFor:(UIImageView*)image from:(NSString*)url withPlaceholder:(NSString*)name;
+- (void)sendHttpRequest:(NSString*)query withBody:(NSString*)body;
 
 @end

@@ -12,22 +12,38 @@
 	<dict>
 		<key>8010CE24-AD1C-45A4-AA00-9F861B32F56F</key>
 		<string>https://bitbucket.org/michaelupstairs/upstairsdownstairs.git</string>
+		<key>AAC89ED9B554F3B5CF7DDB2BF162FB96327908FE</key>
+		<string>https://bitbucket.org/michaelupstairs/upstairsdownstairs.git</string>
+		<key>E28E36D423EC87798E52E2BF482E9F7A1E6479D6</key>
+		<string>https://github.com/rs/SDWebImage.git</string>
 	</dict>
 	<key>IDESourceControlProjectPath</key>
-	<string>client/ios/SpeedyCrew.xcodeproj/project.xcworkspace</string>
+	<string>client/ios/SpeedyCrew.xcodeproj</string>
 	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
 	<dict>
 		<key>8010CE24-AD1C-45A4-AA00-9F861B32F56F</key>
+		<string>../../../../../speedycrew</string>
+		<key>AAC89ED9B554F3B5CF7DDB2BF162FB96327908FE</key>
 		<string>../../../..</string>
+		<key>E28E36D423EC87798E52E2BF482E9F7A1E6479D6</key>
+		<string>../../../..client/ios/SpeedyCrew/SDWebImage</string>
 	</dict>
 	<key>IDESourceControlProjectURL</key>
 	<string>https://bitbucket.org/michaelupstairs/upstairsdownstairs.git</string>
 	<key>IDESourceControlProjectVersion</key>
-	<integer>110</integer>
+	<integer>111</integer>
 	<key>IDESourceControlProjectWCCIdentifier</key>
-	<string>8010CE24-AD1C-45A4-AA00-9F861B32F56F</string>
+	<string>AAC89ED9B554F3B5CF7DDB2BF162FB96327908FE</string>
 	<key>IDESourceControlProjectWCConfigurations</key>
 	<array>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.git</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>E28E36D423EC87798E52E2BF482E9F7A1E6479D6</string>
+			<key>IDESourceControlWCCName</key>
+			<string>SDWebImage</string>
+		</dict>
 		<dict>
 			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
 			<string>public.vcs.git</string>
@@ -35,6 +51,14 @@
 			<string>8010CE24-AD1C-45A4-AA00-9F861B32F56F</string>
 			<key>IDESourceControlWCCName</key>
 			<string>speedycrew</string>
+		</dict>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.git</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>AAC89ED9B554F3B5CF7DDB2BF162FB96327908FE</string>
+			<key>IDESourceControlWCCName</key>
+			<string>upstairsdownstairs</string>
 		</dict>
 	</array>
 </dict>

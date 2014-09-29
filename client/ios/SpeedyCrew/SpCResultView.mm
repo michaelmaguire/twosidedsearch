@@ -9,6 +9,7 @@
 #import "SpCResultView.h"
 #import "SpCDatabase.h"
 #include "Database.h"
+#include <sstream>
 
 @interface SpCResultView()
 @property NSString* key;
@@ -16,19 +17,21 @@
 
 @implementation SpCResultView
 
-#if 0
-@property (nonatomic, readonly)       CLLocationCoordinate2D coordinate;
-@property (nonatomic, readonly, copy) NSString*              title;
-@property (nonatomic, readonly, copy) NSString*              subtitle;
-@property (readonly)                  NSString*              key;
-
-#endif
-
 // ----------------------------------------------------------------------------
 
 + (SpCResultView*)makeWithKey:(NSString*)key
 {
     return [[SpCResultView alloc] initWithKey:key];
+}
+
++ (SpCResultView*)makeWithRow:(long)row
+{
+    SpeedyCrew::Database* db = [SpCDatabase getDatabase];
+    std::ostringstream condition;
+    condition << "from match where rowid = " << row;
+    std::string search = db->query<std::string>("select search " + condition.str());
+    std::string other_search = db->query<std::string>("select other_search " + condition.str());
+    return [SpCResultView makeWithKey: [NSString stringWithFormat:@"search = '%s' and other_search = '%s'", search.c_str(), other_search.c_str()]];
 }
 
 - (SpCResultView*)initWithKey:(NSString*)key
@@ -61,6 +64,11 @@
 }
 
 - (NSString*)subtitle
+{
+    return self.fingerprint;
+}
+
+- (NSString*)fingerprint
 {
     SpeedyCrew::Database* db = [SpCDatabase getDatabase];
     std::string key = [self.key UTF8String];
@@ -105,6 +113,15 @@
         value = "<unknown>";
     }
     return [NSString stringWithFormat:@"%s", value.c_str()];
+}
+
+// ----------------------------------------------------------------------------
+
+- (long)rowid
+{
+    SpeedyCrew::Database* db = [SpCDatabase getDatabase];
+    std::string key = [self.key UTF8String];
+    return db->query<int>("select rowid from match where " + key, 0);
 }
 
 // ----------------------------------------------------------------------------

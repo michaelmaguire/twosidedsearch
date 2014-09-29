@@ -10,12 +10,14 @@
 #import "SpCSearchView.h"
 #import "SpCResultView.h"
 #import "SpCMapViewController.h"
+#import "SpCMatchTableViewController.h"
 #import "SpCAppDelegate.h"
 #import "SpCDatabase.h"
 #import "SpCData.h"
 #import <SDWebImage/UIImageView+WebCache.h>
 
 #include "Database.h"
+#include <stdexcept>
 
 @interface SpCSearchViewController ()
 @property NSMutableArray* searches;
@@ -56,10 +58,16 @@
 - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
 {
     UIView* view = (UIButton*)sender;
-    int tag = view.tag;
-    if (tag < [self.searches count]) {
+    long tag = view.tag;
+    if (0 <= tag && tag < [self.searches count]) {
         SpCMapViewController* map = [segue destinationViewController];
         map.search = [self.searches objectAtIndex: tag];
+    }
+    else {
+        SpCMatchTableViewController* match = [segue destinationViewController];
+        match.result = (SpCResultView*)[SpCResultView makeWithRow:-tag];
+        match.profile = [SpCProfile makeWithFingerprint: match.result.fingerprint];
+        NSLog(@"profile: real_name=%@ username=%@ email=%@ message=%@", match.profile.real_name, match.profile.username, match.profile.email, match.profile.message);
     }
 }
 
@@ -93,10 +101,14 @@
 {
     SpeedyCrew::Database* db = [SpCDatabase getDatabase];
     std::string side([self.side UTF8String]);
-    std::vector<std::string> searches(db->queryColumn("select id from search where side='" + side + "'"));
     [self.searches removeAllObjects];
-    for (std::vector<std::string>::const_iterator it(searches.begin()), end(searches.end()); it != end; ++it) {
-        [self.searches addObject: [SpCSearchView makeWithId:[NSString stringWithFormat:@"%s", it->c_str()] andSide:self.side]];
+    try {
+        std::vector<std::string> searches(db->queryColumn("select id from search where side='" + side + "'"));
+        for (std::vector<std::string>::const_iterator it(searches.begin()), end(searches.end()); it != end; ++it) {
+            [self.searches addObject: [SpCSearchView makeWithId:[NSString stringWithFormat:@"%s", it->c_str()] andSide:self.side]];
+        }
+    }
+    catch (std::runtime_error const& ex) { // eat database errors
     }
 }
 
@@ -124,7 +136,7 @@
 - (void)onExpand: (id)sender
 {
     UITapGestureRecognizer* gesture = (UITapGestureRecognizer*)sender;
-    int section = gesture.view.tag;
+    long section = gesture.view.tag;
     if (section < [self.searches count]) {
         SpCSearchView* search = [self.searches objectAtIndex: section];
         bool value = !search.expanded;
@@ -143,7 +155,7 @@
         commitEditingStyle:(UITableViewCellEditingStyle)editingStyle
         forRowAtIndexPath:(NSIndexPath *)path {
     if (editingStyle == UITableViewCellEditingStyleDelete) {
-        NSLog(@"deleting the search of section %d", path.section);
+        NSLog(@"deleting the search of section %ld", (long)path.section);
         if (path.section < [self.searches count]) {
             SpCSearchView* search = [self.searches objectAtIndex:path.section];
             SpCData* data = [SpCAppDelegate instance].data;
@@ -174,6 +186,8 @@
         cell = [tv dequeueReusableCellWithIdentifier:@"Search Result"];
         SpCResultView* result = [search.results objectAtIndex: path.row - 1];
 
+        NSLog(@"rowid=%ld", result.rowid);
+        cell.tag = -result.rowid;
         cell.textLabel.text = result.identity;
         cell.detailTextLabel.text = result.query;
 
