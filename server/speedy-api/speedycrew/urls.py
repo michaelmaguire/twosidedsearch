@@ -21,6 +21,7 @@ urlpatterns = patterns('',
     url(r'^api/1/invite_crew$', 'scapi1.views.invite_crew', name='invite_crew'),
     url(r'^api/1/kick_crew$', 'scapi1.views.kick_crew', name='kick_crew'),
     url(r'^api/1/leave_crew$', 'scapi1.views.leave_crew', name='leave_crew'),
+    url(r'^api/1/rename_crew$', 'scapi1.views.rename_crew', name='rename_crew'),
 
     url(r'^api/1/send_message$', 'scapi1.views.send_message', name='send_message'),
 

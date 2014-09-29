@@ -201,6 +201,41 @@ class Simple(unittest.TestCase):
         self.assertEqual(("00000000-0000-0000-0000-000000000042", x_id, "ACTIVE"), self.cursor.fetchone())
         self.assertEqual(None, self.cursor.fetchone())
 
+    def test_rename_crew(self):
+        # create a crew
+        response = post("/api/1/create_crew",
+                        { "x-id" : x_id,
+                          "crew_id" : "00000000-0000-0000-0000-000000000000",
+                          "name" : "My chat room",
+                          "fingerprints" : "a,b" })
+        self.assertEqual(response["status"], "OK")
+        self.assertEqual("refresh", synchronise(self.local_db))
+        self.cursor.execute("SELECT id, name FROM crew")
+        self.assertEqual(("00000000-0000-0000-0000-000000000000", "My chat room"), self.cursor.fetchone())
+        self.assertEqual(None, self.cursor.fetchone())
+        # rename it
+        response = post("/api/1/rename_crew",
+                        { "x-id" : x_id,
+                          "crew_id" : "00000000-0000-0000-0000-000000000000",
+                          "name" : "Blah" })        
+        self.assertEqual(response["status"], "OK")
+        self.assertEqual("incremental", synchronise(self.local_db))
+        self.cursor.execute("SELECT id, name FROM crew")
+        self.assertEqual(("00000000-0000-0000-0000-000000000000", "Blah"), self.cursor.fetchone())
+        self.assertEqual(None, self.cursor.fetchone())
+        # unknown crew -> fail
+        response = post("/api/1/rename_crew",
+                        { "x-id" : x_id,
+                          "crew_id" : "00000000-0000-0000-5555-000000000000",
+                          "name" : "Blah" })        
+        self.assertEqual(response["status"], "ERROR")
+        # known crew, but not a member -> fail
+        response = post("/api/1/rename_crew",
+                        { "x-id" : "999",
+                          "crew_id" : "00000000-0000-0000-0000-000000000000",
+                          "name" : "Blah" })        
+        self.assertEqual(response["status"], "ERROR")
+
     def test_send_message(self):
         # create a crew
         response = post("/api/1/create_crew",
