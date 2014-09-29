@@ -4,3 +4,6 @@
 [submodule "client/ios/SpeedyCrew/SDWebImage"]
 	path = client/ios/SpeedyCrew/SDWebImage
 	url = https://github.com/rs/SDWebImage.git
+[submodule "client/ios/SpeedyCrew/UIBubbleTableView"]
+	path = client/ios/SpeedyCrew/UIBubbleTableView
+	url = git@github.com:AlexBarinov/UIBubbleTableView.git

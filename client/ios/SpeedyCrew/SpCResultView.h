@@ -15,12 +15,15 @@
 @property (nonatomic, readonly)       CLLocationCoordinate2D coordinate;
 @property (nonatomic, readonly, copy) NSString*              title;
 @property (nonatomic, readonly, copy) NSString*              subtitle;
+@property (nonatomic, readonly, copy) NSString*              fingerprint;
 @property (nonatomic, readonly, copy) NSString*              identity;
 @property (nonatomic, readonly, copy) NSString*              query;
 @property (nonatomic, readonly, copy) NSString*              email;
 @property (readonly)                  NSString*              key;
+@property (readonly)                  long                   rowid;
 
 + (SpCResultView*)makeWithKey:(NSString*)key;
++ (SpCResultView*)makeWithRow:(long)row;
 - (SpCResultView*)initWithKey:(NSString*)key;
 
 @end
