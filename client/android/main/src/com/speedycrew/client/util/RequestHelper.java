@@ -11,6 +11,7 @@ import android.util.Log;
 import com.speedycrew.client.connection.ConnectionService;
 import com.speedycrew.client.sql.Crew;
 import com.speedycrew.client.sql.Profile;
+import com.speedycrew.client.sql.Search;
 
 public abstract class RequestHelper {
 
@@ -30,10 +31,10 @@ public abstract class RequestHelper {
 		}
 	}
 
-	public static void getSearchResults(Context context, String searchId, ResultReceiver resultReceiver) throws Exception {
+	public static void getSearchResults(Context context, Search search, ResultReceiver resultReceiver) throws Exception {
 		try {
 			Uri uri = Uri.parse("1/search_results");
-			Bundle bundle = produceCreateSearchResultsBundle(searchId);
+			Bundle bundle = produceCreateSearchResultsBundle(search);
 			bundle.putParcelable(ConnectionService.BUNDLE_KEY_RESULT_RECEIVER, resultReceiver);
 			Intent intent = new Intent(ConnectionService.ACTION_MAKE_SIMPLE_REQUEST_WITH_PARAMETERS, uri, context, ConnectionService.class);
 			intent.putExtras(bundle);
@@ -119,12 +120,12 @@ public abstract class RequestHelper {
 		}
 	}
 
-	private static Bundle produceProfileUpdateBundle(String username, String real_name, String message, String email) {
+	private static Bundle produceProfileUpdateBundle(String username, String real_name, String blurbMessage, String email) {
 		Bundle bundle = new Bundle();
 
 		bundle.putString(ConnectionService.Key.USERNAME, username);
 		bundle.putString(ConnectionService.Key.REAL_NAME, real_name);
-		bundle.putString(ConnectionService.Key.MESSAGE, message);
+		bundle.putString(ConnectionService.Key.MESSAGE, blurbMessage);
 		bundle.putString(ConnectionService.Key.EMAIL, email);
 
 		return bundle;
@@ -143,10 +144,10 @@ public abstract class RequestHelper {
 		return bundle;
 	}
 
-	private static Bundle produceCreateSearchResultsBundle(String searchId) {
+	private static Bundle produceCreateSearchResultsBundle(Search search) {
 		Bundle bundle = new Bundle();
 
-		bundle.putString(ConnectionService.Key.SEARCH, searchId);
+		search.addToBundle(bundle);
 
 		return bundle;
 	}
@@ -163,12 +164,12 @@ public abstract class RequestHelper {
 		Bundle bundle = new Bundle();
 
 		if (crew != null) {
-			bundle.putString(com.speedycrew.client.sql.Message.CREW, crew.getCrewId());
+			crew.addToBundle(bundle);
 		}
 		if (fingerprint != null) {
-			bundle.putString(com.speedycrew.client.sql.Match.FINGERPRINT, fingerprint.getFingerprint());
+			fingerprint.addToBundle(bundle);
 		}
-		bundle.putString(com.speedycrew.client.sql.Message.ID, message.getMessageId());
+		message.addToBundle(bundle);
 		bundle.putString(com.speedycrew.client.sql.Message.BODY, bodyText);
 
 		return bundle;

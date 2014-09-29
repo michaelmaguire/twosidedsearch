@@ -2,12 +2,16 @@ package com.speedycrew.client.sql;
 
 import java.util.UUID;
 
+import android.os.Bundle;
 import android.util.Log;
 
 public class Message implements android.provider.BaseColumns {
 	private static final String LOGTAG = Message.class.getName();
 
 	public final static String TABLE_NAME = "message";
+
+	// HTTP parameter name
+	public static final String PARAMETER_NAME = "message_id";
 
 	// Columns names
 	public static final String ID = "id";
@@ -30,6 +34,12 @@ public class Message implements android.provider.BaseColumns {
 
 	public String getMessageId() {
 		return mMessageId;
+	}
+
+	public void addToBundle(Bundle bundle) {
+		if (mMessageId != null) {
+			bundle.putString(PARAMETER_NAME, mMessageId);
+		}
 	}
 
 	public String toString() {
