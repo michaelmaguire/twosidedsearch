@@ -91,7 +91,9 @@
       -- takes crew_id, fingerprints</li>
       <li><a href="leave_crew?x-id=1234;crew_id=12345678-1234-1234-1234-123456789012">/api/1/leave_crew</a>
       -- takes crew_id</li>
-      <li><a href="send_message?x-id=1234;crew_id=12345678-1234-1234-1234-123456789012;message_id=12345678-1234-1234-1234-123456789012;body=Hello">send_message</a>
+      <li><a href="rename_crew?x-id=1234;crew_id=12345678-1234-1234-1234-123456789012;name=Blah">/api/1/rename_crew</a>
+      -- takes crew_id, name</li>
+      <li><a href="send_message?x-id=1234;crew_id=12345678-1234-1234-1234-123456789012;message_id=12345678-1234-1234-1234-123456789012;body=Hello">/api/1/send_message</a>
       -- takes crew_id, message_id, body to send to an existing crew, or takes
       id, fingerprint, body to send to a single recipient
       (automatically creating a new crew if there isn't one already

@@ -99,7 +99,7 @@ class Simple(unittest.TestCase):
         # create a crew
         response = post("/api/1/create_crew",
                         { "x-id" : x_id,
-                          "id" : "00000000-0000-0000-0000-000000000000",
+                          "crew_id" : "00000000-0000-0000-0000-000000000000",
                           "name" : "My chat room",
                           "fingerprints" : "a,b" })
         self.assertEqual(response["status"], "OK")
@@ -114,7 +114,7 @@ class Simple(unittest.TestCase):
         # create another one just to check it works also via incremental
         response = post("/api/1/create_crew",
                         { "x-id" : x_id,
-                          "id" : "00000000-0000-0000-0000-00000000000f",
+                          "crew_id" : "00000000-0000-0000-0000-00000000000f",
                           "name" : "zoo",
                           "fingerprints" : "a,b" })
         self.assertEqual(response["status"], "OK")
@@ -127,7 +127,7 @@ class Simple(unittest.TestCase):
         # invite someone else
         response = post("/api/1/invite_crew",
                         { "x-id" : x_id,
-                          "crew" : "00000000-0000-0000-0000-000000000000",
+                          "crew_id" : "00000000-0000-0000-0000-000000000000",
                           "fingerprints" : "1111" })
         self.assertEqual(response["status"], "OK")
         self.assertEqual("incremental", synchronise(self.local_db))
@@ -139,7 +139,7 @@ class Simple(unittest.TestCase):
         # leave the crew
         response = post("/api/1/leave_crew",
                         { "x-id" : x_id,
-                          "crew" : "00000000-0000-0000-0000-000000000000" })
+                          "crew_id" : "00000000-0000-0000-0000-000000000000" })
         self.assertEqual(response["status"], "OK")
         self.assertEqual("incremental", synchronise(self.local_db))
         self.cursor.execute("SELECT crew, fingerprint, status FROM crew_member WHERE crew = '00000000-0000-0000-0000-000000000000' ORDER BY crew, fingerprint")
@@ -150,14 +150,27 @@ class Simple(unittest.TestCase):
         # now that we're out, we can't invite people anymore...
         response = post("/api/1/invite_crew",
                         { "x-id" : x_id,
-                          "crew" : "00000000-0000-0000-0000-000000000000",
+                          "crew_id" : "00000000-0000-0000-0000-000000000000",
                           "fingerprints" : "2222" })
+        self.assertEqual(response["status"], "ERROR")
+
+        # try to leave the crew again, but we can't
+        response = post("/api/1/leave_crew",
+                        { "x-id" : x_id,
+                          "crew_id" : "00000000-0000-0000-0000-000000000000" })
+        self.assertEqual(response["status"], "ERROR")
+
+        # also can't leave crews that don't exist (sort of redundant
+        # considering the above but it reaches a different code path)
+        response = post("/api/1/leave_crew",
+                        { "x-id" : x_id,
+                          "crew_id" : "00000000-0000-0000-0000-000000000666" })
         self.assertEqual(response["status"], "ERROR")
 
         # that other guy is going to invite us back...
         response = post("/api/1/invite_crew",
                         { "x-id" : "1111",
-                          "crew" : "00000000-0000-0000-0000-000000000000",
+                          "crew_id" : "00000000-0000-0000-0000-000000000000",
                           "fingerprints" : x_id })
         self.assertEqual(response["status"], "OK")
         self.assertEqual("incremental", synchronise(self.local_db))
@@ -169,7 +182,7 @@ class Simple(unittest.TestCase):
         # now that we're back in, we can invite people again...
         response = post("/api/1/invite_crew",
                         { "x-id" : x_id,
-                          "crew" : "00000000-0000-0000-0000-000000000000",
+                          "crew_id" : "00000000-0000-0000-0000-000000000000",
                           "fingerprints" : "2222" })
         self.assertEqual(response["status"], "OK")
         self.assertEqual("incremental", synchronise(self.local_db))
@@ -182,13 +195,13 @@ class Simple(unittest.TestCase):
         # that other guy is going to invite us to another crew...
         response = post("/api/1/create_crew",
                         { "x-id" : "1111",
-                          "id" : "00000000-0000-0000-0000-000000000042",
+                          "crew_id" : "00000000-0000-0000-0000-000000000042",
                           "name" : "My other chat room",
                           "fingerprints" : "" })
         self.assertEqual(response["status"], "OK")
         response = post("/api/1/invite_crew",
                         { "x-id" : "1111",
-                          "crew" : "00000000-0000-0000-0000-000000000042",
+                          "crew_id" : "00000000-0000-0000-0000-000000000042",
                           "fingerprints" : x_id })
         self.assertEqual(response["status"], "OK")
         self.assertEqual("incremental", synchronise(self.local_db))
@@ -201,19 +214,54 @@ class Simple(unittest.TestCase):
         self.assertEqual(("00000000-0000-0000-0000-000000000042", x_id, "ACTIVE"), self.cursor.fetchone())
         self.assertEqual(None, self.cursor.fetchone())
 
+    def test_rename_crew(self):
+        # create a crew
+        response = post("/api/1/create_crew",
+                        { "x-id" : x_id,
+                          "crew_id" : "00000000-0000-0000-0000-000000000000",
+                          "name" : "My chat room",
+                          "fingerprints" : "a,b" })
+        self.assertEqual(response["status"], "OK")
+        self.assertEqual("refresh", synchronise(self.local_db))
+        self.cursor.execute("SELECT id, name FROM crew")
+        self.assertEqual(("00000000-0000-0000-0000-000000000000", "My chat room"), self.cursor.fetchone())
+        self.assertEqual(None, self.cursor.fetchone())
+        # rename it
+        response = post("/api/1/rename_crew",
+                        { "x-id" : x_id,
+                          "crew_id" : "00000000-0000-0000-0000-000000000000",
+                          "name" : "Blah" })        
+        self.assertEqual(response["status"], "OK")
+        self.assertEqual("incremental", synchronise(self.local_db))
+        self.cursor.execute("SELECT id, name FROM crew")
+        self.assertEqual(("00000000-0000-0000-0000-000000000000", "Blah"), self.cursor.fetchone())
+        self.assertEqual(None, self.cursor.fetchone())
+        # unknown crew -> fail
+        response = post("/api/1/rename_crew",
+                        { "x-id" : x_id,
+                          "crew_id" : "00000000-0000-0000-5555-000000000000",
+                          "name" : "Blah" })        
+        self.assertEqual(response["status"], "ERROR")
+        # known crew, but not a member -> fail
+        response = post("/api/1/rename_crew",
+                        { "x-id" : "999",
+                          "crew_id" : "00000000-0000-0000-0000-000000000000",
+                          "name" : "Blah" })        
+        self.assertEqual(response["status"], "ERROR")
+
     def test_send_message(self):
         # create a crew
         response = post("/api/1/create_crew",
                         { "x-id" : x_id,
-                          "id" : "00000000-0000-0000-0000-000000000000",
+                          "crew_id" : "00000000-0000-0000-0000-000000000000",
                           "name" : "My chat room",
                           "fingerprints" : "1111,2222" })
         self.assertEqual(response["status"], "OK")
         # that 1111 guy sends me a message
         response = post("/api/1/send_message",
                         { "x-id" : "1111",
-                          "crew" : "00000000-0000-0000-0000-000000000000",
-                          "id" : "00000000-0000-0000-0000-000000000009",
+                          "crew_id" : "00000000-0000-0000-0000-000000000000",
+                          "message_id" : "00000000-0000-0000-0000-000000000009",
                           "body" : "This is the body of a message" })
         self.assertEqual(response["status"], "OK")
         # I receive it, via refresh...
@@ -224,8 +272,8 @@ class Simple(unittest.TestCase):
         # one from 2222 so we can test incremental sync...
         response = post("/api/1/send_message",
                         { "x-id" : "2222",
-                          "crew" : "00000000-0000-0000-0000-000000000000",
-                          "id" : "00000000-0000-0000-0000-00000000000a",
+                          "crew_id" : "00000000-0000-0000-0000-000000000000",
+                          "message_id" : "00000000-0000-0000-0000-00000000000a",
                           "body" : "Foo bar" })
         self.assertEqual(response["status"], "OK")
         # I receive it, via incremental...
@@ -242,7 +290,7 @@ class Simple(unittest.TestCase):
         response = post("/api/1/send_message",
                         { "x-id" : "3333",
                           "fingerprint" : x_id,
-                          "id" : "00000000-0000-0000-0000-00000000000b",
+                          "message_id" : "00000000-0000-0000-0000-00000000000b",
                           "body" : "Foo bar foo" })
         self.assertEqual(response["status"], "OK")
         # a new crew has been created with me and 3333 in it
@@ -261,7 +309,7 @@ class Simple(unittest.TestCase):
         response = post("/api/1/send_message",
                         { "x-id" : "3333",
                           "fingerprint" : x_id,
-                          "id" : "00000000-0000-0000-0000-00000000000c",
+                          "message_id" : "00000000-0000-0000-0000-00000000000c",
                           "body" : "Foo bar foo2" })
         self.assertEqual(response["status"], "OK")
         # I received a message in the same crew as before, a new one wasn't created
@@ -273,7 +321,7 @@ class Simple(unittest.TestCase):
         # put a matchable query in first
         response = post("/api/1/create_search",
                         { "x-id" : "other-guy",
-                          "id" : "00000000-0000-0000-0000-000000000000",
+                          "search_id" : "00000000-0000-0000-0000-000000000000",
                           "query" : "test1 #tag1 #tag2",
                           "side" : "PROVIDE",
                           "longitude" : "0.01",
@@ -296,7 +344,7 @@ class Simple(unittest.TestCase):
 
         response = post("/api/1/create_search",                        
                         { "x-id" : x_id,
-                          "id" : "00000000-0000-0000-0000-000000000001",
+                          "search_id" : "00000000-0000-0000-0000-000000000001",
                           "query" : "test2 #tag1 #tag2",
                           "side" : "SEEK",
                           "radius" : "10000",
@@ -315,7 +363,7 @@ class Simple(unittest.TestCase):
 
         response = post("/api/1/delete_search",
                         { "x-id" : x_id,
-                          "search" : "00000000-0000-0000-0000-000000000001" })
+                          "search_id" : "00000000-0000-0000-0000-000000000001" })
         self.assertEqual(response["status"], "OK")
         self.assertEqual("incremental", synchronise(self.local_db))
         #self.assertEqual(device_timeline_and_sequence(self.local_db), (1, 5))

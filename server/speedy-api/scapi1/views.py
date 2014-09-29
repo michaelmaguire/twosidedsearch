@@ -898,14 +898,18 @@ def leave_crew(request):
     cursor.execute("""SELECT 1 FROM speedycrew.crew WHERE id = %s FOR UPDATE""",
                    (crew_id,))
     if cursor.fetchone() == None:
-        return json_response({ "message_type", "leave_crew_response",
-                               "status", "ERROR",
-                               "message", "unknown crew" })
-    # mark ours as LEFT (TODO: check it was ACTIVE...)
+        return json_response({ "message_type": "leave_crew_response",
+                               "status": "ERROR",
+                               "message": "unknown crew" })
+    # mark ours as LEFT
     cursor.execute("""UPDATE speedycrew.crew_member
                          SET status = 'LEFT'
-                       WHERE crew = %s AND profile = %s""",
+                       WHERE crew = %s AND profile = %s AND status = 'ACTIVE'""",
                    (crew_id, profile_id))
+    if cursor.rowcount != 1:
+        return json_response({ "message_type": "leave_crew_response",
+                               "status": "ERROR",
+                               "message": "not a member" })        
     # in profile_id order, tell everyone (including ourselves!) to
     # update our crew_member record
     cursor.execute("""SELECT profile
@@ -919,6 +923,41 @@ def leave_crew(request):
                        (member_profile_id, member_profile_id, crew_id, profile_id))
 
     return json_response({ "message_type" : "leave_crew_response",
+                           "status" : "OK" })
+
+def rename_crew(request):
+    profile_id = begin(request)
+    crew_id = param_required(request, "crew_id")
+    name = param_required(request, "name")
+    cursor = connection.cursor()
+    # lock crew row so membership doesn't change
+    cursor.execute("""SELECT 1 FROM speedycrew.crew WHERE id = %s FOR UPDATE""",
+                   (crew_id,))
+    if cursor.fetchone() == None:
+        return json_response({ "message_type": "rename_crew_response",
+                               "status": "ERROR",
+                               "message": "unknown crew_id" })
+    # make sure that the caller is a member
+    cursor.execute("""SELECT 1 FROM speedycrew.crew_member WHERE crew = %s AND profile = %s""",
+                   (crew_id, profile_id))
+    if cursor.fetchone() == None:
+        return json_response({ "message_type": "rename_crew_response",
+                               "status": "ERROR",
+                               "message": "Negative, permission denied" })
+    # update the crew
+    cursor.execute("""UPDATE speedycrew.crew SET name = %s WHERE id = %s""",
+                   (name, crew_id))
+    # tell everyone who needs to know
+    cursor.execute("""SELECT profile
+                        FROM speedycrew.crew_member
+                       WHERE crew = %s
+                       ORDER BY profile""",
+                   (crew_id,))
+    for member_profile_id, in cursor.fetchall():
+        cursor.execute("""INSERT INTO speedycrew.event (profile, seq, type, tab, crew)
+                          VALUES (%s, next_sequence(%s), 'UPDATE', 'CREW', %s)""",
+                       (member_profile_id, member_profile_id, crew_id))
+    return json_response({ "message_type" : "rename_crew_response",
                            "status" : "OK" })
 
 def send_message(request):

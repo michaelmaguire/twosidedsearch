@@ -6,24 +6,28 @@ public class Profile implements android.provider.BaseColumns {
 
 	public final static String TABLE_NAME = "profile";
 
-	private String mFingerprint;
+	// HTTP parameter name
+	// TODO: "profile_id"?
+	public static final String PARAMETER_NAME = "fingerprint";
 
-	public Profile(String fingerprint) {
-		mFingerprint = fingerprint;
+	private String mProfileId;
+
+	public Profile(String profileId) {
+		mProfileId = profileId;
 	}
 
-	public String getFingerprint() {
-		return mFingerprint;
+	public String getProfileId() {
+		return mProfileId;
 	}
 
 	public void addToBundle(Bundle bundle) {
-		if (mFingerprint != null) {
-			bundle.putString(com.speedycrew.client.sql.Match.FINGERPRINT, mFingerprint);
+		if (mProfileId != null) {
+			bundle.putString(PARAMETER_NAME, mProfileId);
 		}
 	}
 
 	public String toString() {
-		return getFingerprint();
+		return getProfileId();
 	}
 
 	// Columns names
