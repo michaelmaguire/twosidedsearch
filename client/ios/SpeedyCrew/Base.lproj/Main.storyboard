@@ -508,6 +508,37 @@
             </objects>
             <point key="canvasLocation" x="-826" y="-97"/>
         </scene>
+        <!--SpC Message2 View Controller-->
+        <scene sceneID="44c-Ub-C1p">
+            <objects>
+                <viewController id="C8l-p9-uJ5" customClass="SpCMessage2ViewController" sceneMemberID="viewController">
+                    <layoutGuides>
+                        <viewControllerLayoutGuide type="top" id="hyj-vO-Ayo"/>
+                        <viewControllerLayoutGuide type="bottom" id="XbQ-TZ-Gc0"/>
+                    </layoutGuides>
+                    <view key="view" contentMode="scaleToFill" id="ZzX-Ha-1QE">
+                        <rect key="frame" x="0.0" y="0.0" width="320" height="480"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <webView contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="c8g-ws-6Ni">
+                                <rect key="frame" x="0.0" y="-32" width="320" height="512"/>
+                                <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                <connections>
+                                    <outlet property="delegate" destination="C8l-p9-uJ5" id="Enc-fc-uGe"/>
+                                </connections>
+                            </webView>
+                        </subviews>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                    </view>
+                    <navigationItem key="navigationItem" id="iLR-KU-DSS"/>
+                    <connections>
+                        <outlet property="html" destination="c8g-ws-6Ni" id="bQI-td-SQI"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="Uca-GR-meF" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="-317" y="-97"/>
+        </scene>
         <!--I'm Crew-->
         <scene sceneID="d2Z-Hn-Sgz">
             <objects>
@@ -605,6 +636,23 @@
                                             </state>
                                             <connections>
                                                 <segue destination="6Nw-Re-IpA" kind="push" id="lOP-cf-NwS"/>
+                                            </connections>
+                                        </button>
+                                    </subviews>
+                                </tableViewCellContentView>
+                            </tableViewCell>
+                            <tableViewCell contentMode="scaleToFill" restorationIdentifier="Crew2" selectionStyle="default" indentationWidth="10" reuseIdentifier="Crew2" id="C3r-za-agA" userLabel="Crew">
+                                <autoresizingMask key="autoresizingMask"/>
+                                <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="C3r-za-agA" id="uyw-qf-JyU">
+                                    <autoresizingMask key="autoresizingMask"/>
+                                    <subviews>
+                                        <button opaque="NO" tag="1" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="hYh-l4-TFo">
+                                            <rect key="frame" x="8" y="7" width="304" height="30"/>
+                                            <state key="normal" title="Button">
+                                                <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
+                                            </state>
+                                            <connections>
+                                                <segue destination="C8l-p9-uJ5" kind="push" id="P0o-rK-yxW"/>
                                             </connections>
                                         </button>
                                     </subviews>

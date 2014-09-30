@@ -9,6 +9,8 @@
 /* Begin PBXBuildFile section */
 		AB29B4B719D8712A004C1AAC /* SpCCrewViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = AB29B4B619D8712A004C1AAC /* SpCCrewViewController.mm */; };
 		AB29B4BD19D8883A004C1AAC /* SpCMessageViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = AB29B4BC19D8883A004C1AAC /* SpCMessageViewController.mm */; };
+		AB2CDE9019D9EAFD00569CF9 /* SpCMessage2ViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = AB2CDE8F19D9EAFD00569CF9 /* SpCMessage2ViewController.mm */; };
+		AB2CDE9519DA0A5200569CF9 /* crew.bundle in Resources */ = {isa = PBXBuildFile; fileRef = AB2CDE9419DA0A5200569CF9 /* crew.bundle */; };
 		AB333835195CCDE800BEC08C /* libSDWebImage.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AB33382E195CCD6D00BEC08C /* libSDWebImage.a */; };
 		AB333837195CCE1B00BEC08C /* ImageIO.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AB333836195CCE1B00BEC08C /* ImageIO.framework */; };
 		AB3FA25219AB831C003D02DC /* SpCProfile.mm in Sources */ = {isa = PBXBuildFile; fileRef = AB3FA25119AB831C003D02DC /* SpCProfile.mm */; };
@@ -85,6 +87,9 @@
 		AB29B4B619D8712A004C1AAC /* SpCCrewViewController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = SpCCrewViewController.mm; sourceTree = "<group>"; };
 		AB29B4BB19D8883A004C1AAC /* SpCMessageViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SpCMessageViewController.h; sourceTree = "<group>"; };
 		AB29B4BC19D8883A004C1AAC /* SpCMessageViewController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = SpCMessageViewController.mm; sourceTree = "<group>"; };
+		AB2CDE8E19D9EAFD00569CF9 /* SpCMessage2ViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SpCMessage2ViewController.h; sourceTree = "<group>"; };
+		AB2CDE8F19D9EAFD00569CF9 /* SpCMessage2ViewController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = SpCMessage2ViewController.mm; sourceTree = "<group>"; };
+		AB2CDE9419DA0A5200569CF9 /* crew.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = crew.bundle; sourceTree = "<group>"; };
 		AB333826195CCD6D00BEC08C /* SDWebImage.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SDWebImage.xcodeproj; path = SpeedyCrew/SDWebImage/SDWebImage.xcodeproj; sourceTree = "<group>"; };
 		AB333836195CCE1B00BEC08C /* ImageIO.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ImageIO.framework; path = System/Library/Frameworks/ImageIO.framework; sourceTree = SDKROOT; };
 		AB3FA25019AB831C003D02DC /* SpCProfile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SpCProfile.h; sourceTree = "<group>"; };
@@ -212,9 +217,12 @@
 		AB9C2E4A184EA15400454DCD /* SpeedyCrew */ = {
 			isa = PBXGroup;
 			children = (
+				AB2CDE9419DA0A5200569CF9 /* crew.bundle */,
 				AB9C2E53184EA15400454DCD /* SpCAppDelegate.h */,
 				AB9C2E54184EA15400454DCD /* SpCAppDelegate.mm */,
 				AB9C2E56184EA15400454DCD /* Main.storyboard */,
+				AB2CDE8E19D9EAFD00569CF9 /* SpCMessage2ViewController.h */,
+				AB2CDE8F19D9EAFD00569CF9 /* SpCMessage2ViewController.mm */,
 				AB29B4BB19D8883A004C1AAC /* SpCMessageViewController.h */,
 				AB29B4BC19D8883A004C1AAC /* SpCMessageViewController.mm */,
 				AB937E29192952F200FC921D /* SpCMapViewController.h */,
@@ -391,6 +399,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AB2CDE9519DA0A5200569CF9 /* crew.bundle in Resources */,
 				AB9C2E5D184EA15400454DCD /* Images.xcassets in Resources */,
 				AB9C2E4F184EA15400454DCD /* InfoPlist.strings in Resources */,
 				AB9C2E58184EA15400454DCD /* Main.storyboard in Resources */,
@@ -418,6 +427,7 @@
 				AB9C2E51184EA15400454DCD /* main.mm in Sources */,
 				ABD4EA78191FE91F00A37FA1 /* SpCCaptainSearchViewController.mm in Sources */,
 				AB6EDE5E187701AE0026A1AB /* SpCSearchViewController.mm in Sources */,
+				AB2CDE9019D9EAFD00569CF9 /* SpCMessage2ViewController.mm in Sources */,
 				ABC8BC4E19AA41D600B33287 /* SpCMatchTableViewController.mm in Sources */,
 				AB937E2B192952F200FC921D /* SpCMapViewController.mm in Sources */,
 				AB6EDE64187869E20026A1AB /* SpCDatabase.mm in Sources */,

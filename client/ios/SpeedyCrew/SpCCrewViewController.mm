@@ -8,6 +8,7 @@
 
 #import "SpCCrewViewController.h"
 #import "SpCMessageViewController.h"
+#import "SpCMessage2ViewController.h"
 #import "SpCDatabase.h"
 #include "Database.h"
 #include <sstream>
@@ -28,7 +29,7 @@
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:  @"Crew" forIndexPath:indexPath];
+    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:  @"Crew2" forIndexPath:indexPath];
     std::ostringstream query;
     query << "select id from crew order by id limit 1 offset " << (long)indexPath.row;
     SpeedyCrew::Database* db = [SpCDatabase getDatabase];
@@ -54,8 +55,13 @@
     query << "select id from crew order by id limit 1 offset " << (long)button.tag;
     SpeedyCrew::Database* db = [SpCDatabase getDatabase];
     std::string crewId = db->query<std::string>(query.str());
+#if 0
     SpCMessageViewController* messages = [segue destinationViewController];
     messages.crewId = [NSString stringWithFormat:@"%s", crewId.c_str()];
+#else
+    SpCMessage2ViewController* messages = [segue destinationViewController];
+    messages.crewId = [NSString stringWithFormat:@"%s", crewId.c_str()];
+#endif
 }
 
 @end
