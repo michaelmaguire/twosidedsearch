@@ -1,0 +1,63 @@
+body {
+  font-family: sans-serif;
+}
+a:link, a:visited {
+    text-decoration: none;
+    color: black;
+}
+div.id {
+  position: relative;
+  top: 0px;
+  left: 0px;
+  color: silver;
+  font-size: xx-small;
+  margin: 0px 0px 0.4em 0px;
+}
+div.mem-id {
+  position: relative;
+  top: 0px;
+  left: 0px;
+  color: blue;
+  font-size: xx-small;
+  margin: 0px 0px 0.4em 0px;
+}
+div.name {
+  color: black;
+  font-weight: bold;
+}
+div.crew {
+  width: 95%;
+  border-style: solid;
+  border-radius: 0.5em;
+  border-width: 1px;
+  padding: 0.4em;
+  margin: 0px 3em 0.2em 0px;
+  background: #DBFFFF;
+}
+div.member {
+  width: 90%;
+  border-style: solid;
+  border-radius: 0.5em;
+  border-width: 1px;
+  padding: 0.4em;
+  margin: 0px 3em 0.2em 0px;
+  background: #EBFFE0;
+}
+div.self {
+  width: 90%;
+  border-style: solid;
+  border-radius: 0.5em;
+  border-width: 1px;
+  padding: 0.4em;
+  margin: 0px 3em 0.2em 0px;
+  background: #FFFFE3;
+}
+div.username {
+  font-size: xx-small;
+}
+div.message {
+  font-weight: bold;
+}
+div.eamil {
+    color: blue;
+}
