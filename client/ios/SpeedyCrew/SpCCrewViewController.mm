@@ -7,61 +7,97 @@
 //
 
 #import "SpCCrewViewController.h"
-#import "SpCMessageViewController.h"
+#import "SpCAppDelegate.h"
 #import "SpCMessage2ViewController.h"
 #import "SpCDatabase.h"
 #include "Database.h"
 #include <sstream>
 
+@interface SpCCrewViewController()
+@property NSString* crewId;
+@property bool      registered;
+@end
+
 @implementation SpCCrewViewController
 
-- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
+- (void)viewDidLoad
 {
-    return 1;
+    if (!self.registered) {
+        NSLog(@"registering crew view for updates");
+        self.registered = YES;
+        SpCData* data = [SpCAppDelegate instance].data;
+        __weak typeof(self) weakSelf = self;
+        [data addListener:^(NSString* name, NSObject* object) {
+                [weakSelf setContent];
+            } withId:@"MessageView"];
+    }
+    [self setContent];
 }
 
-- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+- (void)setContent
 {
+    std::string uuid = [[SpCAppDelegate instance].data.identity UTF8String];
     SpeedyCrew::Database* db = [SpCDatabase getDatabase];
-    int rows = db->query<int>("select count(*) from crew");
-    return rows;
+    std::vector<std::string> id(db->queryColumn("select id from crew order by id"));
+    std::vector<std::string> name(db->queryColumn("select name from crew order by id"));
+    std::size_t size(std::min(id.size(), name.size()));
+
+    std::ostringstream out;
+    out << "<html><head><title></title>";
+    out << "<link rel='stylesheet' type='text/css' href='crew.bundle/crews.css'/>";
+    out << "<head><body>\n";
+    for (std::size_t i(0); i != size; ++i) {
+        out << "<a href='crew://open/" << id[i] << "'>"
+            << "<div class='crew'>"
+            << "<div class='id'>" << id[i] << "</div>"
+            << "<div class='name'>" << (name[i].empty()? "<no name>": name[i]) << "</div>";
+        std::vector<std::string> member(db->queryColumn("select fingerprint from crew_member where crew = '" + id[i] + "'"));
+        for (std::size_t m(0); m != member.size(); ++m) {
+            out << "<div class='" << (member[m] == uuid? "self": "member") << "'>"
+                << "<div class='mem-id'>" << member[m] << "</div>";
+            for (std::string const& v:{ "username", "real_name", "email", "message" }) {
+                std::string value(db->query<std::string>("select " + v + " from profile where fingerprint = '" + member[m] + "'"));
+                if (!value.empty()) {
+                    if (v == "email") {
+                        out << "<div class='" << v << "'><a href='mailto://" << value << "'>" << value << "</a></div>";
+                    }
+                    else {
+                        out << "<div class='" << v << "'>" << value << "</div>";
+                    }
+                }
+            } 
+            out << "</div>";
+        }
+        out << "</div>"
+            << "</a>\n";
+    }
+    out << "</body></head>\n";
+
+    NSString* html = [NSString stringWithFormat:@"%s", out.str().c_str()];
+    NSURL* url = [NSURL fileURLWithPath:[[NSBundle mainBundle] bundlePath]]; 
+    [self.html loadHTMLString: html baseURL: url];
 }
 
-- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+// ----------------------------------------------------------------------------
+
+- (BOOL)webView:(UIWebView *)webView shouldStartLoadWithRequest:(NSURLRequest *)request navigationType:(UIWebViewNavigationType)navigationType
 {
-    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:  @"Crew2" forIndexPath:indexPath];
-    std::ostringstream query;
-    query << "select id from crew order by id limit 1 offset " << (long)indexPath.row;
-    SpeedyCrew::Database* db = [SpCDatabase getDatabase];
-    std::string name = db->query<std::string>(query.str());
-
-    //-dk:TODO the label should probably be the name, a list of participants,
-    //         and only then something generic; the crew name should probably 
-    //         be created to start off as the search name and possibly be
-    //         editable
-    UIButton* button = (UIButton*)[cell.contentView viewWithTag:1];
-    button.tag = indexPath.row;
-    [button setTitle:[NSString stringWithFormat:@"%s", name.c_str()] forState:UIControlStateNormal];
-
-    return cell;
+    NSLog(@"click! scheme=%@ host=%@ path=%@", request.URL.scheme, request.URL.host, request.URL.path);
+    if ([request.URL.scheme isEqual:@"crew"]) {
+        self.crewId = [request.URL.path substringFromIndex:1];
+        [self performSegueWithIdentifier:@"MessageSegue" sender:self];
+        return NO;
+    }
+    return YES;
 }
 
 // ----------------------------------------------------------------------------
 
 - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
 {
-    UIButton* button = (UIButton*)sender;
-    std::ostringstream query;
-    query << "select id from crew order by id limit 1 offset " << (long)button.tag;
-    SpeedyCrew::Database* db = [SpCDatabase getDatabase];
-    std::string crewId = db->query<std::string>(query.str());
-#if 0
-    SpCMessageViewController* messages = [segue destinationViewController];
-    messages.crewId = [NSString stringWithFormat:@"%s", crewId.c_str()];
-#else
+    NSLog(@"prepare for segue: %@", self.crewId);
     SpCMessage2ViewController* messages = [segue destinationViewController];
-    messages.crewId = [NSString stringWithFormat:@"%s", crewId.c_str()];
-#endif
+    messages.crewId = self.crewId;
 }
 
 @end

@@ -258,7 +258,7 @@ namespace
         }
         if (rows) {
             std::vector<std::string>* vec = static_cast<std::vector<std::string>*>(data);
-            vec->push_back(rows[0]);
+            vec->push_back(rows[0]? rows[0]: std::string());
             return 0;
         }
         return 1;

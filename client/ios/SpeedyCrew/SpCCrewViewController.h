@@ -8,6 +8,7 @@
 
 #import <UIKit/UIKit.h>
 
-@interface SpCCrewViewController : UITableViewController
+@interface SpCCrewViewController : UIViewController
+@property (weak, nonatomic) IBOutlet UIWebView *html;
 
 @end

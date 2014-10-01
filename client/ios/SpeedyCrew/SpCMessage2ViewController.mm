@@ -24,6 +24,7 @@
 - (void)viewDidLoad
 {
     if (!self.registered) {
+        NSLog(@"registering message view for updates");
         self.registered = YES;
         SpCData* data = [SpCAppDelegate instance].data;
         __weak typeof(self) weakSelf = self;
@@ -81,7 +82,7 @@
 - (void)didRotateFromInterfaceOrientation: (UIInterfaceOrientation)fromInterfaceOrientation
 {
     [super didRotateFromInterfaceOrientation: fromInterfaceOrientation];
-    NSLog(@"did rotate: orientation=%@");
+    NSLog(@"did rotate: orientation=");
     [self setContent];
 }
 
