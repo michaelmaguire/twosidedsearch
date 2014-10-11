@@ -9,17 +9,18 @@
     <string name="action_messages">Messages</string>
     <string name="action_done">Done</string>
     <string name="action_send_feedback">Send Feedback</string>
+    <string name="action_settings">Settings</string>
+    <string name="action_refresh">Refresh</string>
+    <string name="action_reply">Reply</string>
+    <string name="action_send">Send</string>
+    <string name="action_reset_sync">Reset Sync</string>
     <string name="connection_service_name">SpeedyCrewConnectionService</string>
     <string name="about_description">SpeedyCrew v0.1</string>
     <string name="search_button">Search</string>
     <string name="title_activity_map">MapActivity</string>
-    <string name="action_settings">Settings</string>
     <string name="title_activity_match">MatchActivity</string>
     <string name="title_activity_message_list">MessageListActivity</string>
     <string name="title_activity_message">MessageActivity</string>
-    <string name="hello_world">Hello world!</string>
     <string name="title_activity_message_compose">MessageComposeActivity</string>
-    <string name="action_reply">Reply</string>
-    <string name="action_send">Send</string>
 
 </resources>

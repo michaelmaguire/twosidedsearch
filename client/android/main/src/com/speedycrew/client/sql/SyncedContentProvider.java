@@ -149,8 +149,8 @@ public class SyncedContentProvider extends ContentProvider {
 					String sqlStatement = null;
 					int i = 0;
 					try {
+						Log.i(LOGTAG, "call: START PROCESSING SQL");
 						db.beginTransaction();
-
 						final int length = sqlArray.length();
 						for (i = 0; i < length; ++i) {
 							sqlStatement = sqlArray.getString(i);
@@ -159,6 +159,7 @@ public class SyncedContentProvider extends ContentProvider {
 							db.execSQL(sqlStatement);
 						}
 						db.setTransactionSuccessful();
+						Log.i(LOGTAG, "call: FINISHED PROCESSING SQL");
 					} catch (SQLException sqle) {
 						Log.e(LOGTAG, "call: SQLException for sqlStatement("
 								+ i + ")[" + sqlStatement + "]", sqle);

@@ -5,6 +5,8 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import com.speedycrew.client.util.RequestHelper;
+
 public class MessageListActivity extends Activity {
 
 	@Override
@@ -31,11 +33,23 @@ public class MessageListActivity extends Activity {
 		// Handle action bar item clicks here. The action bar will
 		// automatically handle clicks on the Home/Up button, so long
 		// as you specify a parent activity in AndroidManifest.xml.
-		int id = item.getItemId();
-		if (id == R.id.action_settings) {
+		switch (item.getItemId()) {
+		case R.id.action_settings: {
 			return true;
 		}
-		return super.onOptionsItemSelected(item);
-	}
+		case R.id.action_refresh: {
+			try {
+				RequestHelper.sendSynchronize(
+						SpeedyCrewApplication.getAppContext(), null);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			return true;
+		}
+		default: {
+			return super.onOptionsItemSelected(item);
+		}
 
+		}
+	}
 }

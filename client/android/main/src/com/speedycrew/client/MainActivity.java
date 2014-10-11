@@ -11,6 +11,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 
+import com.speedycrew.client.util.RequestHelper;
+
 public class MainActivity extends Activity {
 	private static final String LOGTAG = MainActivity.class.getName();
 
@@ -136,9 +138,18 @@ public class MainActivity extends Activity {
 			startActivity(intent);
 			return true;
 		}
+		case R.id.action_refresh: {
+			try {
+				RequestHelper.sendSynchronize(
+						SpeedyCrewApplication.getAppContext(), null);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			return true;
+		}
+
 		default:
 			return super.onOptionsItemSelected(item);
 		}
 	}
-
 }

@@ -9,19 +9,28 @@
     tools:context=".MainActivity" >
 
     <TextView
-        android:id="@+id/textView1"
+        android:id="@+id/about_description_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/about_description" />
 
     <TextView
+        android:id="@+id/fingerprint_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentRight="true"
+        android:layout_below="@+id/about_description_text"
+        android:layout_marginTop="24dp"
+        android:text="User fingerprint" />
+
+    <TextView
         android:id="@+id/fingerprint"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignLeft="@+id/textView1"
+        android:layout_alignLeft="@+id/fingerprint_label"
         android:layout_alignParentRight="true"
-        android:layout_below="@+id/textView1"
-        android:layout_marginTop="14dp"
+        android:layout_below="@+id/fingerprint_label"
         android:text="fingerprint" />
 
 </RelativeLayout>

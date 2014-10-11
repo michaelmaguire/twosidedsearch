@@ -9,6 +9,7 @@ import android.view.MenuItem;
 import android.widget.TextView;
 
 import com.speedycrew.client.connection.KeyManager;
+import com.speedycrew.client.util.RequestHelper;
 
 public class AboutActivity extends Activity {
 
@@ -58,6 +59,18 @@ public class AboutActivity extends Activity {
 					+ "");
 			startActivity(Intent.createChooser(sendFeedbackViaEmail,
 					"Send Feedback:"));
+			return true;
+		}
+		case R.id.action_reset_sync: {
+			try {
+				// We explicitly set timeline and sequence to zero here, to
+				// cause a reset.
+				RequestHelper.sendSynchronize(
+						SpeedyCrewApplication.getAppContext(), Long.valueOf(0),
+						Long.valueOf(0), null);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 			return true;
 		}
 		default:
