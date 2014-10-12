@@ -26,7 +26,7 @@
             </objects>
             <point key="canvasLocation" x="-1892" y="-1758"/>
         </scene>
-        <!--Crew Searching-->
+        <!--I'm Crew-->
         <scene sceneID="UTx-uD-hcm">
             <objects>
                 <viewController id="6lY-qQ-pQY" customClass="SpCCrewSearchViewController" sceneMemberID="viewController">
@@ -129,7 +129,7 @@
                             <constraint firstItem="O4D-RI-3tp" firstAttribute="top" secondItem="f04-L4-2MB" secondAttribute="bottom" constant="1" id="zh1-AN-QNs"/>
                         </constraints>
                     </view>
-                    <navigationItem key="navigationItem" title="Crew Searching" id="bJO-ak-4RO"/>
+                    <navigationItem key="navigationItem" title="I'm Crew" id="bJO-ak-4RO"/>
                     <connections>
                         <outlet property="tableView" destination="AGd-yb-SDG" id="zj7-x1-9Im"/>
                     </connections>
@@ -174,7 +174,7 @@
             </objects>
             <point key="canvasLocation" x="-270" y="-2136"/>
         </scene>
-        <!--Captain Searching-->
+        <!--I'm Captain-->
         <scene sceneID="MR8-Rg-Zhj">
             <objects>
                 <viewController id="s4P-oZ-1DX" customClass="SpCCaptainSearchViewController" sceneMemberID="viewController">
@@ -271,7 +271,7 @@
                             <constraint firstItem="dc8-He-RIO" firstAttribute="trailing" secondItem="mfa-9O-fCK" secondAttribute="trailing" id="qkJ-Ua-xcv"/>
                         </constraints>
                     </view>
-                    <navigationItem key="navigationItem" title="Captain Searching" id="L8z-5R-Dhd"/>
+                    <navigationItem key="navigationItem" title="I'm Captain" id="L8z-5R-Dhd"/>
                     <connections>
                         <outlet property="tableView" destination="dc8-He-RIO" id="iR2-J9-umh"/>
                     </connections>
@@ -674,7 +674,7 @@
         <simulatedScreenMetrics key="destination"/>
     </simulatedMetricsContainer>
     <inferredMetricsTieBreakers>
-        <segue reference="JjB-Zw-4AV"/>
-        <segue reference="Mcv-P7-vMj"/>
+        <segue reference="7kT-WD-FT5"/>
+        <segue reference="dMb-2E-DQy"/>
     </inferredMetricsTieBreakers>
 </document>

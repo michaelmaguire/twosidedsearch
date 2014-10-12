@@ -80,7 +80,7 @@
           << "order by created limit 1 offset " << (long)indexPath.row;
     std::string body = db->query<std::string>(query.str());
     UILabel* label = (UILabel*)[cell.contentView viewWithTag:1];
-    label.text = [NSString stringWithFormat:@"%s", body.c_str()];
+    label.text = [NSString stringWithUTF8String: body.c_str()];
 
     return cell;
 }

@@ -72,18 +72,17 @@
         out << "</a>\n";
     }
     out << "</body></html>\n";
-    NSString* html = [NSString stringWithFormat:@"%s", out.str().c_str()];
+    NSString* html = [NSString stringWithUTF8String: out.str().c_str()];
     NSURL* url = [NSURL fileURLWithPath:[[NSBundle mainBundle] bundlePath]]; 
     [self.html loadHTMLString: html baseURL: url];
-
     self.html.autoresizingMask = UIViewAutoresizingFlexibleWidth|UIViewAutoresizingFlexibleHeight;
 }
 
-- (void)didRotateFromInterfaceOrientation: (UIInterfaceOrientation)fromInterfaceOrientation
-{
-    [super didRotateFromInterfaceOrientation: fromInterfaceOrientation];
-    NSLog(@"did rotate: orientation=");
-    [self setContent];
+- (void)viewDidLayoutSubviews {
+    [super viewDidLayoutSubviews];
+    self.html.frame = CGRectMake(0, self.topLayoutGuide.length,
+                                 self.view.frame.size.width,
+                                 self.view.frame.size.height - self.topLayoutGuide.length - self.bottomLayoutGuide.length);
 }
 
 - (BOOL)webView:(UIWebView *)webView shouldStartLoadWithRequest:(NSURLRequest *)request navigationType:(UIWebViewNavigationType)navigationType

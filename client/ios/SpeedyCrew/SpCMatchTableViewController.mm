@@ -84,7 +84,7 @@
                                                       "GROUP BY cm.crew "
                                                       " HAVING COUNT(*) = 2");
             int count = db->query<int>("select count(*) from message where crew = '" + crew + "'");
-            self.crew = [NSString stringWithFormat:@"%s", crew.c_str()];
+            self.crew = [NSString stringWithUTF8String: crew.c_str()];
             return count;
         }
         catch (std::exception const& ex) {
@@ -129,7 +129,7 @@
             SpeedyCrew::Database* db = [SpCDatabase getDatabase];
             try {
                 std::string message = db->query<std::string>(query.str());
-                label.text = [NSString stringWithFormat:@"%s", message.c_str()];
+                label.text = [NSString stringWithUTF8String: message.c_str()];
             }
             catch (std::exception const& ex) {
                 NSLog(@"query didn't yield a result: row=%ld query=%s", (long)indexPath.row, query.str().c_str());

@@ -73,7 +73,7 @@
     }
     out << "</body></head>\n";
 
-    NSString* html = [NSString stringWithFormat:@"%s", out.str().c_str()];
+    NSString* html = [NSString stringWithUTF8String: out.str().c_str()];
     NSURL* url = [NSURL fileURLWithPath:[[NSBundle mainBundle] bundlePath]]; 
     [self.html loadHTMLString: html baseURL: url];
 }

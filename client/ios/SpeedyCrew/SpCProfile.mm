@@ -37,7 +37,7 @@
     SpeedyCrew::Database* db = [SpCDatabase getDatabase];
     std::string fingerprint = [self.fingerprint UTF8String];
     std::string value = db->query<std::string>("select real_name from profile where fingerprint='" + fingerprint + "'");
-    return [NSString stringWithFormat:@"%s", value.c_str()];
+    return [NSString stringWithUTF8String: value.c_str()];
 }
 
 - (NSString*)username
@@ -45,7 +45,7 @@
     SpeedyCrew::Database* db = [SpCDatabase getDatabase];
     std::string fingerprint = [self.fingerprint UTF8String];
     std::string value = db->query<std::string>("select username from profile where fingerprint='" + fingerprint + "'");
-    return [NSString stringWithFormat:@"%s", value.c_str()];
+    return [NSString stringWithUTF8String: value.c_str()];
 }
 
 - (NSString*)email
@@ -53,7 +53,7 @@
     SpeedyCrew::Database* db = [SpCDatabase getDatabase];
     std::string fingerprint = [self.fingerprint UTF8String];
     std::string value = db->query<std::string>("select email from profile where fingerprint='" + fingerprint + "'");
-    return [NSString stringWithFormat:@"%s", value.c_str()];
+    return [NSString stringWithUTF8String: value.c_str()];
 }
 
 - (NSString*)message
@@ -61,7 +61,7 @@
     SpeedyCrew::Database* db = [SpCDatabase getDatabase];
     std::string fingerprint = [self.fingerprint UTF8String];
     std::string value = db->query<std::string>("select message from profile where fingerprint='" + fingerprint + "'");
-    return [NSString stringWithFormat:@"%s", value.c_str()];
+    return [NSString stringWithUTF8String: value.c_str()];
 }
 
 // ----------------------------------------------------------------------------

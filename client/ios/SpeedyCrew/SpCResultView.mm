@@ -60,7 +60,7 @@
     SpeedyCrew::Database* db = [SpCDatabase getDatabase];
     std::string key = [self.key UTF8String];
     std::string value = db->query<std::string>("select username from match where " + key);
-    return [NSString stringWithFormat:@"%s", value.c_str()];
+    return [NSString stringWithUTF8String: value.c_str()];
 }
 
 - (NSString*)subtitle
@@ -73,7 +73,7 @@
     SpeedyCrew::Database* db = [SpCDatabase getDatabase];
     std::string key = [self.key UTF8String];
     std::string value = db->query<std::string>("select fingerprint from match where " + key);
-    return [NSString stringWithFormat:@"%s", value.c_str()];
+    return [NSString stringWithUTF8String: value.c_str()];
 }
 
 // ----------------------------------------------------------------------------
@@ -86,7 +86,7 @@
     if (value.empty()) {
         value = "<anonymous>";
     }
-    return [NSString stringWithFormat:@"%s", value.c_str()];
+    return [NSString stringWithUTF8String: value.c_str()];
 }
 
 // ----------------------------------------------------------------------------
@@ -99,7 +99,7 @@
     if (value.empty()) {
         value = "<unknown>";
     }
-    return [NSString stringWithFormat:@"%s", value.c_str()];
+    return [NSString stringWithUTF8String: value.c_str()];
 }
 
 // ----------------------------------------------------------------------------
@@ -112,7 +112,7 @@
     if (value.empty()) {
         value = "<unknown>";
     }
-    return [NSString stringWithFormat:@"%s", value.c_str()];
+    return [NSString stringWithUTF8String: value.c_str()];
 }
 
 // ----------------------------------------------------------------------------

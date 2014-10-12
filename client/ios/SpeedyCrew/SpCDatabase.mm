@@ -87,7 +87,7 @@ namespace
                       + s_database.escape([name UTF8String]) + "';");
     NSLog(@"querying setting %@: '%s'", name, query.c_str());
     std::string result(s_database.query<std::string>(query));
-    return [NSString stringWithFormat:@"%s", result.c_str()];
+    return [NSString stringWithUTF8String: result.c_str()];
 }
 
 - (void) updateSetting:(NSString*)name with:(NSString*)value

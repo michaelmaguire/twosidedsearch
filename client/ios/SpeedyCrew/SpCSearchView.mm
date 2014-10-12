@@ -83,7 +83,7 @@
     SpeedyCrew::Database* db = [SpCDatabase getDatabase];
     std::string id = [self.id UTF8String];
     std::string search = db->query<std::string>("select query from search where id='" + id + "';");
-    return [NSString stringWithFormat:@"%s", search.c_str()];
+    return [NSString stringWithUTF8String: search.c_str()];
 }
 
 - (NSString*)subtitle

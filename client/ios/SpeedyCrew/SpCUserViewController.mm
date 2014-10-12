@@ -66,7 +66,7 @@
     UITableViewCell *cell = [tv dequeueReusableCellWithIdentifier:id forIndexPath:path];
     std::string scid(db->query<std::string>("select value from settings where name='scid'"));
     if (0 == (long)path.row) {
-        NSString* value = [NSString stringWithFormat:@"%s", scid.c_str()];
+        NSString* value = [NSString stringWithUTF8String: scid.c_str()];
         UIView* view = [cell.contentView viewWithTag:1];
         if (view && ![view isEqual:[NSNull null]]) {
             UILabel* label = (UILabel*)view;
@@ -80,7 +80,7 @@
             if (db->query<int>("select count(*) from profile where fingerprint='" + scid + "'") == 1) {
                 val = db->query<std::string>("select " + std::string([id UTF8String]) + " from profile where fingerprint='" + scid + "'");
             }
-            NSString* value = [NSString stringWithFormat:@"%s", val.c_str()];
+            NSString* value = [NSString stringWithUTF8String: val.c_str()];
             UITextField* text = (UITextField*)view;
             text.text     = value;
             text.tag      = path.row;
