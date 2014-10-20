@@ -93,8 +93,6 @@ public class ConnectionService extends IntentService {
 		public static final String SEARCH = "search";
 		public static final String STATUS = "status";
 		public static final String PARAMETER_NAME_GOOGLE_REGISTRATION_ID = "google_registration_id";
-		public static final String TIMELINE = "timeline";
-		public static final String SEQUENCE = "sequence";
 
 		/**
 		 * This is actually a SpeedyCrew server parameter name passed right
@@ -348,18 +346,32 @@ public class ConnectionService extends IntentService {
 	}
 
 	private void enrichWithTimelineAndSequence(Bundle bundle) {
-		ContentResolver contentResolver = getContentResolver();
-		Bundle timelineSequenceResponse = contentResolver.call(
-				SyncedContentProvider.BASE_URI,
-				SyncedContentProvider.METHOD_FETCH_TIMELINE_SEQUENCE, null,
-				null);
+
+		// See if caller already explicitly set any values for us to use.
+		Object timeline = bundle.get(Control.TIMELINE);
+		Object sequence = bundle.get(Control.SEQUENCE);
+
+		// If either value isn't set, do a SQL query to obtain from our
+		// 'control' table.
+		if (timeline == null || sequence == null) {
+			ContentResolver contentResolver = getContentResolver();
+			Bundle timelineSequenceResponse = contentResolver.call(
+					SyncedContentProvider.BASE_URI,
+					SyncedContentProvider.METHOD_FETCH_TIMELINE_SEQUENCE, null,
+					null);
+
+			if (timeline == null) {
+				timeline = timelineSequenceResponse.getLong(Control.TIMELINE);
+			}
+			if (sequence == null) {
+				sequence = timelineSequenceResponse.getLong(Control.SEQUENCE);
+			}
+		}
 
 		// By happy (planned) coincidence, the HTTP parameters and
 		// the column names are the same.
-		bundle.putString(Control.SEQUENCE, Long
-				.toString(timelineSequenceResponse.getLong(Control.SEQUENCE)));
-		bundle.putString(Control.TIMELINE, Long
-				.toString(timelineSequenceResponse.getLong(Control.TIMELINE)));
+		bundle.putString(Control.SEQUENCE, sequence.toString());
+		bundle.putString(Control.TIMELINE, timeline.toString());
 	}
 
 	private void enrichWithGeoLocation(Bundle bundle) {
