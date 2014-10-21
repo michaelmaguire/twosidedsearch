@@ -217,7 +217,7 @@ def do_refresh(cursor, profile_id, timeline, high_sequence, sql, metadata):
     sql.append(param("INSERT INTO control (timeline, sequence) VALUES (%s, %s)",
                      (timeline, high_sequence,)))
 
-def do_incremental(cursor, profile_id, device_sequence, sql, metadata):
+def do_incremental(cursor, profile_id, timeline, device_sequence, sql, metadata):
 
     # find the configured maximum number of events to send
     cursor.execute("""SELECT int_value
@@ -358,6 +358,11 @@ def do_incremental(cursor, profile_id, device_sequence, sql, metadata):
         metadata.append({ "more" : True })
     if highest_sequence:
         sql.append(param("UPDATE control SET sequence = %s", (highest_sequence,)))
+    else:
+        highest_sequence = device_sequence
+    metadata.append({ "timeline" : timeline })
+    metadata.append({ "old_sequence" : device_sequence })
+    metadata.append({ "new_sequence" : highest_sequence })
 
 def do_synchronise(profile_id, device_timeline, device_sequence):
     cursor = connection.cursor()
@@ -386,7 +391,7 @@ def do_synchronise(profile_id, device_timeline, device_sequence):
         do_refresh(cursor, profile_id, timeline, high_sequence, sql, metadata)
         operation = "refresh"
     else:
-        do_incremental(cursor, profile_id, device_sequence, sql, metadata)
+        do_incremental(cursor, profile_id, timeline, device_sequence, sql, metadata)
         operation = "incremental"
 
     return operation, metadata, sql
