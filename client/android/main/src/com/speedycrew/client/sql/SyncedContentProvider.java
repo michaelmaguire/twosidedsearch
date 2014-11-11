@@ -130,6 +130,31 @@ public class SyncedContentProvider extends ContentProvider {
 
 	}
 
+	private long[] fetchCurrentControlTableTimelineAndSequence() {
+		long timeline = 0L;
+		long sequence = 0L;
+		try {
+			SQLiteDatabase db = mSyncedSQLiteOpenHelper.getReadableDatabase();
+			Cursor cursor = db.rawQuery("SELECT * FROM " + Control.TABLE_NAME,
+					null);
+			if (cursor.moveToFirst()) {
+				timeline = cursor.getLong(cursor
+						.getColumnIndex(Control.TIMELINE));
+				sequence = cursor.getLong(cursor
+						.getColumnIndex(Control.SEQUENCE));
+			} else {
+				Log.w(LOGTAG, "call: empty cursor, starting sync from 0, 0");
+			}
+		} catch (Exception e) {
+			Log.w(LOGTAG,
+					"call: problem querying timeline and sequence, restarting sync from 0, 0",
+					e);
+		}
+		return new long[] { timeline, sequence };
+	}
+
+	private static final String OLD_SEQUENCE = "old_sequence";
+
 	@Override
 	public Bundle call(String method, String arg, Bundle extras) {
 		Log.i(LOGTAG, "call method[" + method + "] arg[" + arg + "]");
@@ -142,32 +167,103 @@ public class SyncedContentProvider extends ContentProvider {
 
 				Log.i(LOGTAG, "call: jsonResponse[" + jsonResponse + "]");
 
-				JSONArray sqlArray = jsonResponse.getJSONArray("sql");
-				if (sqlArray != null) {
-					SQLiteDatabase db = mSyncedSQLiteOpenHelper
-							.getWritableDatabase();
-					String sqlStatement = null;
+				// Parse the metadata in the response. As we go, grab the
+				// the old timeline and sequence values we issued in the
+				// original request, to judge whether we're still interested
+				// in this response.
+				long requestTimeline = 0L;
+				long requestSequence = 0L;
+				JSONArray metadataArray = jsonResponse.getJSONArray("metadata");
+				if (metadataArray != null) {
 					int i = 0;
+					JSONObject metadataStatement = null;
 					try {
-						Log.i(LOGTAG, "call: START PROCESSING SQL");
-						db.beginTransaction();
-						final int length = sqlArray.length();
+						Log.i(LOGTAG, "call: START PROCESSING metadata");
+						final int length = metadataArray.length();
 						for (i = 0; i < length; ++i) {
-							sqlStatement = sqlArray.getString(i);
-							Log.i(LOGTAG, "call: SQL sqlStatement["
-									+ sqlStatement + "]");
-							db.execSQL(sqlStatement);
+							metadataStatement = metadataArray.getJSONObject(i);
+							Log.i(LOGTAG, "call: metadataStatement["
+									+ metadataStatement + "]");
+
+							if (metadataStatement.has(Control.TIMELINE)) {
+								String timelineString = metadataStatement
+										.getString(Control.TIMELINE);
+								requestTimeline = Long
+										.parseLong(timelineString);
+								Log.i(LOGTAG, "call: requestTimeline["
+										+ requestTimeline + "]");
+							}
+							if (metadataStatement.has(OLD_SEQUENCE)) {
+								String oldSequenceString = metadataStatement
+										.getString(OLD_SEQUENCE);
+								requestSequence = Long
+										.parseLong(oldSequenceString);
+								Log.i(LOGTAG, "call: requestSequence["
+										+ requestSequence + "]");
+							}
 						}
-						db.setTransactionSuccessful();
-						Log.i(LOGTAG, "call: FINISHED PROCESSING SQL");
-					} catch (SQLException sqle) {
-						Log.e(LOGTAG, "call: SQLException for sqlStatement("
-								+ i + ")[" + sqlStatement + "]", sqle);
-					} finally {
-						db.endTransaction();
+						Log.i(LOGTAG, "call: FINISHED PROCESSING metadata");
+					} catch (Exception e) {
+						Log.e(LOGTAG, "call: Exception for metadataStatement("
+								+ i + ")[" + metadataStatement + "]", e);
 					}
 				}
 
+				// Check whether we're still interested
+				// in this response.
+				long[] currentControlTableTimelineAndSequence = fetchCurrentControlTableTimelineAndSequence();
+
+				// There are two cases in which we're happy to proceed to
+				// process the SQL:
+				// 1) the timeline has changed, in which case we'll assume for
+				// now that this SQL will contain the drop table and create
+				// table commands to start us from scratch,
+				// 2) the timeline and old_sequence in respose match what we
+				// currently have in our Control table, so this looks like a
+				// relevant response to the last request we would have sent.
+				if (currentControlTableTimelineAndSequence[0] != requestTimeline
+						|| (currentControlTableTimelineAndSequence[0] == requestTimeline && currentControlTableTimelineAndSequence[1] == requestSequence)) {
+					// Looking good -- parse and apply the SQL.
+
+					JSONArray sqlArray = jsonResponse.getJSONArray("sql");
+					if (sqlArray != null) {
+						SQLiteDatabase db = mSyncedSQLiteOpenHelper
+								.getWritableDatabase();
+						String sqlStatement = null;
+						int i = 0;
+						try {
+							Log.i(LOGTAG, "call: START PROCESSING SQL");
+							db.beginTransaction();
+							final int length = sqlArray.length();
+							for (i = 0; i < length; ++i) {
+								sqlStatement = sqlArray.getString(i);
+								Log.i(LOGTAG, "call: SQL sqlStatement["
+										+ sqlStatement + "]");
+								db.execSQL(sqlStatement);
+							}
+							db.setTransactionSuccessful();
+							Log.i(LOGTAG, "call: FINISHED PROCESSING SQL");
+						} catch (SQLException sqle) {
+							Log.e(LOGTAG,
+									"call: SQLException for sqlStatement(" + i
+											+ ")[" + sqlStatement + "]", sqle);
+						} finally {
+							db.endTransaction();
+						}
+					}
+				} else {
+					Log.w(LOGTAG,
+							"call: requestTimeline["
+									+ requestTimeline
+									+ "] requestSequence["
+									+ requestSequence
+									+ "] does not match currentControlTableTimelineAndSequence["
+									+ currentControlTableTimelineAndSequence[0]
+									+ ","
+									+ currentControlTableTimelineAndSequence[1]
+									+ "]  -- we've probably already advanced our sync");
+
+				}
 			} catch (JSONException jsone) {
 				Log.i(LOGTAG,
 						"call: error parsing as JSON" + jsone.getMessage());
@@ -177,30 +273,14 @@ public class SyncedContentProvider extends ContentProvider {
 			getContext().getContentResolver().notifyChange(BASE_URI, null);
 
 		} else if (METHOD_FETCH_TIMELINE_SEQUENCE.equals(method)) {
-			long timeline = 0;
-			long sequence = 0;
-			try {
-				SQLiteDatabase db = mSyncedSQLiteOpenHelper
-						.getReadableDatabase();
-				Cursor cursor = db.rawQuery("SELECT * FROM "
-						+ Control.TABLE_NAME, null);
-				if (cursor.moveToFirst()) {
-					timeline = cursor.getLong(cursor
-							.getColumnIndex(Control.TIMELINE));
-					sequence = cursor.getLong(cursor
-							.getColumnIndex(Control.SEQUENCE));
-				} else {
-					Log.w(LOGTAG, "call: empty cursor, starting sync from 0, 0");
-				}
-			} catch (Exception e) {
-				Log.w(LOGTAG,
-						"call: problem querying timeline and sequence, restarting sync from 0, 0",
-						e);
-			}
+			long[] currentControlTableTimelineAndSequence = fetchCurrentControlTableTimelineAndSequence();
+
 			bundle = new Bundle();
 			// We'll use column names as bundle keys here.
-			bundle.putLong(Control.TIMELINE, timeline);
-			bundle.putLong(Control.SEQUENCE, sequence);
+			bundle.putLong(Control.TIMELINE,
+					currentControlTableTimelineAndSequence[0]);
+			bundle.putLong(Control.SEQUENCE,
+					currentControlTableTimelineAndSequence[1]);
 		} else {
 			Log.w(LOGTAG, "call: unsupported method[" + method + "]");
 		}
