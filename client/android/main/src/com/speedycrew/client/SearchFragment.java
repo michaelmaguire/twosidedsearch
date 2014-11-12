@@ -38,9 +38,10 @@ public class SearchFragment extends Fragment implements View.OnClickListener,
 			Search.ID, Search._ID };
 	static final int[] SEARCH_VIEWS_FROM_LAYOUT = new int[] { R.id.query };
 
-	static final String[] MATCH_PROJECTION = new String[] { Match.USERNAME,
-			Match.DISTANCE, Match.SEARCH, Match.OTHER_SEARCH, Match._ID, };
-	static final int[] MATCH_VIEWS_FROM_LAYOUT = new int[] { R.id.username,
+	static final String[] MATCH_PROJECTION = new String[] { Match.QUERY,
+			Match.DISTANCE, Match.USERNAME, Match.SEARCH, Match.OTHER_SEARCH,
+			Match._ID, };
+	static final int[] MATCH_VIEWS_FROM_LAYOUT = new int[] { R.id.query,
 			R.id.distance };
 
 	static final String SORTED_ORDER = SyncedContentProvider.SQLITE_ROWID
