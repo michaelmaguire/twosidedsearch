@@ -27,6 +27,9 @@ div.selection {
     margin: 10px;
     display: none;
 }
+input.send {
+    float: right;
+}
 input.cancel {
     float: right;
 }

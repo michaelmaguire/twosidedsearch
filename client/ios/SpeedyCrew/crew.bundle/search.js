@@ -30,6 +30,8 @@ function searchInitialize() {
     search.addEventListener("keypress", searchKeyPress);
     search.addEventListener("focus", searchFocus);
 
+    var send = document.getElementById("send");
+    send.addEventListener("click", searchSendButton);
     var cancel = document.getElementById("cancel");
     cancel.addEventListener("click", searchCancel);
 
@@ -40,6 +42,8 @@ function searchFocus() {
     var selection = document.getElementById("selection");
     selection.style.display = "block";
     searchSetSelection();
+    var send = document.getElementById("send");
+    send.className = "send";
     var cancel = document.getElementById("cancel");
     cancel.className = "cancel";
 }
@@ -47,21 +51,27 @@ function searchFocus() {
 function searchCancel() {
     var selection = document.getElementById("selection");
     selection.style.display = "none";
+    var send = document.getElementById("send");
+    send.className = "none";
     var cancel = document.getElementById("cancel");
     cancel.className = "none";
 }
 
 function searchSend(search) {
     searchCall("send", search);
-    searchAdd("{ \"id\":\"" + searchNextId() + "\", \"search\":\"" + search + "\", \"state\":\"open\" }");
+    search.value = "";
+    searchCancel();
+}
+
+function searchSendButton() {
+    var search = document.getElementById("search");
+    searchSend(search.value);
 }
 
 function searchKeyPress(ev) {
     var search = document.getElementById("search");
     if (ev.which == 13) {
         searchSend(search.value);
-        search.value = "";
-        searchCancel();
     }
     searchSetSelection(search.value, rootSectors);
 }

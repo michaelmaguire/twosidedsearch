@@ -15,20 +15,34 @@
 #include <sstream>
 
 @interface SpCNewSearchViewController ()
-
+@property bool registered;
 @end
 
 @implementation SpCNewSearchViewController
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    //-dk:TODO register for updates
+
+    if (!self.registered) {
+        NSLog(@"registering crew search view for updates");
+        self.registered = YES;
+        SpCData* data = [SpCAppDelegate instance].data;
+        __weak typeof(self) weakSelf = self;
+        [data addListener:^(NSString* name, NSObject* object) {
+                [weakSelf receivedUpdate:name];
+            } withId:@"CrewSearchView"];
+    }
+
     [self setContent];
 }
 
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.
+}
+
+- (void)receivedUpdate:(NSString*)name {
+    NSLog(@"crew search received update with name='%@'", name);
 }
 
 - (void)setContent {
@@ -48,6 +62,7 @@
         "                  <nobr>"
         "                    <input class=\"search\" id=\"search\" type=\"text\"></input>"
         "                    <input class=\"none\" id=\"cancel\" type=\"button\" value=\"cancel\"></input>"
+        "                    <input class=\"none\" id=\"send\" type=\"button\" value=\"send\"></input>"
         "                  </nobr>"
         "                </div>"
         "                <div id=\"selection\" class=\"selection\"></div>"
