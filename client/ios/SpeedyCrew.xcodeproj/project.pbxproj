@@ -18,6 +18,7 @@
 		AB6EDE61187799BB0026A1AB /* SpCUserViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = AB6EDE60187799BB0026A1AB /* SpCUserViewController.mm */; };
 		AB6EDE64187869E20026A1AB /* SpCDatabase.mm in Sources */ = {isa = PBXBuildFile; fileRef = AB6EDE63187869E20026A1AB /* SpCDatabase.mm */; };
 		AB6EDE6618786E830026A1AB /* libsqlite3.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = AB6EDE6518786E830026A1AB /* libsqlite3.dylib */; };
+		AB823D211A756B6F0071769F /* SpCNewSearchViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = AB823D201A756B6F0071769F /* SpCNewSearchViewController.mm */; };
 		AB937E281929509400FC921D /* MapKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AB937E271929509400FC921D /* MapKit.framework */; };
 		AB937E2B192952F200FC921D /* SpCMapViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = AB937E2A192952F200FC921D /* SpCMapViewController.mm */; };
 		AB937E2E1932B0DF00FC921D /* SpCResultView.mm in Sources */ = {isa = PBXBuildFile; fileRef = AB937E2D1932B0DF00FC921D /* SpCResultView.mm */; };
@@ -101,6 +102,8 @@
 		AB6EDE62187869E20026A1AB /* SpCDatabase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SpCDatabase.h; sourceTree = "<group>"; };
 		AB6EDE63187869E20026A1AB /* SpCDatabase.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = SpCDatabase.mm; sourceTree = "<group>"; };
 		AB6EDE6518786E830026A1AB /* libsqlite3.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libsqlite3.dylib; path = usr/lib/libsqlite3.dylib; sourceTree = SDKROOT; };
+		AB823D1F1A756B6F0071769F /* SpCNewSearchViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SpCNewSearchViewController.h; sourceTree = "<group>"; };
+		AB823D201A756B6F0071769F /* SpCNewSearchViewController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = SpCNewSearchViewController.mm; sourceTree = "<group>"; };
 		AB937E271929509400FC921D /* MapKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MapKit.framework; path = System/Library/Frameworks/MapKit.framework; sourceTree = SDKROOT; };
 		AB937E29192952F200FC921D /* SpCMapViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SpCMapViewController.h; sourceTree = "<group>"; };
 		AB937E2A192952F200FC921D /* SpCMapViewController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = SpCMapViewController.mm; sourceTree = "<group>"; };
@@ -255,6 +258,8 @@
 				AB3FA25119AB831C003D02DC /* SpCProfile.mm */,
 				AB29B4B519D8712A004C1AAC /* SpCCrewViewController.h */,
 				AB29B4B619D8712A004C1AAC /* SpCCrewViewController.mm */,
+				AB823D1F1A756B6F0071769F /* SpCNewSearchViewController.h */,
+				AB823D201A756B6F0071769F /* SpCNewSearchViewController.mm */,
 			);
 			path = SpeedyCrew;
 			sourceTree = "<group>";
@@ -437,6 +442,7 @@
 				ABD4EA7B1922DF9F00A37FA1 /* SpCSearchView.mm in Sources */,
 				ABAC2F8718720A4A006D7F7E /* SpCData.mm in Sources */,
 				AB9C2E55184EA15400454DCD /* SpCAppDelegate.mm in Sources */,
+				AB823D211A756B6F0071769F /* SpCNewSearchViewController.mm in Sources */,
 				ABE6E2BF19155EEB003D61CC /* SpCCrewSearchViewController.mm in Sources */,
 				ABEC17E918C3B00E00D54C93 /* SpCChanging.mm in Sources */,
 			);

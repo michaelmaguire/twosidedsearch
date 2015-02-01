@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="6250" systemVersion="13F34" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" initialViewController="tal-tQ-TlS">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="6254" systemVersion="14B25" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" initialViewController="tal-tQ-TlS">
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="6244"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="6247"/>
     </dependencies>
     <scenes>
         <!--Tab Bar Controller-->
@@ -16,6 +16,7 @@
                         <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
                     </tabBar>
                     <connections>
+                        <segue destination="WrE-b5-ojk" kind="relationship" relationship="viewControllers" id="Nad-Jw-fn4"/>
                         <segue destination="kkg-HY-tFm" kind="relationship" relationship="viewControllers" id="s8A-7j-TnN"/>
                         <segue destination="7kw-Vf-jaZ" kind="relationship" relationship="viewControllers" id="99c-0m-ztO"/>
                         <segue destination="luk-jx-wja" kind="relationship" relationship="viewControllers" id="NyB-zN-wSu"/>
@@ -24,7 +25,7 @@
                 </tabBarController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="q3j-gU-lyc" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="-1892" y="-1758"/>
+            <point key="canvasLocation" x="-2170" y="-1142"/>
         </scene>
         <!--I'm Crew-->
         <scene sceneID="UTx-uD-hcm">
@@ -596,6 +597,52 @@
             </objects>
             <point key="canvasLocation" x="-1360" y="-97"/>
         </scene>
+        <!--I'm Crew-->
+        <scene sceneID="2U3-gT-TLY">
+            <objects>
+                <navigationController id="WrE-b5-ojk" sceneMemberID="viewController">
+                    <tabBarItem key="tabBarItem" title="I'm Crew" selectedImage="Crew" id="xvs-kl-rcd"/>
+                    <navigationItem key="navigationItem" id="iRa-SO-kme"/>
+                    <navigationBar key="navigationBar" contentMode="scaleToFill" id="s5W-hI-yUk">
+                        <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
+                        <autoresizingMask key="autoresizingMask"/>
+                    </navigationBar>
+                    <connections>
+                        <segue destination="Wcy-iF-1YV" kind="relationship" relationship="rootViewController" id="hLp-Ff-fq7"/>
+                    </connections>
+                </navigationController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="Jsj-ap-esJ" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="-1360" y="622"/>
+        </scene>
+        <!--SpC New Search View Controller-->
+        <scene sceneID="Vef-or-4U2">
+            <objects>
+                <viewController id="Wcy-iF-1YV" customClass="SpCNewSearchViewController" sceneMemberID="viewController">
+                    <layoutGuides>
+                        <viewControllerLayoutGuide type="top" id="bsY-fu-8rx"/>
+                        <viewControllerLayoutGuide type="bottom" id="p2X-vN-S2G"/>
+                    </layoutGuides>
+                    <view key="view" contentMode="scaleToFill" id="SoT-cZ-Oon">
+                        <rect key="frame" x="0.0" y="0.0" width="320" height="480"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <webView contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Bxl-qB-AHs">
+                                <rect key="frame" x="0.0" y="0.0" width="320" height="480"/>
+                                <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                            </webView>
+                        </subviews>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                    </view>
+                    <navigationItem key="navigationItem" id="guK-Y2-gf3"/>
+                    <connections>
+                        <outlet property="html" destination="Bxl-qB-AHs" id="Mvg-ZH-4ft"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="sjL-Sy-iCI" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="-826" y="622"/>
+        </scene>
         <!--Messages-->
         <scene sceneID="rNO-wG-95x">
             <objects>
@@ -674,7 +721,7 @@
         <simulatedScreenMetrics key="destination"/>
     </simulatedMetricsContainer>
     <inferredMetricsTieBreakers>
-        <segue reference="7kT-WD-FT5"/>
-        <segue reference="dMb-2E-DQy"/>
+        <segue reference="JjB-Zw-4AV"/>
+        <segue reference="Mcv-P7-vMj"/>
     </inferredMetricsTieBreakers>
 </document>
