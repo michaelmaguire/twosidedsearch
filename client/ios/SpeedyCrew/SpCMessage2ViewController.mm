@@ -52,12 +52,19 @@
     out << "<html><head><title></title>";
     out << "<link rel='stylesheet' type='text/css' href='crew.bundle/messages.css'/>";
     out << "<script type='text/javascript'>"
+        << "function msgInitialize() {"
+        << "    var iframe = document.createElement(\"IFRAME\");\n"
+        << "     iframe.setAttribute(\"src\", \"js-frame:myObjectiveCFunction\");\n"
+        << "     document.documentElement.appendChild(iframe);\n"
+        << "     iframe.parentNode.removeChild(iframe);\n"
+        << "     iframe = null;\n"
+        << "}\n"
         << "function message_text() {"
         << "    var field = document.getElementById('message');"
         << "    return field.value;"
         << "}"
         << "</script>\n";
-    out << "<head><body>\n";
+    out << "<head><body onLoad=\"msgInitialize()\">\n";
     out << "<div class='input'>";
     out << "<form action='message://send' method='get'><input class='message' id='message' type='text'></input></form>";
     out << "</div>\n";

@@ -7,6 +7,11 @@
 //
 
 #import "SpCNewSearchViewController.h"
+#import "SpCAppDelegate.h"
+#import "SpCData.h"
+#import "SpCDatabase.h"
+
+#include "Database.h"
 #include <sstream>
 
 @interface SpCNewSearchViewController ()
@@ -28,25 +33,6 @@
 
 - (void)setContent {
     std::ostringstream out;
-#if 0
-    out << "<!DOCTYPE html>\n";
-    out << "<html><head><title>Search</title>";
-    out << "<link rel='stylesheet' type='text/css' href='crew.bundle/search.css'/>";
-    out << "<script type='text/javascript'>"
-        << "function search_text() {"
-        << "    var field = document.getElementById('search');"
-        << "    return field.value;"
-        << "}"
-        << "</script>\n";
-    out << "<head><body>\n";
-    out << "<div class='input'>";
-    out << "<form action='message://send' method='get'><input class='search' id='search' type='text'></input></form>";
-    out << "</div>\n";
-    out << "<div class='bottom'>";
-    out << "<form action='message://send' method='get'><input class='search' id='search' type='text'></input></form>";
-    out << "</div>\n";
-    out << "</body></html>\n";
-#else
     out << "<!DOCTYPE html PUBLIC \"-//IETF//DTD HTML//EN\">"
         "<html>"
         "    <head>"
@@ -70,13 +56,82 @@
         "        </div>"
         "    </body>"
         "</html>";
-#endif
 
     NSString* html = [NSString stringWithUTF8String: out.str().c_str()];
     NSURL* url = [NSURL fileURLWithPath:[[NSBundle mainBundle] bundlePath]]; 
+    NSLog(@"set HTML: %@", html);
     [self.html loadHTMLString: html baseURL: url];
     self.html.autoresizingMask = UIViewAutoresizingFlexibleWidth|UIViewAutoresizingFlexibleHeight;
     self.view.autoresizesSubviews = YES;
+    NSLog(@"setting HTML done");
+}
+
+- (void)initializeSearches
+{
+    SpeedyCrew::Database* db = [SpCDatabase getDatabase];
+    std::string side("SEEK");
+    std::vector<std::string> searches(db->queryColumn("select id from search where side='" + side + "'"));
+    NSLog(@"initial searches: %d", int(searches.size()));
+    for (std::vector<std::string>::const_iterator it(searches.begin()), end(searches.end());
+         it != end; ++it) {
+        std::ostringstream out;
+        std::string text(db->query<std::string>("select query from search where id='" + *it + "'"));
+        out << "searchAdd(\"{ "
+            << "\\\"id\\\":\\\"" << *it << "\\\", "
+            << "\\\"search\\\":\\\"" << text << "\\\", "
+            << "\\\"state\\\":\\\"open\\\" "
+            << "}\");";
+        NSString* searchString = [NSString stringWithUTF8String: out.str().c_str()];
+        NSLog(@"adding search: '%@'", searchString);
+        [self.html stringByEvaluatingJavaScriptFromString:searchString];
+
+        std::vector<std::string> matches(db->queryColumn("select other_search from match where search='" + *it + "';"));
+        for (std::vector<std::string>::const_iterator mit(matches.begin()), mend(matches.end());
+             mit != mend; ++mit) {
+            std::string key("from match where search='" + *it + "' and other_search='" + *mit + "'");
+            std::ostringstream out;
+            out << "searchAddMatch(\"{"
+                << "\\\"searchId\\\":\\\"" << *it << "\\\", "
+                << "\\\"search\\\":\\\"" << db->query<std::string>("select query " + key) << "\\\""
+                << "}\");";
+            NSString* matchString = [NSString stringWithUTF8String: out.str().c_str()];
+            NSLog(@"adding match: '%@'", matchString);
+            [self.html stringByEvaluatingJavaScriptFromString:matchString];
+        }
+    }
+    NSLog(@"adding searches done");
+}
+
+- (void)sendSearch:(NSString*)search
+{
+    std::string str([search UTF8String]);
+    if (!str.empty() && str[0] == '/') {
+        str = str.substr(1);
+    }
+    if (!str.empty()) {
+        NSLog(@"sending a new search: %s", str.c_str());
+        SpCData* data = [SpCAppDelegate instance].data;
+        [data addSearchWithText:[NSString stringWithUTF8String: str.c_str()] forSide:@"SEEK"];
+    }
+}
+
+- (BOOL)webView:(UIWebView *)webView shouldStartLoadWithRequest:(NSURLRequest *)request navigationType:(UIWebViewNavigationType)navigationType
+{
+    if ([request.URL.scheme isEqual:@"jscall"]) {
+        NSLog(@"click! scheme=%@ host=%@ path=%@", request.URL.scheme, request.URL.host, request.URL.path);
+        if ([request.URL.host isEqual:@"initialize"]) {
+            [self initializeSearches];
+        }
+        else if ([request.URL.host isEqual:@"send"]) {
+            [self sendSearch:request.URL.path];
+        }
+        else {
+            NSLog(@"something wants to get back from JavaScript - but failed");
+        }
+
+        return NO;
+    }
+    return YES;
 }
 
 /*

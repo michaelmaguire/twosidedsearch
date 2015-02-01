@@ -3,7 +3,7 @@ var rootSectors = [
     { tag:"hospitality", name:"Hospitality", sectors:[
           { tag:"chef-meat", name:"Chef de Partie (meat)", sectors:[] },
           { tag:"chef-fish", name:"Chef de Partie (fish)", sectors:[] },
-          { tag:"chef-pasta", name:"Chef de Partie (fish)", sectors:[] },
+          { tag:"chef-pasta", name:"Chef de Partie (pasta)", sectors:[] },
           { tag:"chef-salad", name:"Chef de Partie (salad)", sectors:[] },
           { tag:"chef-pastry", name:"Chef de Partie (pastry)", sectors:[] },
           { tag:"chef-commis", name:"Chef de Partie (commis)", sectors:[] },
@@ -17,20 +17,23 @@ var rootSectors = [
     { tag:"cleaner", name:"Cleaner", sectors:[] }
 ];
 
+function searchCall(fun, arg) {
+    var iframe = document.createElement("iframe");
+    iframe.setAttribute("src", "jscall://" + fun + "/" + arg);
+    document.documentElement.appendChild(iframe);
+    iframe.parentNode.removeChild(iframe);
+    iframe = null;
+}
+
 function searchInitialize() {
     var search = document.getElementById("search");
     search.addEventListener("keypress", searchKeyPress);
     search.addEventListener("focus", searchFocus);
 
-    //for (var index = 0; index != 20; ++index) {
-    //    var sid = searchNextId();
-    //    searchAdd("{ \"id\":\"" + sid + "\", \"search\":\"test\", \"state\":\"open\" }");
-    //    searchAddMatch("{ \"searchId\":\"" + sid + "\", \"matchId\":\"" + searchNextId() + "\", \"search\":\"some search 1\" }");
-    //    searchAddMatch("{ \"searchId\":\"" + sid + "\", \"matchId\":\"" + searchNextId() + "\", \"search\":\"some search 2\" }");
-    //}
-
     var cancel = document.getElementById("cancel");
     cancel.addEventListener("click", searchCancel);
+
+    searchCall("initialize", "");
 }
 
 function searchFocus() {
@@ -49,7 +52,7 @@ function searchCancel() {
 }
 
 function searchSend(search) {
-    //-dk:TODO send the search upstream
+    searchCall("send", search);
     searchAdd("{ \"id\":\"" + searchNextId() + "\", \"search\":\"" + search + "\", \"state\":\"open\" }");
 }
 
@@ -92,15 +95,14 @@ function searchSetSelection() {
         if (-1 == search.value.indexOf(sector.tag)) {
             var link = document.createElement("a");
             link.className = "sector";
-            var nobr = document.createElement("nobr");
             var text = document.createTextNode(sector.name);
-            nobr.appendChild(text);
-            link.appendChild(nobr);
+            link.appendChild(text);
             (function() {
                 var capture = sector;
                 link.addEventListener("click", function(){ searchSectorAdd(capture); });
             })();
             selection.appendChild(link);
+            selection.appendChild(document.createTextNode(" "));
         }
     }
 }

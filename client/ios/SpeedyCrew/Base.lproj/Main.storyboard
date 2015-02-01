@@ -601,7 +601,7 @@
         <scene sceneID="2U3-gT-TLY">
             <objects>
                 <navigationController id="WrE-b5-ojk" sceneMemberID="viewController">
-                    <tabBarItem key="tabBarItem" title="I'm Crew" selectedImage="Crew" id="xvs-kl-rcd"/>
+                    <tabBarItem key="tabBarItem" title="I'm Crew" image="Crew" id="xvs-kl-rcd"/>
                     <navigationItem key="navigationItem" id="iRa-SO-kme"/>
                     <navigationBar key="navigationBar" contentMode="scaleToFill" id="s5W-hI-yUk">
                         <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
@@ -630,13 +630,17 @@
                             <webView contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Bxl-qB-AHs">
                                 <rect key="frame" x="0.0" y="0.0" width="320" height="480"/>
                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                <connections>
+                                    <outlet property="delegate" destination="Wcy-iF-1YV" id="GI0-DU-Asd"/>
+                                </connections>
                             </webView>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                     </view>
                     <navigationItem key="navigationItem" id="guK-Y2-gf3"/>
                     <connections>
-                        <outlet property="html" destination="Bxl-qB-AHs" id="Mvg-ZH-4ft"/>
+                        <outlet property="html" destination="Bxl-qB-AHs" id="qyd-KO-TUl"/>
+                        <outlet property="view" destination="Bxl-qB-AHs" id="zRb-6y-vv2"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="sjL-Sy-iCI" userLabel="First Responder" sceneMemberID="firstResponder"/>

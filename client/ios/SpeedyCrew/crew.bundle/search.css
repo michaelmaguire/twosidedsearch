@@ -33,7 +33,11 @@ input.cancel {
 input.none {
     display: none;
 }
+form.invisible {
+    dispaly: none;
+}
 a.sector {
+    white-space: nowrap;
     background: lightgreen;
     border-radius: 16px;
     border-size: 6px;
