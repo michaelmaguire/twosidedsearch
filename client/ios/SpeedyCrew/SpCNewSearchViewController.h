@@ -11,5 +11,6 @@
 @interface SpCNewSearchViewController : UIViewController
 
 @property (weak, nonatomic) IBOutlet UIWebView *html;
+@property NSString* side;
 
 @end

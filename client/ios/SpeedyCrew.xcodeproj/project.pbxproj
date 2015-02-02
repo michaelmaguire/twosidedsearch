@@ -43,6 +43,8 @@
 		ABEC17E918C3B00E00D54C93 /* SpCChanging.mm in Sources */ = {isa = PBXBuildFile; fileRef = ABEC17E818C3B00E00D54C93 /* SpCChanging.mm */; };
 		ABEE315318CCCADF0054488B /* CoreLocation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ABEE315218CCCADF0054488B /* CoreLocation.framework */; };
 		ABF397031918185000B8FE39 /* Database.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ABF397011918185000B8FE39 /* Database.cpp */; };
+		ABF914511A801A220046A6E3 /* SpCNewCrewSearchViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = ABF914501A801A220046A6E3 /* SpCNewCrewSearchViewController.mm */; };
+		ABF914571A801A4A0046A6E3 /* SpCNewCaptainSearchViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = ABF914561A801A4A0046A6E3 /* SpCNewCaptainSearchViewController.mm */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -141,6 +143,10 @@
 		ABEE315218CCCADF0054488B /* CoreLocation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreLocation.framework; path = System/Library/Frameworks/CoreLocation.framework; sourceTree = SDKROOT; };
 		ABF397011918185000B8FE39 /* Database.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Database.cpp; sourceTree = "<group>"; };
 		ABF397021918185000B8FE39 /* Database.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Database.h; sourceTree = "<group>"; };
+		ABF9144F1A801A220046A6E3 /* SpCNewCrewSearchViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SpCNewCrewSearchViewController.h; sourceTree = "<group>"; };
+		ABF914501A801A220046A6E3 /* SpCNewCrewSearchViewController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = SpCNewCrewSearchViewController.mm; sourceTree = "<group>"; };
+		ABF914551A801A4A0046A6E3 /* SpCNewCaptainSearchViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SpCNewCaptainSearchViewController.h; sourceTree = "<group>"; };
+		ABF914561A801A4A0046A6E3 /* SpCNewCaptainSearchViewController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = SpCNewCaptainSearchViewController.mm; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -260,6 +266,10 @@
 				AB29B4B619D8712A004C1AAC /* SpCCrewViewController.mm */,
 				AB823D1F1A756B6F0071769F /* SpCNewSearchViewController.h */,
 				AB823D201A756B6F0071769F /* SpCNewSearchViewController.mm */,
+				ABF9144F1A801A220046A6E3 /* SpCNewCrewSearchViewController.h */,
+				ABF914501A801A220046A6E3 /* SpCNewCrewSearchViewController.mm */,
+				ABF914551A801A4A0046A6E3 /* SpCNewCaptainSearchViewController.h */,
+				ABF914561A801A4A0046A6E3 /* SpCNewCaptainSearchViewController.mm */,
 			);
 			path = SpeedyCrew;
 			sourceTree = "<group>";
@@ -436,6 +446,7 @@
 				ABC8BC4E19AA41D600B33287 /* SpCMatchTableViewController.mm in Sources */,
 				AB937E2B192952F200FC921D /* SpCMapViewController.mm in Sources */,
 				AB6EDE64187869E20026A1AB /* SpCDatabase.mm in Sources */,
+				ABF914571A801A4A0046A6E3 /* SpCNewCaptainSearchViewController.mm in Sources */,
 				AB29B4B719D8712A004C1AAC /* SpCCrewViewController.mm in Sources */,
 				ABF397031918185000B8FE39 /* Database.cpp in Sources */,
 				AB3FA25219AB831C003D02DC /* SpCProfile.mm in Sources */,
@@ -444,6 +455,7 @@
 				AB9C2E55184EA15400454DCD /* SpCAppDelegate.mm in Sources */,
 				AB823D211A756B6F0071769F /* SpCNewSearchViewController.mm in Sources */,
 				ABE6E2BF19155EEB003D61CC /* SpCCrewSearchViewController.mm in Sources */,
+				ABF914511A801A220046A6E3 /* SpCNewCrewSearchViewController.mm in Sources */,
 				ABEC17E918C3B00E00D54C93 /* SpCChanging.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
