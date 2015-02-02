@@ -28,6 +28,14 @@
         self.registered = YES;
         SpCData* data = [SpCAppDelegate instance].data;
         __weak typeof(self) weakSelf = self;
+        [data addEventListener:^(char const* message) {
+                [weakSelf addSearch: message];
+            } forEvent:@"search-insert"];
+        [data addEventListener:^(char const* message) {
+                std::string msg(message);
+                std::string::size_type slash(msg.find('/'));
+                [weakSelf addMatch: msg.substr(slash + 1).c_str() forSearch: msg.substr(0, slash).c_str()];
+            } forEvent:@"match-insert"];
         [data addListener:^(NSString* name, NSObject* object) {
                 [weakSelf receivedUpdate:name];
             } withId:@"CrewSearchView"];
@@ -74,11 +82,42 @@
 
     NSString* html = [NSString stringWithUTF8String: out.str().c_str()];
     NSURL* url = [NSURL fileURLWithPath:[[NSBundle mainBundle] bundlePath]]; 
-    NSLog(@"set HTML: %@", html);
     [self.html loadHTMLString: html baseURL: url];
     self.html.autoresizingMask = UIViewAutoresizingFlexibleWidth|UIViewAutoresizingFlexibleHeight;
     self.view.autoresizesSubviews = YES;
-    NSLog(@"setting HTML done");
+}
+
+- (void)addSearch:(char const*)cid {
+    std::string id(cid);
+    SpeedyCrew::Database* db = [SpCDatabase getDatabase];
+
+    std::ostringstream out;
+    std::string text(db->query<std::string>("select query from search where id='" + id + "'"));
+    out << "searchAdd(\"{ "
+        << "\\\"id\\\":\\\"" << id << "\\\", "
+        << "\\\"search\\\":\\\"" << text << "\\\", "
+        << "\\\"state\\\":\\\"" << (db->query<int>("select state from expanded where id='" + id + "'", 1)? "open": "closed") << "\\\" "
+        << "}\");";
+    NSString* searchString = [NSString stringWithUTF8String: out.str().c_str()];
+    NSLog(@"adding search: '%@'", searchString);
+    [self.html stringByEvaluatingJavaScriptFromString:searchString];
+}
+
+- (void)addMatch:(char const*)cmid forSearch:(char const*)csid {
+    std::string mid(cmid);
+    std::string sid(csid);
+    SpeedyCrew::Database* db = [SpCDatabase getDatabase];
+    
+    std::string key("from match where search='" + sid + "' and other_search='" + mid + "'");
+    std::ostringstream out;
+    out << "searchAddMatch(\"{"
+        << "\\\"searchId\\\":\\\"" << sid << "\\\", "
+        << "\\\"matchId\\\":\\\"" << mid << "\\\", "
+        << "\\\"search\\\":\\\"" << db->query<std::string>("select query " + key) << "\\\""
+        << "}\");";
+    NSString* matchString = [NSString stringWithUTF8String: out.str().c_str()];
+    NSLog(@"adding match: '%@'", matchString);
+    [self.html stringByEvaluatingJavaScriptFromString:matchString];
 }
 
 - (void)initializeSearches
@@ -86,32 +125,14 @@
     SpeedyCrew::Database* db = [SpCDatabase getDatabase];
     std::string side("SEEK");
     std::vector<std::string> searches(db->queryColumn("select id from search where side='" + side + "'"));
-    NSLog(@"initial searches: %d", int(searches.size()));
     for (std::vector<std::string>::const_iterator it(searches.begin()), end(searches.end());
          it != end; ++it) {
-        std::ostringstream out;
-        std::string text(db->query<std::string>("select query from search where id='" + *it + "'"));
-        out << "searchAdd(\"{ "
-            << "\\\"id\\\":\\\"" << *it << "\\\", "
-            << "\\\"search\\\":\\\"" << text << "\\\", "
-            << "\\\"state\\\":\\\"open\\\" "
-            << "}\");";
-        NSString* searchString = [NSString stringWithUTF8String: out.str().c_str()];
-        NSLog(@"adding search: '%@'", searchString);
-        [self.html stringByEvaluatingJavaScriptFromString:searchString];
+        [self addSearch: it->c_str()];
 
         std::vector<std::string> matches(db->queryColumn("select other_search from match where search='" + *it + "';"));
         for (std::vector<std::string>::const_iterator mit(matches.begin()), mend(matches.end());
              mit != mend; ++mit) {
-            std::string key("from match where search='" + *it + "' and other_search='" + *mit + "'");
-            std::ostringstream out;
-            out << "searchAddMatch(\"{"
-                << "\\\"searchId\\\":\\\"" << *it << "\\\", "
-                << "\\\"search\\\":\\\"" << db->query<std::string>("select query " + key) << "\\\""
-                << "}\");";
-            NSString* matchString = [NSString stringWithUTF8String: out.str().c_str()];
-            NSLog(@"adding match: '%@'", matchString);
-            [self.html stringByEvaluatingJavaScriptFromString:matchString];
+            [self addMatch: mit->c_str() forSearch: it->c_str()];
         }
     }
     NSLog(@"adding searches done");
@@ -130,6 +151,18 @@
     }
 }
 
+- (void)setExpand:(NSString*)id to:(BOOL) state {
+    std::string str([id UTF8String]);
+    if (!str.empty() && str[0] == '/') {
+        str = str.substr(1);
+    }
+    if (!str.empty()) {
+        NSLog(@"setting state of id='%s' to %s", str.c_str(), state? "expanded": "collapsed");
+        SpeedyCrew::Database* db = [SpCDatabase getDatabase];
+        db->execute("insert or replace into  expanded (id, state) values('" + str + "', " + (state? "1": "0") + ")");
+    }
+}
+
 - (BOOL)webView:(UIWebView *)webView shouldStartLoadWithRequest:(NSURLRequest *)request navigationType:(UIWebViewNavigationType)navigationType
 {
     if ([request.URL.scheme isEqual:@"jscall"]) {
@@ -139,6 +172,12 @@
         }
         else if ([request.URL.host isEqual:@"send"]) {
             [self sendSearch:request.URL.path];
+        }
+        else if ([request.URL.host isEqual:@"expand"]) {
+            [self setExpand:request.URL.path to:YES];
+        }
+        else if ([request.URL.host isEqual:@"collapse"]) {
+            [self setExpand:request.URL.path to:NO];
         }
         else {
             NSLog(@"something wants to get back from JavaScript - but failed");

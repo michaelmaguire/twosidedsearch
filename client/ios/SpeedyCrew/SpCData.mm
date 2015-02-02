@@ -22,7 +22,7 @@
 @interface SpCData()
 @property NSString*            usedIdentity;
 @property NSString*            baseURL;
-@property NSMutableDictionary* listeners;
+@property NSMutableDictionary* eventListeners;
 @property NSCache*             cache;
 @end
 
@@ -40,7 +40,7 @@
     self.usedIdentity = [database querySetting: @"scid"];
     NSLog(@"using identity scid='%@'", self.identity);
     self.searches = [[NSMutableArray alloc] init]; //-dk:TODO recover stored searches
-    self.listeners = [[NSMutableDictionary alloc] init];
+    self.eventListeners = [[NSMutableDictionary alloc] init];
     self.cache = [[NSCache alloc] init];
     self.longitude = 0.0; //-dk:TODO use coordinate and deal with no coordinate set!
     self.latitude  = 0.0;
@@ -85,6 +85,30 @@
                                                                NULL,
                                                                (CFStringRef)@"!*'\"();:@&=+$,/?%#[]% ",
                                                                CFStringConvertNSStringEncodingToEncoding(NSUTF8StringEncoding));;
+}
+
+- (void)addEventListener:(void (^)(char const* message))listener forEvent:(NSString*)name {
+    NSMutableSet* set = [self.eventListeners objectForKey: name];
+    if (!set) {
+        set = [[NSMutableSet alloc] init];
+        [self.eventListeners setObject: set forKey: name];
+    }
+    [set addObject: listener];
+}
+
+- (void)notifyEventListener:(NSString*)name withMessage:(char const*)message {
+    NSMutableSet* set = [self.eventListeners objectForKey: name];
+    if (set) {
+        NSEnumerator* enumerator = [set objectEnumerator];
+        id value;
+        while (value = [enumerator nextObject]) {
+            void (^listener)(char const* message) = value;
+            listener(message);
+        }
+    }
+    else {
+        NSLog(@"no listener for '%@'", name);
+    }
 }
 
 - (void)updateSetting:(NSString*)name with:(NSString*)value
@@ -148,13 +172,36 @@
         }
         NSArray* meta = [dict objectForKey: @"metadata"];
         if (meta && ![meta isEqual:[NSNull null]]) {
+            NSString* data = 0;
             for (long i = 0, count = [meta count]; i != count; ++i) {
-                NSString* data = [[meta objectAtIndex:i] objectForKey: @"DELETE"];
-                if (data) {
+                if ((data = [[meta objectAtIndex:i] objectForKey: @"INSERT"])) {
+                    std::string str([data UTF8String]);
+                    if (str.find("search/") == 0) {
+                        NSLog(@"added search: '%s'", str.substr(7).c_str());
+                        [self notifyEventListener:@"search-insert" withMessage: str.substr(7).c_str()];
+                    }
+                    else if (str.find("match/") == 0) {
+                        std::string::size_type slash(str.find('/', 6));
+                        if (slash != str.npos) {
+                            NSLog(@"added match: search='%s' match='%s'", str.substr(6, slash - 6).c_str(), str.substr(slash + 1).c_str());
+                            [self notifyEventListener:@"match-insert" withMessage: str.substr(6).c_str()];
+                        }
+                        else {
+                            NSLog(@"no second slash found in match: '%s'", str.c_str());
+                        }
+                    }
+                    else {
+                        NSLog(@"unhandled insert: '%s'", str.c_str());
+                    }
+                }
+                else if ((data = [[meta objectAtIndex:i] objectForKey: @"DELETE"])) {
                     std::string str([data UTF8String]);
                     if (str.find("search/") == 0) {
                         NSLog(@"received a search delete: %s", str.substr(7).c_str());
                         db->execute("delete from expanded where id='" + str.substr(7) + "'");
+                    }
+                    else {
+                        NSLog(@"unhandled delete: '%s'", str.c_str());
                     }
                 }
             }

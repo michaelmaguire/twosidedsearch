@@ -117,15 +117,17 @@ function searchSetSelection() {
     }
 }
 
-function searchToggleState(button, matches) {
+function searchToggleState(button, matches, search) {
     if (button.className == "open") {
         matches.className = "closed";
         button.className = "closed"
         button.value = "+"
+        searchCall("collapse", search);
     } else {
         matches.className = "open";
         button.className = "open"
         button.value = "-"
+        searchCall("expand", search);
     }
 }
 
@@ -161,10 +163,10 @@ function searchAdd(searchString) {
 
     var matches = document.createElement("div");
     matches.id = "matches:" + search.id;
-    matches.className = "open";
+    matches.className = search.state;
     parent.appendChild(matches);
 
-    state.addEventListener("click", function() { searchToggleState(state, matches); });
+    state.addEventListener("click", function() { searchToggleState(state, matches, search.id); });
 
     var searches = document.getElementById("searches");
     searches.insertBefore(parent, searches.firstChild);

@@ -29,4 +29,6 @@
 - (void)loadImageFor:(UIImageView*)image from:(NSString*)url withPlaceholder:(NSString*)name;
 - (void)sendHttpRequest:(NSString*)query withBody:(NSString*)body;
 
+- (void)addEventListener:(void (^)(char const* message))listener forEvent:(NSString*)name;
+
 @end
