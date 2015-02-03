@@ -32,10 +32,18 @@
                 [weakSelf addSearch: message];
             } forEvent:@"search-insert"];
         [data addEventListener:^(char const* message) {
+                [weakSelf removeSearch: message];
+            } forEvent:@"search-delete"];
+        [data addEventListener:^(char const* message) {
                 std::string msg(message);
                 std::string::size_type slash(msg.find('/'));
-                [weakSelf addMatch: msg.substr(slash + 1).c_str() forSearch: msg.substr(0, slash).c_str()];
+                [weakSelf addMatch: msg.substr(0, slash).c_str() forSearch: msg.substr(slash + 1).c_str()];
             } forEvent:@"match-insert"];
+        [data addEventListener:^(char const* message) {
+                std::string msg(message);
+                std::string::size_type slash(msg.find('/'));
+                [weakSelf removeMatch: msg.substr(0, slash).c_str() forSearch: msg.substr(slash + 1).c_str()];
+            } forEvent:@"match-delete"];
         [data addListener:^(NSString* name, NSObject* object) {
                 [weakSelf receivedUpdate:name];
             } withId:@"CrewSearchView"];
@@ -105,6 +113,18 @@
     }
 }
 
+- (void)removeSearch:(char const*)cid {
+    std::string id(cid);
+    NSLog(@"removeSearch(%s)", cid);
+    std::ostringstream out;
+    out << "removeSearch(\"{ "
+        << "\\\"id\\\":\\\"" << id << "\\\" "
+        << "}\");";
+    NSString* searchString = [NSString stringWithUTF8String: out.str().c_str()];
+    NSLog(@"remove search: '%@'", searchString);
+    [self.html stringByEvaluatingJavaScriptFromString:searchString];
+}
+
 - (void)addMatch:(char const*)cmid forSearch:(char const*)csid {
     std::string mid(cmid);
     std::string sid(csid);
@@ -123,6 +143,21 @@
         NSLog(@"adding match: '%@'", matchString);
         [self.html stringByEvaluatingJavaScriptFromString:matchString];
     }
+}
+
+- (void)removeMatch:(char const*)cmid forSearch:(char const*)csid {
+    std::string mid(cmid);
+    std::string sid(csid);
+    
+    std::string key("from match where search='" + sid + "' and other_search='" + mid + "'");
+    std::ostringstream out;
+    out << "searchRemoveMatch(\"{"
+        << "\\\"searchId\\\":\\\"" << sid << "\\\", "
+        << "\\\"matchId\\\":\\\"" << mid << "\\\" "
+        << "}\");";
+    NSString* matchString = [NSString stringWithUTF8String: out.str().c_str()];
+    NSLog(@"remove match: '%@'", matchString);
+    [self.html stringByEvaluatingJavaScriptFromString:matchString];
 }
 
 - (void)initializeSearches
@@ -156,6 +191,20 @@
     }
 }
 
+- (void)deleteSearch:(NSString*)search
+{
+    std::string str([search UTF8String]);
+    if (!str.empty() && str[0] == '/') {
+        str = str.substr(1);
+    }
+    if (!str.empty()) {
+        NSLog(@"deleting a search: %s", str.c_str());
+        SpCData* data = [SpCAppDelegate instance].data;
+        [data deleteSearch:[NSString stringWithUTF8String: str.c_str()]];
+    }
+}
+
+
 - (void)setExpand:(NSString*)id to:(BOOL) state {
     std::string str([id UTF8String]);
     if (!str.empty() && str[0] == '/') {
@@ -183,6 +232,9 @@
         }
         else if ([request.URL.host isEqual:@"collapse"]) {
             [self setExpand:request.URL.path to:NO];
+        }
+        else if ([request.URL.host isEqual:@"delete"]) {
+            [self deleteSearch:request.URL.path];
         }
         else {
             NSLog(@"something wants to get back from JavaScript - but failed");

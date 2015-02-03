@@ -131,10 +131,18 @@ function searchToggleState(button, matches, search) {
     }
 }
 
+function removeSearch(searchString) {
+    var search = JSON.parse(searchString);
+    var searches = document.getElementById("searches");
+    var parent = document.getElementById("search:" + search.id);
+    searches.removeChild(parent);
+}
+
 function searchAdd(searchString) {
     var search = JSON.parse(searchString);
     var parent = document.createElement("div");
     parent.className = "search";
+    parent.id = "search:" + search.id;
     var head = document.createElement("div");
     head.className = "searchHead";
 
@@ -144,11 +152,27 @@ function searchAdd(searchString) {
     state.className = search.state;
     head.appendChild(state);
 
+    var dispid = document.createElement("div");
+    dispid.className = "id";
+    dispid.appendChild(document.createTextNode(search.id));
+    head.appendChild(dispid);
+
+    var buttons = document.createElement("div");
+    buttons.className = "searchButtons";
+
+    var del = document.createElement("input");
+    del.type = "button";
+    del.value = "x";
+    del.className = "delete";
+    buttons.appendChild(del);
+
     var map = document.createElement("input");
     map.type = "button";
     map.value = ">";
     map.className = "map";
-    head.appendChild(map);
+    buttons.appendChild(map);
+
+    head.appendChild(buttons);
 
     var paragraph = document.createElement("div");
     paragraph.className = "searchText";
@@ -167,6 +191,7 @@ function searchAdd(searchString) {
     parent.appendChild(matches);
 
     state.addEventListener("click", function() { searchToggleState(state, matches, search.id); });
+    del.addEventListener("click", function() { searchCall("delete", search.id); });
 
     var searches = document.getElementById("searches");
     searches.insertBefore(parent, searches.firstChild);
@@ -178,14 +203,27 @@ function searchAddMatch(matchString) {
     
     var parent = document.createElement("div");
     parent.className = "match";
-    var text = document.createTextNode(match.search);
-    parent.appendChild(text);
+    parent.id = "match:" + match.searchId + "/" + match.matchId;
+
+    var dispid = document.createElement("div");
+    dispid.className = "id";
+    dispid.appendChild(document.createTextNode(parent.id));
+    parent.appendChild(dispid);
+
+    parent.appendChild(document.createTextNode(match.search));
     if (matches.childNodes.length) {
         matches.insertBefore(parent, matches.firstChild);
     }
     else {
         matches.appendChild(parent);
     }
+}
+
+function searchRemoveMatch(matchString) {
+    var match = JSON.parse(matchString);
+    var matches = document.getElementById("matches:" + match.searchId);
+    var node = document.getElementById("match:" + match.searchId + "/" + match.matchId);
+    matches.removeChild(node);
 }
 
 var searchNextIdValue = 0; //-dk:TODO remove

@@ -66,11 +66,27 @@ div.search {
     border-right-width: 16px;
     border: solid 4px green;
 }
+div.match {
+    margin: 2px;
+    border-radius: 16px;
+    border-size: 4px;
+    border-left-width: 16px;
+    border-right-width: 16px;
+    border: solid 4px orange;
+}
 div.searchHead {
 }
 div.searchEmpty {
     width: 100%;
     height: 4px;
+}
+div.id {
+  position: relative;
+  top: 0px;
+  left: 0px;
+  color: silver;
+  font-size: xx-small;
+  margin: 0px 0px 0.4em 0px;
 }
 div.searchText {
     left: 0px;
@@ -83,9 +99,15 @@ input.closed {
     float: left;
     foreground: red;
 }
-input.map {
+div.searchButtons {
     float: right;
+}
+input.map {
+    visibility: none;
     foreground: red;
+}
+input.delete {
+    background: red;
 }
 div.open {
 }

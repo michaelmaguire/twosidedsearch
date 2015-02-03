@@ -176,22 +176,14 @@
             for (long i = 0, count = [meta count]; i != count; ++i) {
                 if ((data = [[meta objectAtIndex:i] objectForKey: @"INSERT"])) {
                     std::string str([data UTF8String]);
-                    if (str.find("search/") == 0) {
-                        NSLog(@"added search: '%s'", str.substr(7).c_str());
-                        [self notifyEventListener:@"search-insert" withMessage: str.substr(7).c_str()];
-                    }
-                    else if (str.find("match/") == 0) {
-                        std::string::size_type slash(str.find('/', 6));
-                        if (slash != str.npos) {
-                            NSLog(@"added match: search='%s' match='%s'", str.substr(6, slash - 6).c_str(), str.substr(slash + 1).c_str());
-                            [self notifyEventListener:@"match-insert" withMessage: str.substr(6).c_str()];
-                        }
-                        else {
-                            NSLog(@"no second slash found in match: '%s'", str.c_str());
-                        }
+                    std::string::size_type slash(str.find('/'));
+                    if (slash != str.npos) {
+                        NSString* kind = [NSString stringWithUTF8String: (str.substr(0, slash) + "-insert").c_str()];
+                        NSLog(@"%@: '%s'", kind, str.substr(slash + 1).c_str());
+                        [self notifyEventListener:kind withMessage: str.substr(slash + 1).c_str()];
                     }
                     else {
-                        NSLog(@"unhandled insert: '%s'", str.c_str());
+                        NSLog(@"unknown INSERT: %@", data);
                     }
                 }
                 else if ((data = [[meta objectAtIndex:i] objectForKey: @"DELETE"])) {
@@ -200,8 +192,14 @@
                         NSLog(@"received a search delete: %s", str.substr(7).c_str());
                         db->execute("delete from expanded where id='" + str.substr(7) + "'");
                     }
+                    std::string::size_type slash(str.find('/'));
+                    if (slash != str.npos) {
+                        NSString* kind = [NSString stringWithUTF8String: (str.substr(0, slash) + "-delete").c_str()];
+                        NSLog(@"%@: '%s'", kind, str.substr(slash + 1).c_str());
+                        [self notifyEventListener:kind withMessage: str.substr(slash + 1).c_str()];
+                    }
                     else {
-                        NSLog(@"unhandled delete: '%s'", str.c_str());
+                        NSLog(@"unknown DELETE: %@", data);
                     }
                 }
             }
