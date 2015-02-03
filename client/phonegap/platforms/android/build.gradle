@@ -41,6 +41,10 @@ android {
     compileSdkVersion 20
     buildToolsVersion "20.0.0"
 
+    lintOptions {
+        abortOnError false
+    }
+
     if (multiarch || System.env.BUILD_MULTIPLE_APKS) {
         productFlavors {
             armv7 {
