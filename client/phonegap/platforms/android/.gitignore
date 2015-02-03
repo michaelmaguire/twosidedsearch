@@ -13,3 +13,4 @@ out
 # Gradle builds
 /build
 .gradle
+CordovaLib/build
