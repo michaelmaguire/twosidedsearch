@@ -2,9 +2,9 @@
 <widget id="com.speedycrew.client" version="1.0.0" xmlns="http://www.w3.org/ns/widgets" xmlns:gap="http://phonegap.com/ns/1.0">
     <name>SpeedyCrew</name>
     <description>
-        Hello World sample application that responds to the deviceready event.
+        SpeedyCrew provides a quick way for two-way-searching: People who want to be crew can easily find people who want hire them, and vice-versa.
     </description>
-    <author email="support@phonegap.com" href="http://phonegap.com">
+    <author email="support@speedycrew.com" href="http://www.speedycrew.com">
         PhoneGap Team
     </author>
     <content src="index.html" />
