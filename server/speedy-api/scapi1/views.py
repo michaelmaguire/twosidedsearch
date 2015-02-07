@@ -217,7 +217,7 @@ def do_refresh(cursor, profile_id, timeline, high_sequence, sql, metadata):
     sql.append(param("INSERT INTO control (timeline, sequence) VALUES (%s, %s)",
                      (timeline, high_sequence,)))
 
-def do_incremental(cursor, profile_id, device_sequence, sql, metadata):
+def do_incremental(cursor, profile_id, timeline, device_sequence, sql, metadata):
 
     # find the configured maximum number of events to send
     cursor.execute("""SELECT int_value
@@ -358,6 +358,11 @@ def do_incremental(cursor, profile_id, device_sequence, sql, metadata):
         metadata.append({ "more" : True })
     if highest_sequence:
         sql.append(param("UPDATE control SET sequence = %s", (highest_sequence,)))
+    else:
+        highest_sequence = device_sequence
+    metadata.append({ "timeline" : timeline })
+    metadata.append({ "old_sequence" : device_sequence })
+    metadata.append({ "new_sequence" : highest_sequence })
 
 def do_synchronise(profile_id, device_timeline, device_sequence):
     cursor = connection.cursor()
@@ -386,7 +391,7 @@ def do_synchronise(profile_id, device_timeline, device_sequence):
         do_refresh(cursor, profile_id, timeline, high_sequence, sql, metadata)
         operation = "refresh"
     else:
-        do_incremental(cursor, profile_id, device_sequence, sql, metadata)
+        do_incremental(cursor, profile_id, timeline, device_sequence, sql, metadata)
         operation = "incremental"
 
     return operation, metadata, sql
@@ -473,7 +478,6 @@ def update_profile(request):
         cursor.execute("""SELECT * FROM speedycrew.profile WHERE email = %s AND id != %s""",
                        (email, profile_id))
         if cursor.fetchone():
-            # TODO should be using 400 for this?
             return json_response({ "message_type" : "update_profile_response",
                                    "request_id" : request_id,
                                    "status" : "ERROR",
@@ -482,7 +486,6 @@ def update_profile(request):
         cursor.execute("""SELECT * FROM speedycrew.profile WHERE username = %s AND id != %s""",
                        (username, profile_id))
         if cursor.fetchone():
-            # TODO should be using 400 for this?
             return json_response({ "message_type" : "update_profile_response",
                                    "request_id" : request_id,
                                    "status" : "ERROR",
@@ -597,15 +600,25 @@ def create_search(request):
 
     # validate inputs
     if id == None or query == None or side == None or longitude == None or latitude == None:
-        return HttpResponseBadRequest("400: Expected search_id, query, side, longitude, latitude")
+        return json_response({ "message_type" : "create_search_response",
+                               "status" : "ERROR",
+                               "message" : "Expected search_id, query, side, longitude, latitude" })
     if not is_well_formed_uuid(id):
-        return HttpResponseBadRequest("400: Malformed UUID")
+        return json_response({ "message_type" : "create_search_response",
+                               "status" : "ERROR",
+                               "message" : "Malformed UUID" })
     if side not in ("SEEK", "PROVIDE"):
-        return HttpResponseBadRequest("400: Expected side=SEEK or side=PROVIDE")
+        return json_response({ "message_type" : "create_search_response",
+                               "status" : "ERROR",
+                               "message" : "Expected side=SEEK or side=PROVIDE" })
     if side == "SEEK" and radius == None:
-        return HttpResponseBadRequest("400: Expected radius to be provided for side=SEEK")
+        return json_response({ "message_type" : "create_search_response",
+                               "status" : "ERROR",
+                               "message" : "Expected radius to be provided for side=SEEK" })
     if side == "PROVIDE" and radius != None:
-        return HttpResponseBadRequest("400: Did not expect radius for side=PROVIDE")
+        return json_response({ "message_type" : "create_search_response",
+                               "status" : "ERROR",
+                               "message" : "Did not expect radius for side=PROVIDE" })
     # TODO validate the wellformedness of latitude, longitude
 
     tags = re.findall(r"(\w+)", query)    
@@ -647,11 +660,10 @@ def create_search(request):
                 pass
 
     if len(tag_ids) == 0:
-        # should this be a 200 or 400?
         return json_response({ "message_type" : "create_search_response",
                                "request_id" : request_id,
                                "status" : "ERROR",
-                               "message" : "query contains no indexable words" })
+                               "message" : "Query contains no indexable words" })
 
     try:
         cursor.execute("""INSERT INTO speedycrew.search (id, owner, query, side, address, postcode, city, country, geography, radius, status, created)
@@ -659,7 +671,10 @@ def create_search(request):
                        (id, profile_id, query, side, address, postcode, city, country, longitude, latitude, radius))
     except IntegrityError, e:
         if e.message.find('"search_pkey"') != -1:
-            return HttpResponseBadRequest("400: Search ID already exists")
+            return json_response({ "message_type" : "create_search_response",
+                                   "request_id" : request_id,
+                                   "status" : "ERROR",
+                                   "message" : "Search ID already exists" })
         else:
             raise e
 
@@ -801,7 +816,7 @@ def invite_crew(request):
     if cursor.fetchone() == None:
         return json_response({ "message_type", "invite_crew_response",
                                "status", "ERROR",
-                               "message", "unknown crew" })
+                               "message", "Unknown crew_id" })
     # check that you're actually a member and ACTIVE...
     cursor.execute("""SELECT 1
                         FROM speedycrew.crew_member
@@ -812,7 +827,7 @@ def invite_crew(request):
     if cursor.fetchone() == None:
         return json_response({ "message_type": "invite_crew_response",
                                "status": "ERROR",
-                               "message": "cannot invite" })        
+                               "message": "Cannot invite" })        
     # the order of operations in delicate here: first, we will create
     # all the crew_member records (it doesn't matter in which order
     # this is done)
@@ -900,7 +915,7 @@ def leave_crew(request):
     if cursor.fetchone() == None:
         return json_response({ "message_type": "leave_crew_response",
                                "status": "ERROR",
-                               "message": "unknown crew" })
+                               "message": "Unknown crew ID" })
     # mark ours as LEFT
     cursor.execute("""UPDATE speedycrew.crew_member
                          SET status = 'LEFT'
@@ -909,7 +924,7 @@ def leave_crew(request):
     if cursor.rowcount != 1:
         return json_response({ "message_type": "leave_crew_response",
                                "status": "ERROR",
-                               "message": "not a member" })        
+                               "message": "Not a member" })
     # in profile_id order, tell everyone (including ourselves!) to
     # update our crew_member record
     cursor.execute("""SELECT profile
@@ -936,7 +951,7 @@ def rename_crew(request):
     if cursor.fetchone() == None:
         return json_response({ "message_type": "rename_crew_response",
                                "status": "ERROR",
-                               "message": "unknown crew_id" })
+                               "message": "Unknown crew_id" })
     # make sure that the caller is a member
     cursor.execute("""SELECT 1 FROM speedycrew.crew_member WHERE crew = %s AND profile = %s""",
                    (crew_id, profile_id))
@@ -1034,7 +1049,9 @@ def send_message(request):
                        (id, profile_id, crew_id, body))
     except IntegrityError, e:
         if e.message.find('"message_pkey"') != -1:
-            return HttpResponseBadRequest("400: Message ID already exists")
+            return json_response({ "message_type": "send_message_response",
+                                   "status": "ERROR",
+                                   "message": "Message ID already exists" })
         else:
             raise e
 

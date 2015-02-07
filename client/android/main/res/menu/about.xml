@@ -6,4 +6,10 @@
         android:showAsAction="ifRoom"
         android:title="@string/action_send_feedback"/>
 
+    
+        <item
+        android:id="@+id/action_reset_sync"
+        android:orderInCategory="200"
+        android:showAsAction="ifRoom"
+        android:title="@string/action_reset_sync"/>
 </menu>

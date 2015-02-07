@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
+	<false/>
+	<key>IDESourceControlProjectIdentifier</key>
+	<string>59102F7F-01C7-4F77-8ABF-8282E1108B86</string>
+	<key>IDESourceControlProjectName</key>
+	<string>SpeedyCrew</string>
+	<key>IDESourceControlProjectOriginsDictionary</key>
+	<dict>
+		<key>AAC89ED9B554F3B5CF7DDB2BF162FB96327908FE</key>
+		<string>https://bitbucket.org/michaelupstairs/upstairsdownstairs.git</string>
+	</dict>
+	<key>IDESourceControlProjectPath</key>
+	<string>client/phonegap/platforms/ios/SpeedyCrew.xcodeproj</string>
+	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
+	<dict>
+		<key>AAC89ED9B554F3B5CF7DDB2BF162FB96327908FE</key>
+		<string>../../../../../..</string>
+	</dict>
+	<key>IDESourceControlProjectURL</key>
+	<string>https://bitbucket.org/michaelupstairs/upstairsdownstairs.git</string>
+	<key>IDESourceControlProjectVersion</key>
+	<integer>111</integer>
+	<key>IDESourceControlProjectWCCIdentifier</key>
+	<string>AAC89ED9B554F3B5CF7DDB2BF162FB96327908FE</string>
+	<key>IDESourceControlProjectWCConfigurations</key>
+	<array>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.git</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>AAC89ED9B554F3B5CF7DDB2BF162FB96327908FE</string>
+			<key>IDESourceControlWCCName</key>
+			<string>SpeedyCrew</string>
+		</dict>
+	</array>
+</dict>
+</plist>

@@ -125,3 +125,76 @@ Thoughts on search implementation
 
 The current search implementation is not good enough.  I have
 something better in the works.  To be described here...
+
+
+
+
+
+Problems
+
+1.  Write skew causes concurrent searches not to see each
+other (both are running as 'aggressor', both are not yet
+committed and so don't see the other).  In a serial schedule, one
+would commit first and the other would see it.  One idea is to
+create the search first in a transaction and then run searches in
+another transaction.  Then there is a new problem: the two
+searches can both see each other and could both generate matches,
+which clash.  We want to run them in parallel, but we want each
+one to see only those that committed before them in a
+hypothetical serial schedule.
+
+Solution:
+
+1.  Create a 'commit order' for all searches: allow aggressor
+searches to see only pasive searches that were created earlier.
+Let's call that 'time'.
+
+Example schedules:
+
+Add S1 time=1 COMMIT
+Add S2 time=2 COMMIT
+Run S1, doesn't see S2
+Run S2, does see S1
+-> OK
+
+Add S1 time=2 COMMIT
+Add S2 time=1 COMMIT
+Run S1, does see S2
+Run S2, doesn't see S1
+-> OK
+
+Add S1 time=2 COMMIT
+Run S1, doesn't see S2
+Add S2 time=1 COMMIT
+Run S2, doesn't see S1
+-> NOT OK
+
+The problem here is that a naive 'time' doesn't necessarily line up
+with commit order, there can be races.  One approach is to use
+advisory transaction locking to serialise the production of time
+number, so that we can be sure to give out numbers sequentially, and
+not release the lock until after we commit.  This means that the
+creation of search records becomes a kind of bottleneck, so that we
+can number them sequentially... doh.
+
+2.  Create the searches first, and then literally handle the match
+unique key violations.  This would be a rare situation that would only
+come up when matching searches are posted concurrently, and would only
+apply to a very small number of match rows (those produced by the
+overlapping searches).
+
+Schedules:
+
+Add S1 COMMIT
+Add S2 COMMIT
+Run S1, sees S2
+Run S2, sees S1, clashes ignored
+-> OK
+
+Add S1 COMMIT
+Run S1 doesn't see S2
+Add S2 COMMIT
+Run S2 sees S1
+-> NOT OK
+
+... to be continued ...

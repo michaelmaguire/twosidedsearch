@@ -1,32 +1,77 @@
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     android:paddingBottom="@dimen/activity_vertical_margin"
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="com.speedycrew.client.MessageComposeActivity$PlaceholderFragment" >
 
-    <TextView
-        android:id="@+id/crew"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="crew" />
+        android:orientation="horizontal" >
 
-    <AutoCompleteTextView
-        android:id="@+id/body"
-        android:layout_width="wrap_content"
+        <TextView
+            android:id="@+id/crew_label"
+            android:layout_width="200dp"
+            android:layout_height="wrap_content"
+            android:paddingLeft="25dp"
+            android:text="Crew id" />
+
+        <TextView
+            android:id="@+id/crew"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="crew" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentRight="true"
-        android:layout_below="@+id/crew"
-        android:layout_marginTop="26dp"
-        android:ems="10"
-        android:text="AutoCompleteTextView" >
+        android:orientation="horizontal" >
+
+        <TextView
+            android:id="@+id/recipient_fingerprint_label"
+            android:layout_width="200dp"
+            android:layout_height="wrap_content"
+            android:paddingLeft="25dp"
+            android:text="Recipient fingerprint" />
+
+        <TextView
+            android:id="@+id/fingerprint"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="fingerprint" />
+    </LinearLayout>
+
+    <View
+        android:id="@+id/primerdivisor"
+        android:layout_width="fill_parent"
+        android:layout_height="2dp"
+        android:background="#000000" />
+
+    <ScrollView
+        android:layout_width="fill_parent"
+        android:layout_height="0dp"
+        android:layout_marginLeft="15dp"
+        android:layout_marginRight="15dp"
+        android:layout_marginTop="20dp"
+        android:layout_weight="1"
+        android:fillViewport="true" >
+
+        <EditText
+            android:id="@+id/body"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="top|left"
+            android:inputType="textMultiLine"
+            android:lines="5"
+            android:scrollHorizontally="false" />
 
         <requestFocus />
-    </AutoCompleteTextView>
+    </ScrollView>
 
-</RelativeLayout>
+</LinearLayout>

@@ -3,6 +3,12 @@
     tools:context="com.speedycrew.client.MessageListActivity" >
 
     <item
+        android:id="@+id/action_refresh"
+        android:orderInCategory="90"
+        android:showAsAction="ifRoom"
+        android:title="@string/action_refresh"/>
+    
+    <item
         android:id="@+id/action_settings"
         android:orderInCategory="100"
         android:showAsAction="never"

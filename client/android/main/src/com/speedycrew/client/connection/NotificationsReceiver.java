@@ -74,10 +74,12 @@ public class NotificationsReceiver {
 	 * Google Play Store or enable it in the device's system settings.
 	 */
 	public boolean checkPlayServices(Context context) {
-		int resultCode = GooglePlayServicesUtil.isGooglePlayServicesAvailable(context);
+		int resultCode = GooglePlayServicesUtil
+				.isGooglePlayServicesAvailable(context);
 		if (resultCode != ConnectionResult.SUCCESS) {
 			if (GooglePlayServicesUtil.isUserRecoverableError(resultCode)) {
-				Log.i(LOGTAG, "Play Services need to be installed on this device.");
+				Log.i(LOGTAG,
+						"Play Services need to be installed on this device.");
 				// TODO: How to display error dialog with only a context?
 				// GooglePlayServicesUtil.getErrorDialog(resultCode, context,
 				// PLAY_SERVICES_RESOLUTION_REQUEST).show();
@@ -167,7 +169,8 @@ public class NotificationsReceiver {
 		// Check if app was updated; if so, it must clear the registration ID
 		// since the existing regID is not guaranteed to work with the new
 		// app version.
-		int registeredVersion = prefs.getInt(PROPERTY_APP_VERSION, Integer.MIN_VALUE);
+		int registeredVersion = prefs.getInt(PROPERTY_APP_VERSION,
+				Integer.MIN_VALUE);
 		int currentVersion = getAppVersion(context);
 		if (registeredVersion != currentVersion) {
 			Log.i(LOGTAG, "App version changed.");
@@ -202,7 +205,8 @@ public class NotificationsReceiver {
 		// This sample app persists the registration ID in shared preferences,
 		// but
 		// how you store the regID in your app is up to you.
-		return context.getSharedPreferences(MainActivity.class.getSimpleName(), Context.MODE_PRIVATE);
+		return context.getSharedPreferences(MainActivity.class.getSimpleName(),
+				Context.MODE_PRIVATE);
 	}
 
 	/**
@@ -210,7 +214,8 @@ public class NotificationsReceiver {
 	 */
 	private static int getAppVersion(Context context) {
 		try {
-			PackageInfo packageInfo = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
+			PackageInfo packageInfo = context.getPackageManager()
+					.getPackageInfo(context.getPackageName(), 0);
 			return packageInfo.versionCode;
 		} catch (NameNotFoundException e) {
 			// should never happen
@@ -231,7 +236,8 @@ public class NotificationsReceiver {
 		protected void onHandleIntent(Intent intent) {
 			try {
 				Bundle extras = intent.getExtras();
-				Log.i(LOGTAG, "GcmIntentService onHandleIntent: " + extras.toString());
+				Log.i(LOGTAG,
+						"GcmIntentService onHandleIntent: " + extras.toString());
 
 				// Check for our workaround to SERVICE_NOT_AVAILABLE from
 				// GCM.register:
@@ -245,11 +251,13 @@ public class NotificationsReceiver {
 					 */
 					Log.i(LOGTAG, "Received: registration_id[" + regid + "]");
 
-					persistRegistrationId(SpeedyCrewApplication.getAppContext(), regid);
+					persistRegistrationId(
+							SpeedyCrewApplication.getAppContext(), regid);
 
 				}
 
-				GoogleCloudMessaging gcm = GoogleCloudMessaging.getInstance(this);
+				GoogleCloudMessaging gcm = GoogleCloudMessaging
+						.getInstance(this);
 				// The getMessageType() intent parameter must be the intent you
 				// received
 				// in your BroadcastReceiver.
@@ -262,14 +270,20 @@ public class NotificationsReceiver {
 					 * types, just ignore any message types you're not
 					 * interested in, or that you don't recognize.
 					 */
-					if (GoogleCloudMessaging.MESSAGE_TYPE_MESSAGE.equals(messageType)) {
-						Log.i(LOGTAG, "Received: MESSAGE_TYPE_MESSAGE" + extras.toString());
-						RequestHelper.sendSynchronize(SpeedyCrewApplication.getAppContext(), 0, 0, null);
+					if (GoogleCloudMessaging.MESSAGE_TYPE_MESSAGE
+							.equals(messageType)) {
+						Log.i(LOGTAG,
+								"Received: MESSAGE_TYPE_MESSAGE"
+										+ extras.toString());
+						RequestHelper.sendSynchronize(
+								SpeedyCrewApplication.getAppContext(), null);
 
 						sendNotification("New match available");
-					} else if (GoogleCloudMessaging.MESSAGE_TYPE_SEND_ERROR.equals(messageType)) {
+					} else if (GoogleCloudMessaging.MESSAGE_TYPE_SEND_ERROR
+							.equals(messageType)) {
 						Log.i(LOGTAG, "Received: MESSAGE_TYPE_SEND_ERROR");
-					} else if (GoogleCloudMessaging.MESSAGE_TYPE_DELETED.equals(messageType)) {
+					} else if (GoogleCloudMessaging.MESSAGE_TYPE_DELETED
+							.equals(messageType)) {
 						Log.i(LOGTAG, "Received: MESSAGE_TYPE_DELETED");
 					}
 				}
@@ -286,12 +300,19 @@ public class NotificationsReceiver {
 		// This is just one simple example of what you might choose to do with
 		// a GCM message.
 		private void sendNotification(String msg) {
-			mNotificationManager = (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
+			mNotificationManager = (NotificationManager) this
+					.getSystemService(Context.NOTIFICATION_SERVICE);
 
-			PendingIntent contentIntent = PendingIntent.getActivity(this, 0, new Intent(this, MainActivity.class), 0);
+			PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
+					new Intent(this, MainActivity.class), 0);
 
-			NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this).setSmallIcon(R.drawable.notification_icon).setContentTitle("SpeedyCrew Notification")
-					.setStyle(new NotificationCompat.BigTextStyle().bigText(msg)).setContentText(msg);
+			NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(
+					this)
+					.setSmallIcon(R.drawable.notification_icon)
+					.setContentTitle("SpeedyCrew Notification")
+					.setStyle(
+							new NotificationCompat.BigTextStyle().bigText(msg))
+					.setContentText(msg);
 
 			mBuilder.setContentIntent(contentIntent);
 			mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
@@ -303,7 +324,8 @@ public class NotificationsReceiver {
 		public void onReceive(Context context, Intent intent) {
 
 			// Explicitly specify that GcmIntentService will handle the intent.
-			ComponentName comp = new ComponentName(context.getPackageName(), GcmIntentService.class.getName());
+			ComponentName comp = new ComponentName(context.getPackageName(),
+					GcmIntentService.class.getName());
 			// Start the service, keeping the device awake while it is
 			// launching.
 			startWakefulService(context, (intent.setComponent(comp)));

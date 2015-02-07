@@ -121,6 +121,11 @@ public class MessageActivity extends Activity {
 					t = (TextView) rootView.findViewById(R.id.created);
 					t.setText(read_created);
 
+					String read_body = cursor.getString(cursor
+							.getColumnIndex(Message.BODY));
+					t = (TextView) rootView.findViewById(R.id.body);
+					t.setText(read_body);
+
 				} else {
 					Log.w(LOGTAG, "call: empty cursor, messageId[" + messageId
 							+ "] not found");

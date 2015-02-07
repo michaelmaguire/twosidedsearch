@@ -156,6 +156,11 @@ public class MatchActivity extends Activity {
 					t = (TextView) rootView.findViewById(R.id.score);
 					t.setText(score);
 
+					String matches = cursor.getString(cursor
+							.getColumnIndex(Match.MATCHES));
+					t = (TextView) rootView.findViewById(R.id.matches);
+					t.setText(matches);
+
 				} else {
 					Log.w(LOGTAG, "call: empty cursor, search[" + search
 							+ "] other_search[" + other_search + "] not found");
