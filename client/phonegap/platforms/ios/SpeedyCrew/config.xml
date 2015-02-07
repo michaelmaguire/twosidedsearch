@@ -27,7 +27,7 @@
         SpeedyCrew provides a quick way for two-way-searching: People who want to be crew can easily find people who want hire them, and vice-versa.
     </description>
     <author email="support@speedycrew.com" href="http://www.speedycrew.com">
-        PhoneGap Team
+        SpeedyCrew Team
     </author>
     <content src="index.html" />
     <preference name="permissions" value="none" />
