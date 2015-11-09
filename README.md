@@ -2,8 +2,6 @@
 
 This README would normally document whatever steps are necessary to get your application up and running.
 
-![SpeedyCrew.jpg](https://bitbucket.org/repo/A8RjAR/images/369725626-SpeedyCrew.jpg)
-
 ### What is this repository for? ###
 
 * Quick summary
